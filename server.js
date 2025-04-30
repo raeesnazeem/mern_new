@@ -1,14 +1,10 @@
 const express = require('express')
 const app = express()
 const PORT = 3000
+const router = require('./router/authRouter')
 
-app.get('/', (req, res) => {
-    res.status (200).send('Hello World!');
-})
+app.use('/api/v1/auth', router)
 
-app.get('/register', (req, res) => {
-    res.status(200).send("This is the register page")
-})
 
 app.listen(PORT, () => {
     console.log(`Server is successfully running on http://localhost:${PORT}`)
