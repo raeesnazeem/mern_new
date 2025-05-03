@@ -9,7 +9,7 @@ const home = async (req, res) => {
 const register = async (req, res) => {
     try{
         res.status(200).send("This is the new registration page")
-    } catch {
+    } catch(error) {
         res.status(500).send("There's been an error on the page")
     }
 }
