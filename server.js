@@ -5,6 +5,9 @@ const PORT = 3000
 const router = require('./router/authRouter')
 const connectDB = require('./utils/db')
 
+// Parse JSON bodies
+app.use(express.json());
+
 app.use('/api/v1/auth', router)
 
 
