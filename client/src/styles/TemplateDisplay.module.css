@@ -1,0 +1,75 @@
+.templateDisplay {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  
+  .templateDisplay h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    color: #37352f;
+  }
+  
+  .templateSections {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  
+  .templateSection {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    background-color: white;
+  }
+  
+  .templateSection h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #37352f;
+    text-transform: capitalize;
+  }
+  
+  .templatePreview {
+    min-height: 100px;
+    background-color: #f7f6f3;
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8a8a8a;
+  }
+  
+  .regenerateButton {
+    padding: 8px 16px;
+    border: 1px solid #e0e0e0;
+    background-color: white;
+    color: #37352f;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .regenerateButton:hover {
+    background-color: #f7f6f3;
+  }
+  
+  .exportButton {
+    padding: 12px 24px;
+    background-color: #37352f;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 32px;
+  }
+  
+  .exportButton:hover {
+    background-color: #2b2a26;
+  }

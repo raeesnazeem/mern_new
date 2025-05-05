@@ -1,0 +1,49 @@
+.promptContainer {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  
+  .promptContainer h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #37352f;
+  }
+  
+  .promptTextarea {
+    width: 100%;
+    padding: 16px;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.5;
+    resize: none;
+    margin-bottom: 16px;
+    transition: border 0.2s ease;
+  }
+  
+  .promptTextarea:focus {
+    outline: none;
+    border-color: #8a8a8a;
+    box-shadow: 0 0 0 1px #8a8a8a;
+  }
+  
+  .submitButton {
+    padding: 10px 20px;
+    background-color: #37352f;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .submitButton:hover {
+    background-color: #2b2a26;
+  }
+  
+  .submitButton:active {
+    background-color: #1f1e1b;
+  }

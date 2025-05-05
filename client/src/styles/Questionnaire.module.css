@@ -1,0 +1,94 @@
+.questionnaire {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  
+  .questionnaire h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    color: #37352f;
+  }
+  
+  .questionGroup {
+    margin-bottom: 32px;
+  }
+  
+  .questionGroup label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 12px;
+    color: #37352f;
+  }
+  
+  .options {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .optionButton {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    background-color: white;
+    color: #37352f;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .optionButton:hover {
+    background-color: #f7f6f3;
+  }
+  
+  .optionButton.selected {
+    background-color: #37352f;
+    color: white;
+    border-color: #37352f;
+  }
+  
+  .sectionOptions {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+  }
+  
+  .sectionCheckbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .sectionCheckbox input {
+    width: 16px;
+    height: 16px;
+    accent-color: #37352f;
+  }
+  
+  .sectionCheckbox label {
+    font-weight: 400;
+    margin: 0;
+    cursor: pointer;
+  }
+  
+  .submitButton {
+    padding: 12px 24px;
+    background-color: #37352f;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 16px;
+  }
+  
+  .submitButton:hover {
+    background-color: #2b2a26;
+  }
+  
+  .submitButton:disabled {
+    background-color: #e0e0e0;
+    cursor: not-allowed;
+  }

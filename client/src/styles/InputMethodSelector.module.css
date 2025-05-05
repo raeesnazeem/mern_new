@@ -1,0 +1,40 @@
+.methodSelector {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 32px;
+    text-align: center;
+  }
+  
+  .methodSelector h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    color: #37352f;
+  }
+  
+  .buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+  }
+  
+  .methodButton {
+    padding: 12px 24px;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    background-color: white;
+    color: #37352f;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 180px;
+  }
+  
+  .methodButton:hover {
+    background-color: #f7f6f3;
+    border-color: #d0d0d0;
+  }
+  
+  .methodButton:active {
+    background-color: #f0efec;
+  }
