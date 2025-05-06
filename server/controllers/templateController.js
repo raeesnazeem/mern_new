@@ -1,394 +1,373 @@
-const Template = require('../models/templateModel')
-const {v4: uuidv4} = require('uuid')
-
-// Helper function to extract keywords from text  - this will return an array of the words processed without common words
-const extractKeywords = (text) => {
-    if (!text) return []
-    const words = text.toLowerCase().split(/\s+/); //splits the string into an array of substrings wherever it finds one or more whitespace characters.
-    const commonWords = new Set(['the', 'and', 'or', 'a', 'an', 'in', 'on', 'at', 'for', 'to', 'of']) //filter out insignificant words from text processing.
-    return [...new Set(words.filter(word => word.length > 2 && !commonWords.has(word)))]
-  }
-
- // Helper function to find matching templates based on keywords
-const findMatchingTemplates = async (keywords, sectionType) => {
-    const query = {
-      sectionType,
-      tags: { $in: keywords }
-    } 
-    return await Template.find(query)
-    .sort({ createdAt: -1 }) // Get most recent first
-    .limit(5); // Limit results to prevent overload
-}
-
+const Template = require("../models/templateModel");
+const { v4: uuid } = require("uuid");
 
 const templateController = {
-    // Create a new template
-    createTemplate: async (req, res) => {
-      try {
-        const { name, sectionType, json, tags } = req.body
-        
-        // Auto-extract tags from name if not provided
-        let finalTags = tags || extractKeywords(name)
-        
-        const newTemplate = new Template({
-          name,
-          sectionType,
-          json,
-          tags: finalTags
-        })
-  
-        await newTemplate.save()
-        
-        res.status(201).json({
-          success: true,
-          data: newTemplate
-        })
-      } catch (error) {
-        res.status(400).json({
-          success: false,
-          message: error.message
-        })
-      }
-    },
-  
-    // Get all templates with optional filtering
-    getTemplates: async (req, res) => {
-      try {
-        const { sectionType, tag, search } = req.query;
-        const query = {}
-        
-        if (sectionType) query.sectionType = sectionType;
-        if (tag) query.tags = tag;
-        if (search) {
-          query.$text = { $search: search }
-        }
-        
-        const templates = await Template.find(query).sort({ createdAt: -1 })
-        
-        res.status(200).json({
-          success: true,
-          data: templates
-        })
-      } catch (error) {
-        res.status(500).json({
-          success: false,
-          message: error.message
-        })
-      }
-    },
-  
-    // Get a single template by ID
-    getTemplate: async (req, res) => {
-      try {
-        const template = await Template.findById(req.params.id)
-        
-        if (!template) {
-          return res.status(404).json({
-            success: false,
-            message: 'Template not found'
-          })
-        }
-        
-        res.status(200).json({
-          success: true,
-          data: template
-        })
-      } catch (error) {
-        res.status(500).json({
-          success: false,
-          message: error.message
-        })
-      }
-    },
-  
-    // Update a template
-    updateTemplate: async (req, res) => {
-      try {
-        const { name, json, tags } = req.body
-        
-        const template = await Template.findByIdAndUpdate(
-          req.params.id,
-          { name, json, tags, updatedAt: Date.now() },
-          { new: true, runValidators: true }
-        )
-        
-        if (!template) {
-          return res.status(404).json({
-            success: false,
-            message: 'Template not found'
-          })
-        }
-        
-        res.status(200).json({
-          success: true,
-          data: template
-        })
-      } catch (error) {
-        res.status(400).json({
-          success: false,
-          message: error.message
-        })
-      }
-    },
-  
-    // Delete a template
-    deleteTemplate: async (req, res) => {
-      try {
-        const template = await Template.findByIdAndDelete(req.params.id);
-        
-        if (!template) {
-          return res.status(404).json({
-            success: false,
-            message: 'Template not found'
-          })
-        }
-        
-        res.status(200).json({
-          success: true,
-          message: 'Template deleted successfully'
-        })
-      } catch (error) {
-        res.status(500).json({
-          success: false,
-          message: error.message
-        })
-      }
-    },
-  
-    // Generate a complete webpage from sections
-    generateWebpage: async (req, res) => {
-      try {
-        const { prompt, selectedSections } = req.body
-        
-        // Default section order (can be customized by client)
-        const sectionOrder = [
-          'header',
-          'about',
-          'features', // or 'services'
-          'testimonials',
-          'team',
-          'cta',
-          'contact',
-          'footer'
-        ]
-        
-        let finalSections = [];
-        
-        // If specific sections are selected, use those
-        if (selectedSections && Object.keys(selectedSections).length > 0) {
-          for (const sectionType of sectionOrder) {
-            if (selectedSections[sectionType]) {
-              const template = await Template.findById(selectedSections[sectionType])
-              if (template) {
-                finalSections.push({
-                  sectionType,
-                  templateId: template._id,
-                  json: template.json
+    /* ----------------------------------------------------*
+     * Process user prompt and find matching templates
+     * ----------------------------------------------------*/
+    findTemplatesByPrompt: async (req, res) => {
+        try {
+            const { prompt, style, sectionTypes } = req.body;
+
+            if (!prompt) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Prompt is required' 
                 });
-              }
             }
-          }
-        } else {
-          // Otherwise, find matching templates based on prompt keywords
-          const keywords = extractKeywords(prompt)
-          
-          for (const sectionType of sectionOrder) {
-            const matchingTemplates = await findMatchingTemplates(keywords, sectionType);
+
+            // Extract keywords and potential style/section types from prompt
+            const { keywords, potentialStyle, potentialSectionTypes } = analyzePrompt(prompt);
             
-            if (matchingTemplates.length > 0) {
-              // Select the best match (simple implementation - could be enhanced)
-              const selectedTemplate = matchingTemplates[0]
-              finalSections.push({
-                sectionType,
-                templateId: selectedTemplate._id,
-                json: selectedTemplate.json
-              });
+            // Use style from request or extract from prompt
+            const finalStyle = style || potentialStyle;
+            // Use sectionTypes from request or extract from prompt
+            const finalSectionTypes = sectionTypes || potentialSectionTypes;
+
+            // Build strict matching conditions
+            const queryConditions = {
+                isActive: true
+            };
+
+            // Add strict style matching if available
+            if (finalStyle) {
+                queryConditions.style = finalStyle.toLowerCase();
             }
-          }
-        }
-        
-        // Generate a unique ID for this webpage configuration
-        const webpageId = uuidv4()
-        
-        res.status(200).json({
-          success: true,
-          data: {
-            webpageId,
-            sections: finalSections,
-            promptUsed: prompt
-          }
-        });
-      } catch (error) {
-        res.status(500).json({
-          success: false,
-          message: error.message
-        });
-      }
-    },
-  
-    // Regenerate a specific section
-    regenerateSection: async (req, res) => {
-      try {
-        const { webpageId, currentSections, sectionToRegenerate, prompt } = req.body
-        
-        // Find the section to regenerate in current sections
-        const sectionIndex = currentSections.findIndex(
-          section => section.sectionType === sectionToRegenerate
-        );
-        
-        if (sectionIndex === -1) {
-          return res.status(400).json({
-            success: false,
-            message: 'Section not found in current webpage'
-          })
-        }
-        
-        // Find alternative templates for this section
-        const keywords = extractKeywords(prompt);
-        const matchingTemplates = await findMatchingTemplates(keywords, sectionToRegenerate)
-        
-        if (matchingTemplates.length === 0) {
-          return res.status(404).json({
-            success: false,
-            message: 'No alternative templates found for this section'
-          });
-        }
-        
-        // Select a different template (not the current one)
-        const currentTemplateId = currentSections[sectionIndex].templateId;
-        const newTemplate = matchingTemplates.find(
-          t => t._id.toString() !== currentTemplateId.toString()
-        ) || matchingTemplates[0];
-        
-        // Update the section
-        const updatedSections = [...currentSections]
-        updatedSections[sectionIndex] = {
-          sectionType: sectionToRegenerate,
-          templateId: newTemplate._id,
-          json: newTemplate.json
-        };
-        
-        res.status(200).json({
-          success: true,
-          data: {
-            webpageId,
-            sections: updatedSections,
-            regeneratedSection: sectionToRegenerate
-          }
-        });
-      } catch (error) {
-        res.status(500).json({
-          success: false,
-          message: error.message
-        });
-      }
-    },
-  
-    // Apply color palette to all sections
-    applyColorPalette: async (req, res) => {
-      try {
-        const { sections, colors } = req.body
-        
-        if (!sections || !Array.isArray(sections) || !colors) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid request data'
-          })
-        }
-        
-        // Process each section's JSON to apply colors
-        const processedSections = sections.map(section => {
-          const processedJson = JSON.parse(JSON.stringify(section.json))
-          
-          // This is a simplified example - actual implementation would need to 
-          // traverse the Elementor JSON structure and update color values
-          // based on your specific Elementor template structure
-          
-          // Example: Replace primary color
-          const jsonString = JSON.stringify(processedJson);
-          const updatedJsonString = jsonString.replace(/#3498db/g, colors.primary)
-          // Add similar replacements for secondary, accent colors, etc.
-          
-          return {
-            ...section,
-            json: JSON.parse(updatedJsonString)
-          };
-        });
-        
-        res.status(200).json({
-          success: true,
-          data: {
-            sections: processedSections,
-            colorsApplied: colors
-          }
-        });
-      } catch (error) {
-        res.status(500).json({
-          success: false,
-          message: error.message
-        });
-      }
-    },
-  
-    // Export complete webpage as single Elementor JSON
-    exportWebpage: async (req, res) => {
-      try {
-        const { sections } = req.body
-        
-        if (!sections || !Array.isArray(sections)) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid sections data'
-          })
-        }
-        
-        // Combine all sections into a single Elementor JSON structure
-        // This is a simplified example - actual implementation depends on 
-        // how Elementor expects combined templates to be structured
-        
-        const combinedJson = {
-          // Elementor template metadata
-          "version": "0.4",
-          "title": "Generated Webpage",
-          "type": "page",
-          
-          // Combine content from all sections
-          "content": sections.reduce((acc, section) => {
-            // Assuming each section's json has a "content" array
-            if (section.json && section.json.content) {
-              return [...acc, ...section.json.content];
+
+            // Add strict section type matching if available
+            if (finalSectionTypes && finalSectionTypes.length > 0) {
+                queryConditions.sectionType = { 
+                    $in: finalSectionTypes.map(type => type.toLowerCase()) 
+                };
             }
-            return acc;
-          }, [])
-        };
-        
-        // Set filename with timestamp
-        const filename = `elementor-template-${Date.now()}.json`;
-        
-        res.status(200)
-          .attachment(filename)
-          .json({
-            success: true,
-            data: combinedJson
-          });
-      } catch (error) {
-        res.status(500).json({
+
+            // Keyword matching (secondary priority)
+            let keywordQuery = {};
+            if (keywords.length > 0) {
+                keywordQuery = {
+                    $or: [
+                        { name: { $regex: keywords.join('|'), $options: 'i' } },
+                        { tags: { $in: keywords } }
+                    ]
+                };
+            }
+
+            // Find templates that match ALL conditions
+            const matchingTemplates = await Template.find({
+                ...queryConditions,
+                ...keywordQuery
+            })
+            .sort({ 
+                popularity: -1,
+                updatedAt: -1 
+            })
+            .limit(50);
+
+            // If no strict matches found, relax the style condition
+            let relaxedResults = [];
+            if (matchingTemplates.length === 0 && finalStyle) {
+                relaxedResults = await Template.find({
+                    ...(finalSectionTypes && { sectionType: { $in: finalSectionTypes } }),
+                    ...keywordQuery,
+                    isActive: true
+                })
+                .sort({ popularity: -1 })
+                .limit(50);
+            }
+
+            const allResults = [...matchingTemplates, ...relaxedResults];
+            const templatesBySection = groupTemplatesBySection(allResults);
+
+            res.status(200).json({
+                success: true,
+                data: {
+                    allTemplates: allResults,
+                    templatesBySection,
+                    suggestedOrder: suggestTemplateOrder(Object.keys(templatesBySection)),
+                    matchedConditions: {
+                        style: finalStyle,
+                        sectionTypes: finalSectionTypes,
+                        keywords
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error('Error finding templates:', error);
+            res.status(500).json({ 
+                success: false, 
+                message: 'Server error while processing template search',
+                error: error.message 
+            });
+        }
+    },
+
+
+
+     /* ----------------------------------------------------*
+      * Create/Upload a new template
+      * POST /api/templates
+      * Required fields: name, sectionType, json
+     * ----------------------------------------------------*/
+
+  createTemplate: async (req, res) => {
+    try {
+      const { name, sectionType, json, tags, style } = req.body;
+
+      // Validate required fields
+      if (!name || !sectionType || !json) {
+        return res.status(400).json({
           success: false,
-          message: error.message
+          message: 'Name, sectionType, and json are required fields'
         });
       }
+
+      // Validate JSON content
+      try {
+        JSON.parse(JSON.stringify(json)); // Test if valid JSON
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid JSON content',
+          error: error.message
+        });
+      }
+
+      // Check for existing template with same name and section type
+      const existingTemplate = await Template.findOne({ 
+        name: name.trim(),
+        sectionType: sectionType.toLowerCase()
+      });
+
+      if (existingTemplate) {
+        return res.status(409).json({
+          success: false,
+          message: 'Template with this name and section type already exists',
+          existingTemplate: {
+            _id: existingTemplate._id,
+            name: existingTemplate.name,
+            sectionType: existingTemplate.sectionType
+          }
+        });
+      }
+
+      // Create new template
+      const newTemplate = await Template.create({
+        name: name.trim(),
+        sectionType: sectionType.toLowerCase(),
+        json,
+        tags: tags ? [...new Set(tags.map(tag => tag.toLowerCase()))] : [], // Remove duplicates and lowercase
+        style: style ? style.toLowerCase() : undefined,
+        // createdAt and updatedAt are automatically handled
+      });
+
+      // Format the response
+      const response = {
+        success: true,
+        message: 'Template created successfully',
+        data: {
+          id: newTemplate._id,
+          name: newTemplate.name,
+          sectionType: newTemplate.sectionType,
+          style: newTemplate.style,
+          tags: newTemplate.tags,
+          createdAt: newTemplate.createdAt
+        }
+      };
+
+      res.status(201).json(response);
+
+    } catch (error) {
+      console.error('Error creating template:', error);
+      
+      // Handle specific Mongoose validation errors
+      if (error.name === 'ValidationError') {
+        const messages = Object.values(error.errors).map(val => val.message);
+        return res.status(400).json({
+          success: false,
+          message: 'Validation error',
+          errors: messages
+        });
+      }
+
+      // Handle duplicate key errors
+      if (error.code === 11000) {
+        return res.status(409).json({
+          success: false,
+          message: 'Template with similar unique attributes already exists'
+        });
+      }
+
+      // Generic error handler
+      res.status(500).json({
+        success: false,
+        message: 'Server error while creating template',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
-  };
+  },
+
+
+      /* ----------------------------------------------------*
+     * * Bulk upload templates
+      * POST /api/templates/bulk
+     * ----------------------------------------------------*/
+
+  bulkUploadTemplates: async (req, res) => {
+    try {
+      const { templates } = req.body;
+
+      if (!templates || !Array.isArray(templates)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Templates array is required'
+        });
+      }
+
+      // Validate each template
+      const validatedTemplates = [];
+      const errors = [];
+
+      for (const [index, template] of templates.entries()) {
+        try {
+          // Basic validation
+          if (!template.name || !template.sectionType || !template.json) {
+            throw new Error('Missing required fields (name, sectionType, or json)');
+          }
+
+          // Check for duplicates in the batch
+          const duplicateInBatch = validatedTemplates.some(
+            t => t.name === template.name.trim() && 
+                 t.sectionType === template.sectionType.toLowerCase()
+          );
+
+          if (duplicateInBatch) {
+            throw new Error('Duplicate template in upload batch');
+          }
+
+          // Add to validated list
+          validatedTemplates.push({
+            name: template.name.trim(),
+            sectionType: template.sectionType.toLowerCase(),
+            json: template.json,
+            tags: template.tags ? [...new Set(template.tags.map(tag => tag.toLowerCase()))] : [],
+            style: template.style ? template.style.toLowerCase() : undefined,
+            isActive: template.isActive !== false // Default to true
+          });
+        } catch (error) {
+          errors.push({
+            index,
+            name: template.name || 'unnamed',
+            error: error.message
+          });
+        }
+      }
+
+      // Check if all templates failed validation
+      if (validatedTemplates.length === 0 && errors.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'All templates failed validation',
+          errors
+        });
+      }
+
+      // Insert validated templates
+      const result = await Template.insertMany(validatedTemplates, { ordered: false });
+
+      res.status(201).json({
+        success: true,
+        message: `Successfully uploaded ${result.length} templates`,
+        data: {
+          createdCount: result.length,
+          errorCount: errors.length,
+          errors: errors.length > 0 ? errors : undefined
+        }
+      });
+
+    } catch (error) {
+      console.error('Error during bulk upload:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Server error during bulk upload',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  }
+
+
+
+};
+
+// Enhanced prompt analyzer
+const analyzePrompt = (prompt) => {
+    if (!prompt) return { keywords: [], potentialStyle: null, potentialSectionTypes: [] };
     
+    const words = prompt.toLowerCase().split(/\s+/);
+    const commonWords = new Set(['the', 'and', 'or', 'a', 'an', 'in', 'on', 'at', 'for', 'to', 'of']);
+    
+    // Extract potential style from prompt - just extracts (first style that matches) one style using find
+    const possibleStyles = ['modern', 'classic', 'minimalist', 'bold', 'elegant'];
+    const potentialStyle = possibleStyles.find(style => 
+        prompt.toLowerCase().includes(style)
+    );
 
+    // Extract potential section types from prompt - extracts an array of sections using filter
+    const possibleSections = ["header", "about", "cta", "features", "testimonials", "contact", "footer", "faq", "map", "breadcrumbs"];
+    const potentialSectionTypes = possibleSections.filter(section => 
+        prompt.toLowerCase().includes(section)
+    );
 
+    // Extract regular keywords
+    const keywords = [...new Set(words.filter(word => 
+      word.length > 2 && 
+      !commonWords.has(word) && 
+      !/^\d+$/.test(word) &&
+      !possibleStyles.includes(word) &&
+      !possibleSections.includes(word)
+  ))];
 
-const search = async (req, res) => {
-    try{
-        res.status(200).json(extractKeywords("This is a fairly new system"))
-    } catch(error) {
-        res.status(500).json("Internal Server error")
-    }
-}
+    return { keywords, potentialStyle, potentialSectionTypes };
+};
 
-module.exports = {templateController, search}
+// Helper function to group templates by their section type
+const groupTemplatesBySection = (templates) => {
+    return templates.reduce((acc, template) => {
+        const { sectionType } = template;
+        if (!acc[sectionType]) {
+            acc[sectionType] = [];
+        }
+        acc[sectionType].push(template);
+        return acc;
+    }, {});
+};
+
+// Helper function to suggest a logical order of sections
+const suggestTemplateOrder = (availableSections) => {
+    const defaultOrder = [
+        'header',
+        'breadcrumbs',
+        'about',
+        'features',
+        'testimonials',
+        'faq',
+        'cta',
+        'map',
+        'contact',
+        'footer'
+    ];
+
+    // Create ordered array with available sections
+    const orderedSections = defaultOrder.filter(section => 
+        availableSections.includes(section)
+    );
+
+    // Add any remaining sections that weren't in the default order
+    const remainingSections = availableSections.filter(section => 
+        !defaultOrder.includes(section)
+    );
+
+    return [...orderedSections, ...remainingSections];
+};
+
+module.exports = {templateController};

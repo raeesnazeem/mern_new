@@ -6,7 +6,7 @@ const TopBar = () => {
     <div className={styles.topBar}>
       <h1>Elementor Template Generator</h1>
       <div className={styles.userControls}>
-        <button className={styles.profileButton}>Profile</button>
+        <button className={styles.loginButton}>Login</button>
       </div>
     </div>
   )

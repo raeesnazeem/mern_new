@@ -5,7 +5,7 @@ import PromptInput from '../components/PromptInput'
 import Questionnaire from '../components/Questionnaire'
 import TemplateDisplay from '../components/TemplateDisplay'
 import TopBar from '../components/TopBar'
-// Add this at the top with other imports
+
 import styles from '../styles/DashboardPage.module.css'
 
 const DashboardPage = () => {

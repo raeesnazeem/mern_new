@@ -31,6 +31,20 @@ const templateSchema = new mongoose.Schema({
         type: Object,
         required: [true, 'JSON content is required']
     },
+
+    isActive: {
+        type: Boolean,
+        default: true
+      },
+      popularity: {
+        type: Number,
+        default: 0
+      },
+      style: {
+        type: String,
+        enum: ['modern', 'classic', 'minimalist', 'bold', 'elegant']
+      },
+
     createdAt: {
         type: Date,
         default: Date.now,
