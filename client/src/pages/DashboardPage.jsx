@@ -18,6 +18,8 @@ const DashboardPage = () => {
   const [webpageId, setWebpageId] = useState(null)
   const [activeView, setActiveView] = useState('home')
   const [hasReset, setHasReset] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState('')
+  const [selectedTemplate, setSelectedTemplate] = useState(null)
 
   // reset function
   const resetEverything = () => {
@@ -163,12 +165,41 @@ const DashboardPage = () => {
           }
           return <CreateTemplate />
 
+
       case 'fetchtemplate':
-            if (!hasReset) {
-              resetEverything()
-              setHasReset(true)
-            }
-            return <FetchTemplateDisplay />    
+        if (!hasReset) {
+          resetEverything()
+          setHasReset(true)
+        }
+        return (
+          <FetchTemplateDisplay
+            onPreview={(url, template) => {
+              setPreviewUrl(url)
+              setSelectedTemplate(template)
+              setActiveView('templatePreview') // Switch view to preview
+            }}
+          />
+        )
+
+      case 'templatePreview':
+          return (
+            <div className="preview-section">
+              <h2>Preview: {selectedTemplate?.name}</h2>
+              <div className="iframe-container">
+                <iframe 
+                  src={previewUrl}
+                  title="Elementor Preview"
+                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+              <div className="preview-actions">
+                <a href={previewUrl} target="_blank" rel="noopener noreferrer">
+                  Open in new tab
+                </a>
+              </div>
+            </div>
+          )
 
       default:
         return <div><p>Unknown view</p></div>
