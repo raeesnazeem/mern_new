@@ -1,6 +1,14 @@
 const mongoose = require("mongoose")
+const { v4: uuidv4 } = require('uuid') // UUID generator
 
 const templateSchema = new mongoose.Schema({
+    uuid: {
+        type: String,
+        default: () => uuidv4(), // Auto-generate UUIDv4
+        unique: true, 
+        immutable: true, // Prevent modification after creation
+        index: true //helps in faster querying
+    },
     name: {
         type: String,
         required: [true, 'Template name is required'],
@@ -11,7 +19,7 @@ const templateSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Section type is required'],
         enum: {
-            values: ["header", "about", "cta", "features", "testimonials", "contact", "footer", "faq", "map", "breadcrumbs"],
+            values: ["header", "about", "cta", "features", "testimonials", "contact", "footer", "faq", "map", "breadcrumbs", "services", "conditions", "gallery", "before and afters", "form", "blog", "cards", "meet the team", "social feed", "mission and vision", "herospace", "herospace slider"],
             message: '{VALUE} is not a valid section type'
         },
         lowercase: true
@@ -22,9 +30,9 @@ const templateSchema = new mongoose.Schema({
         index: true,
         validate: {
             validator: function(tags) {
-                return tags.length <= 20; // Limit number of tags
+                return tags.length <= 50; // Limit number of tags
             },
-            message: 'Cannot have more than 20 tags'
+            message: 'Cannot have more than 50 tags'
         }
     },
     json: {
@@ -42,7 +50,6 @@ const templateSchema = new mongoose.Schema({
       },
       style: {
         type: String,
-        enum: ['modern', 'classic', 'minimalist', 'bold', 'elegant']
       },
 
     createdAt: {
@@ -62,7 +69,7 @@ templateSchema.pre('save', function(next) {
     next();
   })
 
-  // Optional: Create text index for searching name and tags
+  // Creating text index for searching name and tags
 templateSchema.index({ name: 'text', tags: 'text' })
 
 const Template = new mongoose.model('Template', templateSchema)

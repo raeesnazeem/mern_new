@@ -9,6 +9,8 @@
   .rightPanelContent {
     height: 100%;
     overflow-y: auto;
+    margin:0;
+    padding:0;
   }
   
   /* Reset Button Styles */
@@ -44,6 +46,26 @@
     transition: transform 0.3s ease;
   }
   
+  .dashboardoptions {
+    list-style: none;
+    border-bottom: 1px solid #e0e0e0;
+    width:100%;
+  }
+
+  .menuList{
+    display: flex;
+    flex-direction: column;
+    display: flex;
+    gap:10px;
+    justify-content: start;
+    margin-left:0;
+    padding-left:0;
+  }
+
+  .rightPanel{
+    margin:5px !important;
+  }
+
   .resetButton:hover .resetIcon {
     transform: rotate(-45deg);
   }
@@ -130,5 +152,9 @@
     .spinner {
       width: 32px;
       height: 32px;
+    }
+
+    .dashboardoptions {
+      list-style: none;
     }
   }
