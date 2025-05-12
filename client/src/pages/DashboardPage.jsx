@@ -4,7 +4,6 @@ import InputMethodSelector from '../components/InputMethodSelector'
 import CreateTemplate from '../components/CreateTemplate'
 import PromptInput from '../components/PromptInput'
 import Questionnaire from '../components/Questionnaire'
-import TemplateDisplay from '../components/TemplateDisplay'
 import TopBar from '../components/TopBar'
 
 import styles from '../styles/DashboardPage.module.css'
@@ -30,98 +29,20 @@ const DashboardPage = () => {
     setWebpageId(null)
   }
 
+  // To select which input method (prompt box or questionnare)
   const handleMethodSelect = (method) => {
     setInputMethod(method)
     setTemplates([])
     setActiveView('home')
   }
 
+  // Logic for prompt handling through textarea or questionnare
   const handlePromptSubmit = async (prompt) => {
     setIsLoading(true)
     setCurrentPrompt(prompt)
-
-    try {
-      const response = await fetch('/api/generate-webpage', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt }),
-      })
-
-      const data = await response.json()
-      if (data.success) {
-        setTemplates(data.data.sections)
-        setWebpageId(data.data.webpageId)
-        setActiveView('templateDisplay')
-      } else {
-        console.error('Error generating templates:', data.message)
-      }
-    } catch (error) {
-      console.error('API call failed:', error)
-    } finally {
-      setIsLoading(false)
-    }
   }
 
-  const handleRegenerateSection = async (sectionType) => {
-    setIsLoading(true)
-
-    try {
-      const response = await fetch('/api/regenerate-section', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          webpageId: webpageId,
-          currentSections: templates,
-          sectionToRegenerate: sectionType,
-          prompt: currentPrompt,
-        }),
-      })
-
-      const data = await response.json()
-      if (data.success) {
-        setTemplates(data.data.sections)
-      } else {
-        console.error('Error regenerating section:', data.message)
-      }
-    } catch (error) {
-      console.error('API call failed:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleExport = async () => {
-    try {
-      const response = await fetch('/api/export-webpage', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ sections: templates }),
-      })
-
-      const data = await response.json()
-      if (data.success) {
-        const blob = new Blob([JSON.stringify(data.data)], { type: 'application/json' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `elementor-template-${Date.now()}.json`
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-      } else {
-        console.error('Error exporting:', data.message)
-      }
-    } catch (error) {
-      console.error('API call failed:', error)
-    }
-  }
-
+  // Logic for rendering the righ panel of the layout
   const renderRightPanel = () => {
     if (isLoading) {
       return (
@@ -131,7 +52,7 @@ const DashboardPage = () => {
         </div>
       )
     }
-
+    // chnage the state of activeView (rightpanel) as per the cases.
     switch (activeView) {
       case 'home':
         if (!inputMethod) {
@@ -144,15 +65,6 @@ const DashboardPage = () => {
           return <Questionnaire onSubmit={handlePromptSubmit} />
         }
         return null
-
-      case 'templateDisplay':
-        return (
-          <TemplateDisplay
-            templates={templates}
-            onRegenerateSection={handleRegenerateSection}
-            onExport={handleExport}
-          />
-        )
 
       case 'allTemplates':
         return <div><h2>All Templates (Coming Soon)</h2></div>
@@ -181,25 +93,49 @@ const DashboardPage = () => {
           />
         )
 
+      // case 'templatePreview':
+      //     return (
+      //       <div className="preview-section">
+      //         <h2>Preview: {selectedTemplate?.name}</h2>
+      //         <div className="iframe-container">
+      //           <iframe 
+      //             src={previewUrl}
+      //             title="Elementor Preview"
+      //             sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
+      //             referrerPolicy="no-referrer"
+      //           />
+      //         </div>
+      //         <div className="preview-actions">
+      //           <a href={previewUrl} target="_blank" rel="noopener noreferrer">
+      //             Open in new tab
+      //           </a>
+      //         </div>
+      //       </div>
+      //     )
+
       case 'templatePreview':
-          return (
-            <div className="preview-section">
-              <h2>Preview: {selectedTemplate?.name}</h2>
-              <div className="iframe-container">
-                <iframe 
-                  src={previewUrl}
-                  title="Elementor Preview"
-                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-              <div className="preview-actions">
-                <a href={previewUrl} target="_blank" rel="noopener noreferrer">
-                  Open in new tab
-                </a>
-              </div>
-            </div>
-          )
+      return (
+        <div className="preview-section">
+          <h2>Preview: {selectedTemplate?.name}</h2>
+          <div className="iframe-container" style={{ height: '80vh', border: '1px solid #ccc' }}>
+            <iframe 
+              src={previewUrl}
+              title="Elementor Preview"
+              sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
+              referrerPolicy="no-referrer"
+              allow="fullscreen"
+              width="100%"
+              height="100%"
+              style={{ width: '100%', height: '100%', border: 'none' }}
+            />
+          </div>
+          <div className="preview-actions">
+            <a href={previewUrl} target="_blank" rel="noopener noreferrer">
+              Open in new tab
+            </a>
+          </div>
+        </div>
+      )
 
       default:
         return <div><p>Unknown view</p></div>
@@ -216,7 +152,7 @@ const DashboardPage = () => {
           </button>
         </li>
         <li className={styles.dashboardoptions}>
-          <button onClick={() => setActiveView('templateDisplay')}>
+          <button onClick={() => setActiveView('home')}>
             Generate Template
           </button>
         </li>

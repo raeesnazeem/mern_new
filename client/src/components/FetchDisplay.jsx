@@ -62,14 +62,15 @@ const FetchTemplateDisplay = ({ onPreview }) => {
         }
       );
 
-      const authParam = encodeURIComponent(token);
-      const postURL = `${response.data?.preview_url}&auth=${authParam}`;
+ 
+      const postURL = `${response.data?.public_url}`
+      console.log(response.data)
 
       if (!postURL) {
         throw new Error('No post URL returned from WordPress');
       }
 
-      // 🔁 Instead of setting local state, call the parent
+      // Instead of setting local state, call the parent
       onPreview(postURL, template);
     } catch (err) {
       console.error('Error sending to WordPress:', err);
