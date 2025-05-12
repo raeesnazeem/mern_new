@@ -117,18 +117,6 @@ const FetchTemplateDisplay = ({ onPreview }) => {
               </li>
             ))}
           </ul>
-          <ul>
-            {templates.map((template) => ( //map through all tempates in the array to find the matching one
-              <li
-                key={template.uuid}
-                className={selectedTemplate?._id === template._id ? 'active' : ''}
-                onClick={() => fetchData(template)}
-              >
-                {template.name}
-                <span className="preview-badge">Go to colors panel</span>
-              </li>
-            ))}
-          </ul>
         </div>
       )}
     </div>
