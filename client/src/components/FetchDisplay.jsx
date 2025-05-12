@@ -8,6 +8,8 @@ const FetchTemplateDisplay = ({ onPreview }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [selectedTemplateForColors, setSelectedTemplateForColors] = useState(null);
+  const [showColorExtractor, setShowColorExtractor] = useState(false);
 
   const fetchTemplates = async () => {
     if (!sectionType.trim()) {
@@ -100,11 +102,11 @@ const FetchTemplateDisplay = ({ onPreview }) => {
         {error && <div className="error-message">{error}</div>}
       </div>
 
-      {templates.length > 0 && (
+      {templates.length > 0 && (    //if template has any elements in it
         <div className="template-list">
           <h2>Templates for: {sectionType}</h2>
           <ul>
-            {templates.map((template) => (
+            {templates.map((template) => ( //map through all tempates in the array to find the matching one
               <li
                 key={template.uuid}
                 className={selectedTemplate?._id === template._id ? 'active' : ''}
@@ -112,6 +114,18 @@ const FetchTemplateDisplay = ({ onPreview }) => {
               >
                 {template.name}
                 <span className="preview-badge">Preview</span>
+              </li>
+            ))}
+          </ul>
+          <ul>
+            {templates.map((template) => ( //map through all tempates in the array to find the matching one
+              <li
+                key={template.uuid}
+                className={selectedTemplate?._id === template._id ? 'active' : ''}
+                onClick={() => fetchData(template)}
+              >
+                {template.name}
+                <span className="preview-badge">Go to colors panel</span>
               </li>
             ))}
           </ul>
