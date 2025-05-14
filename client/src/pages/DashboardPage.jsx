@@ -148,7 +148,7 @@ const DashboardPage = () => {
       <ul className={styles.menuList}>
         <li className={styles.dashboardoptions}>
           <button onClick={() => setActiveView('addTemplate')}>
-            Add Template(s)
+            Add New Template(s)
           </button>
         </li>
         <li className={styles.dashboardoptions}>
@@ -158,7 +158,7 @@ const DashboardPage = () => {
         </li>
         <li className={styles.dashboardoptions}>
           <button onClick={() => setActiveView('fetchtemplate')}>
-            See All Templates
+            See Template(s)
           </button>
         </li>
         <li className={styles.dashboardoptions}>
@@ -166,7 +166,7 @@ const DashboardPage = () => {
             resetEverything()
             setActiveView('home')
           }}>
-            Reset
+            Reload
           </button>
         </li>
       </ul>

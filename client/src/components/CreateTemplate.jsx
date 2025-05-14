@@ -14,11 +14,7 @@ const CreateTemplate = ({ onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
-  const sectionTypes = [
-    "header", "about", "cta", "services", "conditions", "features", 
-    "testimonials", "contact", "footer", 
-    "faq", "map", "breadcrumbs"
-  ];
+  const sectionTypes = ["full template", "header", "about", "cta", "features", "testimonials", "contact", "footer", "faq", "map", "breadcrumbs", "services", "conditions", "gallery", "before and afters", "form", "blog", "cards", "meet the team", "social feed", "mission and vision", "herospace", "herospace slider"]
 
   const styles = [
     'modern', 'classic', 'minimalist', 'bold', 'elegant'
@@ -142,7 +138,7 @@ const CreateTemplate = ({ onSuccess }) => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} autoComplete="off">
         <div className="mb-4">
           <label className="block text-gray-700 mb-2" htmlFor="name">
             Template Name*
@@ -155,6 +151,7 @@ const CreateTemplate = ({ onSuccess }) => {
             onChange={handleChange}
             className={`w-full p-2 border rounded ${errors.name ? 'border-red-500' : 'border-gray-300'}`}
             placeholder="Enter template name"
+            autoComplete="off"
           />
           {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
         </div>
