@@ -19,7 +19,7 @@ const templateSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Section type is required'],
         enum: {
-            values: ["header", "about", "cta", "features", "testimonials", "contact", "footer", "faq", "map", "breadcrumbs", "services", "conditions", "gallery", "before and afters", "form", "blog", "cards", "meet the team", "social feed", "mission and vision", "herospace", "herospace slider"],
+            values: ["full template", "header", "about", "cta", "features", "testimonials", "contact", "footer", "faq", "map", "breadcrumbs", "services", "conditions", "gallery", "before and afters", "form", "blog", "cards", "meet the team", "social feed", "mission and vision", "herospace", "herospace slider"],
             message: '{VALUE} is not a valid section type'
         },
         lowercase: true

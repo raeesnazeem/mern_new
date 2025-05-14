@@ -1,5 +1,5 @@
-const Template = require("../models/templateModel")
-const { v4: uuid } = require("uuid")
+const Template = require("../models/templateModel");
+const { v4: uuid } = require("uuid");
 
 const templateController = {
   /* ----------------------------------------------------*
@@ -7,42 +7,41 @@ const templateController = {
    * ----------------------------------------------------*/
   makeTemplatesByPrompt: async (req, res) => {
     try {
-      const { prompt, style, sectionTypes } = req.body
-  
+      const { prompt, style, sectionTypes } = req.body;
+
       if (!prompt) {
         return res.status(400).json({
           success: false,
           message: 'Prompt is required'
-        })
+        });
       }
-  
-      // Extract relevant data from prompt
-      const { styles, colors, sectionTypes: extractedSections, keywords } = analyzePrompt(prompt);
-  
-      // Use provided style or fallback to first detected style from prompt
-      const finalStyle = style || styles?.[0] || null;
-  
-      // Use provided section types or fallback to extracted section types
-      const finalSectionTypes = sectionTypes || extractedSections || []
-  
-      // Build base query
+
+      // Extract keywords and potential style/section types from prompt
+      const { keywords, potentialStyle, potentialSectionTypes } = analyzePrompt(prompt);
+
+      // Use style from request or extract from prompt
+      const finalStyle = style || potentialStyle;
+      // Use sectionTypes from request or extract from prompt
+      const finalSectionTypes = sectionTypes || potentialSectionTypes;
+
+      // Build strict matching conditions
       const queryConditions = {
         isActive: true
       };
-  
-      // Strict match: style
+
+      // Add strict style matching if available
       if (finalStyle) {
-        queryConditions.style = finalStyle.toLowerCase()
+        queryConditions.style = finalStyle.toLowerCase();
       }
-  
-      // Strict match: sectionTypes
-      if (finalSectionTypes.length > 0) {
+
+      // Add strict section type matching if available
+      if (finalSectionTypes && finalSectionTypes.length > 0) {
         queryConditions.sectionType = {
           $in: finalSectionTypes.map(type => type.toLowerCase())
         };
       }
-  
-      // Keyword query (non-strict)
+
+      // Keyword matching (secondary priority)
       let keywordQuery = {};
       if (keywords.length > 0) {
         keywordQuery = {
@@ -52,8 +51,8 @@ const templateController = {
           ]
         };
       }
-  
-      // Query for matching templates
+
+      // Find templates that match ALL conditions
       const matchingTemplates = await Template.find({
         ...queryConditions,
         ...keywordQuery
@@ -63,28 +62,22 @@ const templateController = {
           updatedAt: -1
         })
         .limit(50);
-  
-      // Relax style condition if no results found
-      let relaxedResults = []
+
+      // If no strict matches found, relax the style condition
+      let relaxedResults = [];
       if (matchingTemplates.length === 0 && finalStyle) {
-        const relaxedQuery = {
-          isActive: true,
-          ...keywordQuery
-        };
-        if (finalSectionTypes.length > 0) {
-          relaxedQuery.sectionType = {
-            $in: finalSectionTypes.map(type => type.toLowerCase())
-          }
-        }
-  
-        relaxedResults = await Template.find(relaxedQuery)
+        relaxedResults = await Template.find({
+          ...(finalSectionTypes && { sectionType: { $in: finalSectionTypes } }),
+          ...keywordQuery,
+          isActive: true
+        })
           .sort({ popularity: -1 })
-          .limit(50)
+          .limit(50);
       }
-  
+
       const allResults = [...matchingTemplates, ...relaxedResults];
       const templatesBySection = groupTemplatesBySection(allResults);
-  
+
       res.status(200).json({
         success: true,
         data: {
@@ -97,18 +90,17 @@ const templateController = {
             keywords
           }
         }
-      })
-  
+      });
+
     } catch (error) {
-      console.error('Error finding templates:', error)
+      console.error('Error finding templates:', error);
       res.status(500).json({
         success: false,
         message: 'Server error while processing template search',
         error: error.message
-      })
+      });
     }
   },
-  
 
 
 
@@ -270,87 +262,87 @@ const templateController = {
     * POST /api/templates/bulk
    * ----------------------------------------------------*/
 
-  // bulkUploadTemplates: async (req, res) => {
-  //   try {
-  //     const { templates } = req.body;
+  bulkUploadTemplates: async (req, res) => {
+    try {
+      const { templates } = req.body;
 
-  //     if (!templates || !Array.isArray(templates)) {
-  //       return res.status(400).json({
-  //         success: false,
-  //         message: 'Templates array is required'
-  //       });
-  //     }
+      if (!templates || !Array.isArray(templates)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Templates array is required'
+        });
+      }
 
-  //     // Validate each template
-  //     const validatedTemplates = [];
-  //     const errors = [];
+      // Validate each template
+      const validatedTemplates = [];
+      const errors = [];
 
-  //     for (const [index, template] of templates.entries()) {
-  //       try {
-  //         // Basic validation
-  //         if (!template.name || !template.sectionType || !template.json) {
-  //           throw new Error('Missing required fields (name, sectionType, or json)');
-  //         }
+      for (const [index, template] of templates.entries()) {
+        try {
+          // Basic validation
+          if (!template.name || !template.sectionType || !template.json) {
+            throw new Error('Missing required fields (name, sectionType, or json)');
+          }
 
-  //         // Check for duplicates in the batch
-  //         const duplicateInBatch = validatedTemplates.some(
-  //           t => t.name === template.name.trim() &&
-  //             t.sectionType === template.sectionType.toLowerCase()
-  //         );
+          // Check for duplicates in the batch
+          const duplicateInBatch = validatedTemplates.some(
+            t => t.name === template.name.trim() &&
+              t.sectionType === template.sectionType.toLowerCase()
+          );
 
-  //         if (duplicateInBatch) {
-  //           throw new Error('Duplicate template in upload batch');
-  //         }
+          if (duplicateInBatch) {
+            throw new Error('Duplicate template in upload batch');
+          }
 
-  //         // Add to validated list
-  //         validatedTemplates.push({
-  //           name: template.name.trim(),
-  //           sectionType: template.sectionType.toLowerCase(),
-  //           json: template.json,
-  //           tags: template.tags ? [...new Set(template.tags.map(tag => tag.toLowerCase()))] : [],
-  //           style: template.style ? template.style.toLowerCase() : undefined,
-  //           isActive: template.isActive !== false // Default to true
-  //         });
-  //       } catch (error) {
-  //         errors.push({
-  //           index,
-  //           name: template.name || 'unnamed',
-  //           error: error.message
-  //         });
-  //       }
-  //     }
+          // Add to validated list
+          validatedTemplates.push({
+            name: template.name.trim(),
+            sectionType: template.sectionType.toLowerCase(),
+            json: template.json,
+            tags: template.tags ? [...new Set(template.tags.map(tag => tag.toLowerCase()))] : [],
+            style: template.style ? template.style.toLowerCase() : undefined,
+            isActive: template.isActive !== false // Default to true
+          });
+        } catch (error) {
+          errors.push({
+            index,
+            name: template.name || 'unnamed',
+            error: error.message
+          });
+        }
+      }
 
-  //     // Check if all templates failed validation
-  //     if (validatedTemplates.length === 0 && errors.length > 0) {
-  //       return res.status(400).json({
-  //         success: false,
-  //         message: 'All templates failed validation',
-  //         errors
-  //       });
-  //     }
+      // Check if all templates failed validation
+      if (validatedTemplates.length === 0 && errors.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'All templates failed validation',
+          errors
+        });
+      }
 
-  //     // Insert validated templates
-  //     const result = await Template.insertMany(validatedTemplates, { ordered: false });
+      // Insert validated templates
+      const result = await Template.insertMany(validatedTemplates, { ordered: false });
 
-  //     res.status(201).json({
-  //       success: true,
-  //       message: `Successfully uploaded ${result.length} templates`,
-  //       data: {
-  //         createdCount: result.length,
-  //         errorCount: errors.length,
-  //         errors: errors.length > 0 ? errors : undefined
-  //       }
-  //     });
+      res.status(201).json({
+        success: true,
+        message: `Successfully uploaded ${result.length} templates`,
+        data: {
+          createdCount: result.length,
+          errorCount: errors.length,
+          errors: errors.length > 0 ? errors : undefined
+        }
+      });
 
-  //   } catch (error) {
-  //     console.error('Error during bulk upload:', error);
-  //     res.status(500).json({
-  //       success: false,
-  //       message: 'Server error during bulk upload',
-  //       error: process.env.NODE_ENV === 'development' ? error.message : undefined
-  //     });
-  //   }
-  // }
+    } catch (error) {
+      console.error('Error during bulk upload:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Server error during bulk upload',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  }
 
 
 

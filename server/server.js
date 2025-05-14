@@ -22,8 +22,8 @@ const corsOptions = {
 
 // Middlewares
 app.use(cors(corsOptions));
-app.use(express.json());  // Parse JSON bodies
-app.use(express.urlencoded({ extended: true }));  // Parse URL-encoded bodies
+app.use(express.json({ limit: '30mb' })) // parse json bodies
+app.use(express.urlencoded({ extended: true, limit: '30mb' })) //parse url encoded 
 
 // Routes
 app.use('/api/v1/auth', router);
@@ -31,29 +31,29 @@ app.use('/api/v1/template', tempRouter);
 
 // Health Check Endpoint
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'OK', timestamp: new Date() });
+  res.status(200).json({ status: 'OK', timestamp: new Date() })
 });
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ error: 'Internal Server Error' });
-});
+  res.status(500).json({ error: 'Internal Server Error' })
+})
 
 // Database Connection and Server Start
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
-    console.log(`API Documentation available at http://localhost:${PORT}/api-docs`);
+    console.log(`API Documentation available at http://localhost:${PORT}/api-docs`)
   });
 }).catch(err => {
-  console.error('Database connection failed:', err);
+  console.error('Database connection failed:', err)
   process.exit(1);
 });
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
-  console.error('Unhandled Rejection:', err);
+  console.error('Unhandled Rejection:', err)
   // Close server and exit process
   server.close(() => process.exit(1));
 });
