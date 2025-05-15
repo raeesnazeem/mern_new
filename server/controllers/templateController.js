@@ -7,7 +7,7 @@ const templateController = {
    * ----------------------------------------------------*/
   makeTemplatesByPrompt: async (req, res) => {
     try {
-      const { prompt, style, sectionTypes } = req.body
+      const { prompt } = req.body
   
       if (!prompt) {
         return res.status(400).json({
@@ -17,87 +17,126 @@ const templateController = {
       }
   
       // Extract relevant data from prompt
-      const { styles, colors, sectionTypes: extractedSections, keywords } = analyzePrompt(prompt);
+      const { styles, colors, sectionTypes, keywords } = analyzePrompt(prompt);
   
-      // Use provided style or fallback to first detected style from prompt
-      const finalStyle = style || styles?.[0] || null;
+      // Use first detected style from prompt or fallback to null
+      const finalStyle = styles?.[0] || null;
   
-      // Use provided section types or fallback to extracted section types
-      const finalSectionTypes = sectionTypes || extractedSections || []
+      // Use detected section types from prompt or fallback to null
+      const finalSectionTypes = sectionTypes || []
   
-      // Build base query
-      const queryConditions = {
-        isActive: true
-      };
-  
-      // Strict match: style
-      if (finalStyle) {
-        queryConditions.style = finalStyle.toLowerCase()
-      }
-  
-      // Strict match: sectionTypes
-      if (finalSectionTypes.length > 0) {
-        queryConditions.sectionType = {
-          $in: finalSectionTypes.map(type => type.toLowerCase())
-        };
-      }
-  
-      // Keyword query (non-strict)
-      let keywordQuery = {};
-      if (keywords.length > 0) {
-        keywordQuery = {
-          $or: [
-            { name: { $regex: keywords.join('|'), $options: 'i' } },
-            { tags: { $in: keywords } }
-          ]
-        };
-      }
-  
-      // Query for matching templates
-      const matchingTemplates = await Template.find({
-        ...queryConditions,
-        ...keywordQuery
-      })
-        .sort({
-          popularity: -1,
-          updatedAt: -1
-        })
-        .limit(50);
-  
-      // Relax style condition if no results found
-      let relaxedResults = []
-      if (matchingTemplates.length === 0 && finalStyle) {
-        const relaxedQuery = {
+      // STEP 1: Try to find templates that match BOTH color AND style criteria
+      if (finalSectionTypes.length > 0 && finalStyle && promptColor) {
+        const colorAndStyleQuery = {
           isActive: true,
-          ...keywordQuery
+          sectionType: {
+            $in: finalSectionTypes.map(type => type.toLowerCase())
+          },
+          style: finalStyle.toLowerCase(),
+          tags: promptColor.toLowerCase()
         };
-        if (finalSectionTypes.length > 0) {
-          relaxedQuery.sectionType = {
+        
+        // Find templates matching both color AND style
+        matchingTemplates = await Template.find(colorAndStyleQuery)
+          .sort({
+            popularity: -1,
+            updatedAt: -1
+          })
+          .limit(50);
+      }
+      
+      // // STEP OPTIONAL: If no results, try with JUST the style and sectionTypes (ignoring color)
+      // if (matchingTemplates.length === 0 && finalStyle && finalSectionTypes.length > 0) {
+      //   const styleOnlyQuery = {
+      //     isActive: true,
+      //     sectionType: {
+      //       $in: finalSectionTypes.map(type => type.toLowerCase())
+      //     },
+      //     style: finalStyle.toLowerCase()
+      //   };
+        
+      //   // Find templates matching style only
+      //   matchingTemplates = await Template.find(styleOnlyQuery)
+      //     .sort({
+      //       popularity: -1,
+      //       updatedAt: -1
+      //     })
+      //     .limit(50);
+      // }
+      
+      // STEP 2: If no results, try with JUST the color and sectionTypes (ignoring style)
+      if (matchingTemplates.length === 0 && promptColor && finalSectionTypes.length > 0) {
+        const colorOnlyQuery = {
+          isActive: true,
+          sectionType: {
+            $in: finalSectionTypes.map(type => type.toLowerCase())
+          },
+          tags: promptColor.toLowerCase()
+        };
+        
+        // Find templates matching color only
+        matchingTemplates = await Template.find(colorOnlyQuery)
+          .sort({
+            popularity: -1,
+            updatedAt: -1
+          })
+          .limit(50);
+      }
+      
+      // STEP 3: If still no results, fall back to just sectionTypes
+      if (matchingTemplates.length === 0 && finalSectionTypes.length > 0) {
+        const sectionOnlyQuery = {
+          isActive: true,
+          sectionType: {
             $in: finalSectionTypes.map(type => type.toLowerCase())
           }
-        }
-  
-        relaxedResults = await Template.find(relaxedQuery)
-          .sort({ popularity: -1 })
-          .limit(50)
+        };
+        
+        // Find templates matching sectionTypes only
+        matchingTemplates = await Template.find(sectionOnlyQuery)
+          .sort({
+            popularity: -1,
+            updatedAt: -1
+          })
+          .limit(50);
       }
-  
-      const allResults = [...matchingTemplates, ...relaxedResults];
-      const templatesBySection = groupTemplatesBySection(allResults);
-  
+      
+      // // STEP OPTIONAL: Last resort - if no matches by section type, use keywords
+      // if (matchingTemplates.length === 0 && keywords.length > 0) {
+      //   const keywordQuery = {
+      //     isActive: true,
+      //     $or: [
+      //       { name: { $regex: keywords.join('|'), $options: 'i' } },
+      //       { tags: { $in: keywords.map(kw => kw.toLowerCase()) } }
+      //     ]
+      //   };
+        
+      //   // Find templates by keywords
+      //   matchingTemplates = await Template.find(keywordQuery)
+      //     .sort({
+      //       popularity: -1,
+      //       updatedAt: -1
+      //     })
+      //     .limit(50);
+      // }
+
+      // Group templates by section and suggest an order
+      const templatesBySection = groupTemplatesBySection(matchingTemplates);
+      
       res.status(200).json({
         success: true,
         data: {
-          allTemplates: allResults,
+          allTemplates: matchingTemplates,
           templatesBySection,
           suggestedOrder: suggestTemplateOrder(Object.keys(templatesBySection)),
           matchedConditions: {
             style: finalStyle,
+            color: promptColor,
             sectionTypes: finalSectionTypes,
             keywords
           }
         }
-      })
+      });
   
     } catch (error) {
       console.error('Error finding templates:', error)
@@ -409,7 +448,7 @@ const groupTemplatesBySection = (templates) => {
   return templates.reduce((acc, template) => {
     const { sectionType } = template;
     if (!acc[sectionType]) {
-      acc[sectionType] = [];
+      acc[sectionType] = []; //checks if there's an object's value(not key) associated with the sectionType. Eg: for header-SectionType if empty, then initializes header: []_______ means acc.header = []. Helps in grouping by value.
     }
     acc[sectionType].push(template);
     return acc;
@@ -417,12 +456,14 @@ const groupTemplatesBySection = (templates) => {
 };
 
 // Helper function to suggest a logical order of sections
+// with additional sections inserted between features and testimonials
 const suggestTemplateOrder = (availableSections) => {
   const defaultOrder = [
     'header',
     'breadcrumbs',
     'about',
     'features',
+    // Additional sections will be inserted here
     'testimonials',
     'faq',
     'cta',
@@ -431,17 +472,33 @@ const suggestTemplateOrder = (availableSections) => {
     'footer'
   ];
 
-  // Create ordered array with available sections
-  const orderedSections = defaultOrder.filter(section =>
+  // Find the index where we want to insert additional sections (after 'features')
+  const featuresIndex = defaultOrder.indexOf('features')
+  
+  // Split the default order into before and after parts
+  const beforeFeatures = defaultOrder.slice(0, featuresIndex + 1)
+  const afterFeatures = defaultOrder.slice(featuresIndex + 1)
+  
+  // Filter the sections that are in the default order
+  const orderedBeforeFeatures = beforeFeatures.filter(section =>
     availableSections.includes(section)
   );
-
-  // Add any remaining sections that weren't in the default order
-  const remainingSections = availableSections.filter(section =>
-    !defaultOrder.includes(section)
+  
+  const orderedAfterFeatures = afterFeatures.filter(section =>
+    availableSections.includes(section)
   );
+  
+  // Find any sections that aren't in the default order
+  const additionalSections = availableSections.filter(section =>
+    !defaultOrder.includes(section)
+  )
+  
+  // Combine the three parts: before features, additional sections, and after features
+  return [
+    ...orderedBeforeFeatures,
+    ...additionalSections,
+    ...orderedAfterFeatures
+  ]
+}
 
-  return [...orderedSections, ...remainingSections];
-};
-
-module.exports = { templateController };
+module.exports = { templateController }
