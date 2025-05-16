@@ -10,13 +10,13 @@ const connectDB = require('./utils/db');
 // CORS Configuration
 const corsOptions = {
   origin: [
-    'http://localhost:5173',  // Your Vite frontend
+    'http://localhost:5173',  // Vite frontend
     'http://127.0.0.1:5173',  // Alternative localhost
     // Add other allowed origins as needed
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,  // If you need to handle cookies/auth
+  credentials: true,  // If we need to handle cookies/auth
   optionsSuccessStatus: 200  // For legacy browser support
 };
 

@@ -29,20 +29,20 @@ const DashboardPage = () => {
     setWebpageId(null)
   }
 
-  // To select which input method (prompt box or questionnare)
+  // To select which input method (prompt box or questionnaire)
   const handleMethodSelect = (method) => {
     setInputMethod(method)
     setTemplates([])
     setActiveView('home')
   }
 
-  // Logic for prompt handling through textarea or questionnare
+  // Logic for prompt handling through textarea or questionnaire
   const handlePromptSubmit = async (prompt) => {
     setIsLoading(true)
     setCurrentPrompt(prompt)
   }
 
-  // Logic for rendering the righ panel of the layout
+  // Logic for rendering the right panel of the layout
   const renderRightPanel = () => {
     if (isLoading) {
       return (
@@ -52,7 +52,7 @@ const DashboardPage = () => {
         </div>
       )
     }
-    // chnage the state of activeView (rightpanel) as per the cases.
+    // change the state of activeView (rightpanel) as per the cases.
     switch (activeView) {
       case 'home':
         if (!inputMethod) {

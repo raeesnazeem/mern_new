@@ -192,14 +192,47 @@ const FetchTemplateDisplay = ({ onPreview }) => {
         { headers: { 'Accept': 'application/json' } }
       );
 
-      setTemplates(Array.isArray(response.data.data) ? response.data.data : []);
+      const theData = Array.isArray(response.data.data) ? response.data.data : []
+      const normalizedData = normalizeImageData(theData)
+
+      setTemplates(normalizedData)
     } catch (err) {
       console.error('Fetch error:', err);
       setError(err.response?.data?.message || 'Failed to fetch templates');
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+
+function normalizeImageData(data) {
+  if (Array.isArray(data)) {
+    return data.map(normalizeImageData);
+  } else if (data && typeof data === 'object') {
+    // Check if it's an image object with id or source: library
+    const isImage =
+      ('url' in data && ('id' in data || (data.source && data.source === 'library')));
+
+    if (isImage) {
+      const { id, ...rest } = data;
+      return {
+        ...rest,
+        source: 'external'
+      };
+    }
+
+    // Recursively process all object properties
+    const normalized = {};
+    for (const key in data) {
+      normalized[key] = normalizeImageData(data[key]);
+    }
+    return normalized;
+  }
+
+  // Return primitives as-is
+  return data;
+}
+
 
   const sendToElementor = async (template) => {
     setSelectedTemplate(template);

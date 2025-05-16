@@ -20,10 +20,13 @@ const templateController = {
       const { styles, colors, sectionTypes, keywords } = analyzePrompt(prompt);
   
       // Use first detected style from prompt or fallback to null
-      const finalStyle = styles?.[0] || null;
+      const finalStyle = styles?.[0] || []
   
       // Use detected section types from prompt or fallback to null
       const finalSectionTypes = sectionTypes || []
+
+      // Get first color from prompt (or empty string if none)
+      const promptColor = colors?.[0] || "";
   
       // STEP 1: Try to find templates that match BOTH color AND style criteria
       if (finalSectionTypes.length > 0 && finalStyle && promptColor) {
@@ -45,24 +48,6 @@ const templateController = {
           .limit(50);
       }
       
-      // // STEP OPTIONAL: If no results, try with JUST the style and sectionTypes (ignoring color)
-      // if (matchingTemplates.length === 0 && finalStyle && finalSectionTypes.length > 0) {
-      //   const styleOnlyQuery = {
-      //     isActive: true,
-      //     sectionType: {
-      //       $in: finalSectionTypes.map(type => type.toLowerCase())
-      //     },
-      //     style: finalStyle.toLowerCase()
-      //   };
-        
-      //   // Find templates matching style only
-      //   matchingTemplates = await Template.find(styleOnlyQuery)
-      //     .sort({
-      //       popularity: -1,
-      //       updatedAt: -1
-      //     })
-      //     .limit(50);
-      // }
       
       // STEP 2: If no results, try with JUST the color and sectionTypes (ignoring style)
       if (matchingTemplates.length === 0 && promptColor && finalSectionTypes.length > 0) {
@@ -101,24 +86,6 @@ const templateController = {
           .limit(50);
       }
       
-      // // STEP OPTIONAL: Last resort - if no matches by section type, use keywords
-      // if (matchingTemplates.length === 0 && keywords.length > 0) {
-      //   const keywordQuery = {
-      //     isActive: true,
-      //     $or: [
-      //       { name: { $regex: keywords.join('|'), $options: 'i' } },
-      //       { tags: { $in: keywords.map(kw => kw.toLowerCase()) } }
-      //     ]
-      //   };
-        
-      //   // Find templates by keywords
-      //   matchingTemplates = await Template.find(keywordQuery)
-      //     .sort({
-      //       popularity: -1,
-      //       updatedAt: -1
-      //     })
-      //     .limit(50);
-      // }
 
       // Group templates by section and suggest an order
       const templatesBySection = groupTemplatesBySection(matchingTemplates);
@@ -167,9 +134,9 @@ const templateController = {
       }
 
       const templates = await Template.find({ sectionType: { $regex: new RegExp(`^${sectionType}$`, 'i') } }) //just making sectiontype case insensitive
-        .select('name sectionType json createdAt tags isActive style')
+        .select('name sectionType json createdAt tags isActive style') //Only includes these specific fields
         .sort({ createdAt: -1 })
-        .lean();
+        .lean()
 
       if (!templates || templates.length === 0) {
         return res.status(404).json({
@@ -399,8 +366,8 @@ const templateController = {
 
 
 /* ----------------------------------------------------*
- * * Enhanced prompt analyzer - helper function
-    analayzes the prompt and returns an object with keywords, style and sectionType
+ * *prompt analyzer - helper function
+    analyzes the prompt and returns an object with keywords, style and sectionType
  * ----------------------------------------------------*/
 
     const analyzePrompt = (prompt) => {
