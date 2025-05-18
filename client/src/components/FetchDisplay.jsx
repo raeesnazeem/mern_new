@@ -31,17 +31,16 @@ const FetchTemplateDisplay = ({ onPreview }) => {
         ? response.data.data
         : [];
 
-        console.log('rawdb fetched data', theData)
+      console.log("rawdb fetched data", theData);
 
       // Clean each template's JSON data individually
-      const cleanedTemplates = theData.map(template => ({
+      const cleanedTemplates = theData.map((template) => ({
         ...template,
-        json: prepareTemplateForImport(template.json)
+        json: prepareTemplateForImport(template.json),
       }));
 
       console.log("Json Cleaned Template:", cleanedTemplates); // Debugging
       setTemplates(cleanedTemplates);
-
     } catch (err) {
       console.error("Fetch error:", err);
       setError(err.response?.data?.message || "Failed to fetch templates");
@@ -53,18 +52,18 @@ const FetchTemplateDisplay = ({ onPreview }) => {
   function prepareTemplateForImport(templateJson) {
     // Parse JSON if it's a string
     let parsedJson = templateJson;
-    if (typeof templateJson === 'string') {
+    if (typeof templateJson === "string") {
       try {
         parsedJson = JSON.parse(templateJson);
       } catch (err) {
-        console.error('Failed to parse template JSON:', err);
+        console.error("Failed to parse template JSON:", err);
         return templateJson;
       }
     }
 
     // Extract the content array from the template structure
     let content = parsedJson.content || parsedJson;
-    
+
     // First normalize image data in the content
     const normalizedContent = normalizeImageData(content);
 
@@ -78,7 +77,7 @@ const FetchTemplateDisplay = ({ onPreview }) => {
         external_header_footer: true,
         hide_title: true,
         page_layout: "full_width",
-        ui_theme_style: "no"
+        ui_theme_style: "no",
       },
       version: "0.4",
       type: "wp-page",
@@ -131,10 +130,6 @@ const FetchTemplateDisplay = ({ onPreview }) => {
       }));
   }
 
-  
-
-
-
   const sendToElementor = async (template) => {
     setSelectedTemplate(template);
     setLoading(true);
@@ -167,6 +162,7 @@ const FetchTemplateDisplay = ({ onPreview }) => {
       }
 
       onPreview(response.data.public_url, template);
+      
     } catch (err) {
       console.error("Error sending to WordPress:", err);
       setError(err.response?.data?.message || "Failed to create preview");
@@ -206,7 +202,6 @@ const FetchTemplateDisplay = ({ onPreview }) => {
                   selectedTemplate?._id === template._id ? "active" : ""
                 }
               >
-        
                 <div className="template-item">
                   <span
                     className="template-name"
