@@ -58,6 +58,8 @@ const DashboardPage = () => {
       const templatesOrderedBySection =
         response.data.data.templatesOrderedBySection;
 
+        console.log(templatesOrderedBySection)
+
       // Store it in state
       setTemplatesOrderedBySection(templatesOrderedBySection);
 

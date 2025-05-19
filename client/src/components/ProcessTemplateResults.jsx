@@ -1,36 +1,90 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios"; // Ensure axios is imported
 
-// Helper function to transform the template data
+
+// Helper functions to transform the template data
+
+
+// 1 - Your provided normalizeImageData function
+function normalizeImageData(data) {
+  if (Array.isArray(data)) {
+    return data.map(item => normalizeImageData(item)); // Recursively call for each item in the array
+  } else if (data && typeof data === "object") {
+    // Check if this object represents an image data structure
+    // Elementor image data often has 'url'.
+    // It might have an 'id' if it was from the media library of the source site.
+    // 'source: "library"' is also a good indicator.
+    const isImage =
+      "url" in data && // Must have a URL
+      (data.hasOwnProperty("id") || (data.source && data.source === "library")); // And an ID or source:library
+
+    if (isImage) {
+      // Create a new object, copying all properties except 'id' (if it exists)
+      // and explicitly setting 'source' to "external".
+      const { id, ...restOfData } = data; // Destructure to separate 'id' (it will be undefined if not present)
+      return {
+        ...restOfData, // Spread the rest of the properties
+        source: "external", // Force source to external
+        // id: undefined // Explicitly ensure id is not carried over if that's desired, otherwise removing it via destructuring is enough
+      };
+    }
+
+    // If not an image object that meets the criteria, recursively normalize its properties
+    const normalizedSubObject = {};
+    for (const key in data) {
+      if (Object.prototype.hasOwnProperty.call(data, key)) { // Process only own properties
+        normalizedSubObject[key] = normalizeImageData(data[key]);
+      }
+    }
+    return normalizedSubObject;
+  }
+
+  // Return data unchanged if it's not an array or a processable object (e.g., string, number, boolean, null)
+  return data;
+}
+
+// 2 - helper function transformTemplatesToWorkingFormat function
 const transformTemplatesToWorkingFormat = (templatesBySectionType) => {
   const finalContentArray = [];
-  // Define the order in which sections should appear.
-  // Adjust this array if you have different section types or a different preferred order.
-  const sectionOrder = ["header", "herospace", "cta", "footer"]; // Example order
+  // Define the order in which section types should appear on the page.
+  // For each type, ONE template variation will be randomly selected if multiple exist.
+  const sectionOrder = ['header', 'herospace', 'about', 'services', 'cta', 'testimonials', 'map', 'footer'];
 
   sectionOrder.forEach((sectionKey) => {
+    const availableSectionsForType = templatesBySectionType?.[sectionKey];
+
     if (
-      templatesBySectionType &&
-      templatesBySectionType[sectionKey] &&
-      Array.isArray(templatesBySectionType[sectionKey])
+      availableSectionsForType &&
+      Array.isArray(availableSectionsForType) &&
+      availableSectionsForType.length > 0
     ) {
-      templatesBySectionType[sectionKey].forEach((sectionObject) => {
-        // Each sectionObject is expected to have a 'json' key,
-        // which in turn has a 'content' array.
-        if (
-          sectionObject &&
-          sectionObject.json &&
-          Array.isArray(sectionObject.json.content)
-        ) {
-          finalContentArray.push(...sectionObject.json.content);
-        } else {
-          console.warn(
-            `Skipping section in '${sectionKey}' due to missing or invalid 'json.content':`,
-            sectionObject
-          );
-        }
-      });
+      // If there are one or more sections for this type, randomly pick one.
+      const randomIndex = Math.floor(Math.random() * availableSectionsForType.length);
+      const chosenSectionObject = availableSectionsForType[randomIndex];
+
+      // Check if the chosen section object and its json.content are valid
+      if (
+        chosenSectionObject &&
+        chosenSectionObject.json &&
+        Array.isArray(chosenSectionObject.json.content)
+      ) {
+        // BEFORE pushing, normalize the image data within this section's content
+        const normalizedSectionContent = normalizeImageData(chosenSectionObject.json.content);
+        finalContentArray.push(...normalizedSectionContent);
+      } else {
+        console.warn(
+          `The randomly chosen section for '${sectionKey}' is missing or has invalid 'json.content'. Chosen object:`,
+          chosenSectionObject
+        );
+      }
+    } else if (templatesBySectionType && Object.prototype.hasOwnProperty.call(templatesBySectionType, sectionKey)) {
+      // This condition means the key exists, but it's not a non-empty array.
+      console.warn(
+        `No usable sections found for section type '${sectionKey}'. Expected a non-empty array, but found:`,
+        availableSectionsForType
+      );
     }
+    // If templatesBySectionType[sectionKey] does not exist, it's silently skipped.
   });
 
   return finalContentArray;
