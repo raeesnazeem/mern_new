@@ -8,8 +8,9 @@ import TopBar from "../components/TopBar";
 
 import styles from "../styles/DashboardPage.module.css";
 import FetchTemplateDisplay from "../components/FetchDisplay";
+import ProcessTemplateResults from "../components/ProcessTemplateResults";
 
-import axios from "axios"
+import axios from "axios";
 
 const DashboardPage = () => {
   const [inputMethod, setInputMethod] = useState(null);
@@ -22,6 +23,8 @@ const DashboardPage = () => {
   const [previewUrl, setPreviewUrl] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [matchedConditions, setMatchedConditions] = useState(null);
+  const [templatesOrderedBySection, setTemplatesOrderedBySection] =
+    useState(null);
 
   // reset function
   const resetEverything = () => {
@@ -39,26 +42,33 @@ const DashboardPage = () => {
     setActiveView("home");
   };
 
-  // Logic for prompt handling through textarea or questionnaire
+
+
   const handlePromptSubmit = async (prompt) => {
-  setIsLoading(true);
-  setCurrentPrompt(prompt);
+    setIsLoading(true);
+    setCurrentPrompt(prompt);
 
-  try {
-    const response = await axios.post('/api/v1/template/make-template-prompt', { prompt });
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/api/v1/template/make-template-prompt",
+        { prompt }
+      );
 
-    console.log('Templates:', response.data.data.allTemplates);
-    setTemplates(response.data.data.allTemplates);
-    setMatchedConditions(response.data.data.matchedConditions);
-    console.log('Matched Conditions Templates:', matchedConditions)
+      // Extract templatesOrderedBySection
+      const templatesOrderedBySection =
+        response.data.data.templatesOrderedBySection;
 
-  } catch (error) {
-    console.error('Error:', error.message);
-    alert('Failed to generate templates.');
-  } finally {
-    setIsLoading(false);
-  }
-};
+      // Store it in state
+      setTemplatesOrderedBySection(templatesOrderedBySection);
+
+      setActiveView("processResults"); // Switch to processResults view in the rightPanel
+    } catch (error) {
+      console.error("Error:", error.message);
+      alert("Failed to generate templates.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Logic for rendering the right panel of the layout
   const renderRightPanel = () => {
@@ -74,7 +84,9 @@ const DashboardPage = () => {
     switch (activeView) {
       case "home":
         if (!inputMethod) {
-          return <InputMethodSelector onMethodSelect={handlePromptOrQuestionnaire} />;
+          return (
+            <InputMethodSelector onMethodSelect={handlePromptOrQuestionnaire} />
+          );
         }
         if (inputMethod === "prompt") {
           return <PromptInput onSubmit={handlePromptSubmit} />;
@@ -105,14 +117,14 @@ const DashboardPage = () => {
         }
         return (
           <FetchTemplateDisplay
-            onPreview={(url, template) => {  //passing the onPreview function to the child component, to be called there
+            onPreview={(url, template) => {
+              //passing the onPreview function to the child component, to be called there
               setPreviewUrl(url);
               setSelectedTemplate(template);
               setActiveView("templatePreview"); // Switch view to preview
             }}
           />
         );
-
 
       case "templatePreview": //preview the template in an iframe
         return (
@@ -139,6 +151,18 @@ const DashboardPage = () => {
               </a>
             </div>
           </div>
+        );
+
+      case "processResults":
+        return (
+          <ProcessTemplateResults
+            templatesOrderedBySection={templatesOrderedBySection}
+            onPreview={(url, template) => {
+              setPreviewUrl(url);
+              setSelectedTemplate(template);
+              setActiveView("templatePreview");
+            }}
+          />
         );
 
       default:

@@ -146,6 +146,8 @@ const FetchTemplateDisplay = ({ onPreview }) => {
         json: template.json,
       };
 
+      console.log('single Template Data', requestData)
+      
       const response = await axios.post(
         "https://customlayout.gogroth.com/wp-json/custom-builder/v1/import-template",
         requestData,
