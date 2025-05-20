@@ -1,19 +1,17 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios"; // Ensure axios is imported
+import { useState, useEffect, useRef } from "react";
+import AiLoader from "./AiLoader";
+import axios from "axios";
 
+import ColorExtractor from "./ColorExtractor";
 
 // Helper functions to transform the template data
 
-
-// 1 - Your provided normalizeImageData function
+// 1 -  normalizeImageData function
 function normalizeImageData(data) {
   if (Array.isArray(data)) {
-    return data.map(item => normalizeImageData(item)); // Recursively call for each item in the array
+    return data.map((item) => normalizeImageData(item)); // Recursively call for each item in the array
   } else if (data && typeof data === "object") {
     // Check if this object represents an image data structure
-    // Elementor image data often has 'url'.
-    // It might have an 'id' if it was from the media library of the source site.
-    // 'source: "library"' is also a good indicator.
     const isImage =
       "url" in data && // Must have a URL
       (data.hasOwnProperty("id") || (data.source && data.source === "library")); // And an ID or source:library
@@ -25,14 +23,14 @@ function normalizeImageData(data) {
       return {
         ...restOfData, // Spread the rest of the properties
         source: "external", // Force source to external
-        // id: undefined // Explicitly ensure id is not carried over if that's desired, otherwise removing it via destructuring is enough
       };
     }
 
     // If not an image object that meets the criteria, recursively normalize its properties
     const normalizedSubObject = {};
     for (const key in data) {
-      if (Object.prototype.hasOwnProperty.call(data, key)) { // Process only own properties
+      if (Object.prototype.hasOwnProperty.call(data, key)) {
+        // Process only own properties
         normalizedSubObject[key] = normalizeImageData(data[key]);
       }
     }
@@ -43,12 +41,21 @@ function normalizeImageData(data) {
   return data;
 }
 
-// 2 - helper function transformTemplatesToWorkingFormat function
+// 2 - helper function
 const transformTemplatesToWorkingFormat = (templatesBySectionType) => {
   const finalContentArray = [];
   // Define the order in which section types should appear on the page.
   // For each type, ONE template variation will be randomly selected if multiple exist.
-  const sectionOrder = ['header', 'herospace', 'about', 'services', 'cta', 'testimonials', 'map', 'footer'];
+  const sectionOrder = [
+    "header",
+    "herospace",
+    "about",
+    "services",
+    "cta",
+    "testimonials",
+    "map",
+    "footer",
+  ];
 
   sectionOrder.forEach((sectionKey) => {
     const availableSectionsForType = templatesBySectionType?.[sectionKey];
@@ -59,7 +66,9 @@ const transformTemplatesToWorkingFormat = (templatesBySectionType) => {
       availableSectionsForType.length > 0
     ) {
       // If there are one or more sections for this type, randomly pick one.
-      const randomIndex = Math.floor(Math.random() * availableSectionsForType.length);
+      const randomIndex = Math.floor(
+        Math.random() * availableSectionsForType.length
+      );
       const chosenSectionObject = availableSectionsForType[randomIndex];
 
       // Check if the chosen section object and its json.content are valid
@@ -69,7 +78,9 @@ const transformTemplatesToWorkingFormat = (templatesBySectionType) => {
         Array.isArray(chosenSectionObject.json.content)
       ) {
         // BEFORE pushing, normalize the image data within this section's content
-        const normalizedSectionContent = normalizeImageData(chosenSectionObject.json.content);
+        const normalizedSectionContent = normalizeImageData(
+          chosenSectionObject.json.content
+        );
         finalContentArray.push(...normalizedSectionContent);
       } else {
         console.warn(
@@ -77,7 +88,10 @@ const transformTemplatesToWorkingFormat = (templatesBySectionType) => {
           chosenSectionObject
         );
       }
-    } else if (templatesBySectionType && Object.prototype.hasOwnProperty.call(templatesBySectionType, sectionKey)) {
+    } else if (
+      templatesBySectionType &&
+      Object.prototype.hasOwnProperty.call(templatesBySectionType, sectionKey)
+    ) {
       // This condition means the key exists, but it's not a non-empty array.
       console.warn(
         `No usable sections found for section type '${sectionKey}'. Expected a non-empty array, but found:`,
@@ -92,40 +106,41 @@ const transformTemplatesToWorkingFormat = (templatesBySectionType) => {
 
 const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
   const [loading, setLoading] = useState(false);
+  const [showLoader, setShowLoader] = useState(false); // To control minimum display time
   const [error, setError] = useState(null);
 
+  //make sure that the request is sent only once
+  const hasSentRequest = useRef(false);
+
+  // Start loading when templates are available
   useEffect(() => {
-    if (templatesOrderedBySection) {
+    // Only proceed if:
+    // - templates exist
+    // - request hasn't already been sent
+    // - we're not already loading
+    if (templatesOrderedBySection && !hasSentRequest.current && !loading) {
+      hasSentRequest.current = true; // Mark as called
       sendToWordPress(templatesOrderedBySection);
     }
-  }, [templatesOrderedBySection, onPreview]); // Added onPreview to dependency array as it's used in sendToWordPress
+  }, [templatesOrderedBySection]);
 
   const sendToWordPress = async (rawTemplatesBySection) => {
-    console.log("sendToWordPress called with:", rawTemplatesBySection); // See what data it's getting each time
+    console.log("sendToWordPress called with:", rawTemplatesBySection);
     setLoading(true);
-    setError(null); // Reset error on new attempt
+    setShowLoader(true); // Show loader immediately
+    setError(null);
+
     try {
       const username = "Onboarding";
       const appPassword = "Eccq j5vS z9rg PoCo 8LgN quC5";
       const token = btoa(`${username}:${appPassword}`);
 
-      // Transform the input data to the "working" format
       const transformedContent = transformTemplatesToWorkingFormat(
         rawTemplatesBySection
       );
 
-      // Check if transformation resulted in any content
-      if (transformedContent.length === 0) {
-        console.warn(
-          "Transformation resulted in an empty content array. Check your input data and sectionOrder in the helper function.",
-          rawTemplatesBySection
-        );
-        // Optionally, you could throw an error here or handle it as appropriate
-        // For now, we'll proceed, but WordPress might reject an empty page.
-      }
-
       const fullJsonStructure = {
-        content: transformedContent, // Use the transformed array here
+        content: transformedContent,
         page_settings: {
           external_header_footer: true,
           hide_title: true,
@@ -142,12 +157,12 @@ const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
       };
 
       console.log(
-        "Sending to WordPress with requestData:",
+        "Sending to WordPress:",
         JSON.stringify(requestData, null, 2)
-      ); // For debugging
+      );
 
       const response = await axios.post(
-        "https://customlayout.gogroth.com/wp-json/custom-builder/v1/import-template",
+        "https://customlayout.gogroth.com/wp-json/custom-builder/v1/import-template ",
         requestData,
         {
           headers: {
@@ -157,6 +172,8 @@ const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
         }
       );
 
+      console.log('returned data from wordpress api:', response.data)
+
       if (!response.data?.public_url) {
         throw new Error(
           "No post URL returned from WordPress. Response: " +
@@ -164,28 +181,25 @@ const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
         );
       }
 
-      onPreview(response.data.public_url, {
-        name: requestData.name,
-        json: fullJsonStructure,
-      });
+      // Delay hiding the loader if less than 5s have passed
+      const timer = setTimeout(() => {
+        onPreview(response.data.public_url, {
+          name: requestData.name,
+          json: fullJsonStructure,
+        });
+        setShowLoader(false);
+      }, 5000);
+
+      return () => clearTimeout(timer);
     } catch (err) {
       console.error("Error sending to WordPress:", err);
       let errorMessage = "Failed to import template.";
       if (err.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.error("Error data:", err.response.data);
-        console.error("Error status:", err.response.status);
-        console.error("Error headers:", err.response.headers);
         errorMessage =
           err.response.data?.message || `Server error: ${err.response.status}`;
       } else if (err.request) {
-        // The request was made but no response was received
-        console.error("Error request:", err.request);
         errorMessage = "No response received from WordPress server.";
       } else {
-        // Something happened in setting up the request that triggered an Error
-        console.error("Error message:", err.message);
         errorMessage = err.message;
       }
       setError(errorMessage);
@@ -194,8 +208,14 @@ const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
     }
   };
 
-  if (loading) {
-    return <div>Importing template into WordPress...</div>;
+  // Always show loader for at least 5s if loading was triggered
+  if (showLoader || loading) {
+    return (
+      <AiLoader
+        heading="Your page is being generated"
+        subHeading="powered by Buildbot from Growth99"
+      />
+    );
   }
 
   if (error) {
