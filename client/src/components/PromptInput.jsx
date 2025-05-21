@@ -16,7 +16,7 @@ const PromptInput = ({ onSubmit }) => {
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="e.g., I need a modern, dark-themed website for my law firm with sections for services, about us, and contact information..."
+          placeholder="e.g., I need a modern, dark-themed website for my aesthetic clinic with sections for services, about us, and contact information..."
           className={styles.promptTextarea}
           rows={5}
           required
