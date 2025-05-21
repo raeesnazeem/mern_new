@@ -226,4 +226,4 @@ const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
   return null;
 };
 
-export default ProcessTemplateResults; // Assuming this is a default export
+export default ProcessTemplateResults; 
