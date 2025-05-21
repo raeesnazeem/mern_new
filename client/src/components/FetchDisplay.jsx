@@ -22,10 +22,15 @@ const FetchTemplateDisplay = ({ onPreview }) => {
     setError(null);
 
     try {
+      const req_api = import.meta.env.VITE_TO_SERVER_API_URL;
+      console.log('API URL:', req_api);
+      
       const response = await axios.get(
         `${import.meta.env.VITE_TO_SERVER_API_URL}/template/fetch-template?sectionType=${sectionType}`,
         { headers: { Accept: "application/json" } }
       );
+
+
 
       const theData = Array.isArray(response.data.data)
         ? response.data.data
