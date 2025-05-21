@@ -41,17 +41,17 @@ const connectDB = require('./utils/db');
 //   credentials: true,
 // };
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'https://g99buildbot.vercel.app'
-];
+// const allowedOrigins = [
+//   'http://localhost:5173',
+//   'http://127.0.0.1:5173',
+//   'https://g99buildbot.vercel.app'
+// ];
 
 const corsOptions = {
-  origin: allowedOrigins,
-  credentials: true,
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: false,
 };
 
 console.log('Allowed origins:', allowedOrigins);
