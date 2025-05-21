@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require('express');
 const app = express();
 // const PORT = process.env.PORT || 3000;  // Use environment variable for port
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 3000;
 const router = require('./router/authRouter');
 const tempRouter = require('./router/templateRouter');
 const cors = require('cors');
