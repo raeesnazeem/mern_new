@@ -19,28 +19,42 @@ const connectDB = require('./utils/db');
 //   allowedHeaders: ['Content-Type', 'Authorization'],
 //   credentials: true,
 // };
+// const allowedOrigins = [
+//   process.env.SERVER_API_URL || 'http://localhost:5173',
+//   process.env.ALT_SERVER_API_URL || 'http://127.0.0.1:5173',
+//   'https://g99buildbot.vercel.app'
+// ].filter(Boolean);
+
+// const corsOptions = {
+//   origin: function (origin, callback) {
+//     if (!origin) return callback(null, true); // allow non-browser requests (e.g., curl, Postman)
+
+//     if (allowedOrigins.includes(origin)) {
+//       callback(null, true);
+//     } else {
+//       console.log(`CORS blocked for origin: ${origin}`);
+//       callback(new Error('Not allowed by CORS'));
+//     }
+//   },
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+//   credentials: true,
+// };
+
 const allowedOrigins = [
-  process.env.SERVER_API_URL || 'http://localhost:5173',
-  process.env.ALT_SERVER_API_URL || 'http://127.0.0.1:5173',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
   'https://g99buildbot.vercel.app'
-].filter(Boolean);
+];
 
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // allow non-browser requests (e.g., curl, Postman)
-
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.log(`CORS blocked for origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: allowedOrigins,
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
 };
-console.log('Allowed origins:', corsOptions.origin);
+
+console.log('Allowed origins:', allowedOrigins);
 
 
 // Middlewares
