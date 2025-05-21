@@ -54,7 +54,6 @@ const corsOptions = {
   credentials: false,
 };
 
-console.log('Allowed origins:', allowedOrigins);
 
 
 // Middlewares
