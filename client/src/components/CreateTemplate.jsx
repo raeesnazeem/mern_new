@@ -67,7 +67,7 @@ const CreateTemplate = ({ onSuccess }) => {
           : []
       };
 
-      const response = await axios.post('http://localhost:3000/api/v1/template/create-template', payload, {
+      const response = await axios.post(`${import.meta.env.VITE_TO_SERVER_API_URL}/template/create-template`, payload, {
         withCredentials: true, // If you need to send cookies
         headers: {
           'Content-Type': 'application/json',

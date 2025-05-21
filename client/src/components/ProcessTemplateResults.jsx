@@ -131,9 +131,10 @@ const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
     setError(null);
 
     try {
-      const username = "Onboarding";
-      const appPassword = "Eccq j5vS z9rg PoCo 8LgN quC5";
+      const username = `${import.meta.env.VITE_WP_USERNAME}`;
+      const appPassword = `${import.meta.env.VITE_WP_PASS}`;
       const token = btoa(`${username}:${appPassword}`);
+      
 
       const transformedContent = transformTemplatesToWorkingFormat(
         rawTemplatesBySection
@@ -162,7 +163,7 @@ const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
       );
 
       const response = await axios.post(
-        "https://customlayout.gogroth.com/wp-json/custom-builder/v1/import-template ",
+        `${import.meta.env.VITE_WP_IMPORT_API_URL}`,
         requestData,
         {
           headers: {

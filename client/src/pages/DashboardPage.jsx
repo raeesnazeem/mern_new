@@ -50,7 +50,7 @@ const DashboardPage = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:3000/api/v1/template/make-template-prompt",
+        `${import.meta.env.VITE_TO_SERVER_API_URL}/template/make-template-prompt`,
         { prompt }
       );
 

@@ -23,7 +23,7 @@ const FetchTemplateDisplay = ({ onPreview }) => {
 
     try {
       const response = await axios.get(
-        `http://localhost:3000/api/v1/template/fetch-template?sectionType=${sectionType}`,
+        `${import.meta.env.VITE_TO_SERVER_API_URL}/template/fetch-template?sectionType=${sectionType}`,
         { headers: { Accept: "application/json" } }
       );
 
@@ -135,8 +135,8 @@ const FetchTemplateDisplay = ({ onPreview }) => {
     setLoading(true);
 
     try {
-      const username = "Onboarding";
-      const appPassword = "Eccq j5vS z9rg PoCo 8LgN quC5";
+      const username = `${import.meta.env.VITE_VITE_WP_USERNAME}`;
+      const appPassword = `${import.meta.env.VITE_WP_PASS}`;
       const token = btoa(`${username}:${appPassword}`);
 
       const requestData = {
@@ -149,7 +149,7 @@ const FetchTemplateDisplay = ({ onPreview }) => {
       console.log('single Template Data', requestData)
       
       const response = await axios.post(
-        "https://customlayout.gogroth.com/wp-json/custom-builder/v1/import-template",
+        `${import.meta.env.VITE_WP_IMPORT_API_URL}`,
         requestData,
         {
           headers: {
