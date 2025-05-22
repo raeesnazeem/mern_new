@@ -1,0 +1,39 @@
+// src/App.jsx
+import React from 'react';
+
+const App = ({ children }) => {
+  console.log("App.jsx: Rendering App component.");
+  console.log("App.jsx: Received 'children' prop:", children); // What is this?
+
+  // Let's try to get the component's display name if it's a React element
+  if (React.isValidElement(children) && typeof children.type === 'function') {
+    console.log("App.jsx: Children component display name:", children.type.displayName || children.type.name || "Unknown");
+  } else if (children) {
+    console.log("App.jsx: Children prop is present but not a typical function component element:", children);
+  } else {
+    console.log("App.jsx: Children prop is null or undefined.");
+  }
+
+  return (
+    <div
+      className="app"
+      style={{
+        border: '5px solid blue',
+        color: 'black', // Ensure text is visible
+        backgroundColor: 'lightblue',
+        padding: '10px',
+        minHeight: '100px' // Make sure App div is visible
+      }}
+    >
+      <h2>This is the main App Component Shell</h2>
+      <p>Attempting to render children below this line:</p>
+      <hr />
+      {/* Now, render the children that React Router provides */}
+      {children}
+      <hr />
+      <p>Children should have appeared above this line.</p>
+    </div>
+  );
+};
+
+export default App;

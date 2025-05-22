@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../components/DashboardLayout";
 import InputMethodSelector from "../components/InputMethodSelector";
 import CreateTemplate from "../components/CreateTemplate";
@@ -12,7 +13,10 @@ import ProcessTemplateResults from "../components/ProcessTemplateResults";
 
 import axios from "axios";
 
-const DashboardPage = () => {
+
+
+const DashboardPage = () => { 
+  const navigate = useNavigate()
   const [inputMethod, setInputMethod] = useState(null);
   const [templates, setTemplates] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,28 +46,30 @@ const DashboardPage = () => {
     setActiveView("home");
   };
 
-
-
   const handlePromptSubmit = async (prompt) => {
     setIsLoading(true);
     setCurrentPrompt(prompt);
 
-    try {
+    try { // This should return a data object with keys allTemplates, templatesOrderedBySection, suggestedOrder and matchedConditions object
       const response = await axios.post(
-        `${import.meta.env.VITE_TO_SERVER_API_URL}/template/make-template-prompt`,
+        `${
+          import.meta.env.VITE_TO_SERVER_API_URL
+        }/template/make-template-prompt`,
         { prompt }
       );
 
-      // Extract templatesOrderedBySection
-      const templatesOrderedBySection =
+      // from the response data - Extract templatesOrderedBySection alone
+      const templatesInOrder =
         response.data.data.templatesOrderedBySection;
 
-        console.log(templatesOrderedBySection)
+      console.log(templatesInOrder);
 
-      // Store it in state
-      setTemplatesOrderedBySection(templatesOrderedBySection);
+      // /preview route renders TemplatePreview Component
+      navigate("/preview", {
+        state: { templatesOrderedBySection: templatesInOrder }
+      });
 
-      setActiveView("processResults"); // Switch to processResults view in the rightPanel
+
     } catch (error) {
       console.error("Error:", error.message);
       alert("Failed to generate templates.");
@@ -91,28 +97,29 @@ const DashboardPage = () => {
           );
         }
         if (inputMethod === "prompt") {
-          return <PromptInput onSubmit={handlePromptSubmit} />;
+          // return <PromptInput onSubmit={handlePromptSubmit} />;
+          return <PromptInput onSubmit={handlePromptSubmit} />;;
         }
         if (inputMethod === "questionnaire") {
           return <Questionnaire onSubmit={handlePromptSubmit} />;
         }
         return null;
 
-      case "allTemplates":
+      case "allTemplates":  //when activeView state is set to allTemplates
         return (
           <div>
             <h2>All Templates (Coming Soon)</h2>
           </div>
         );
 
-      case "addTemplate":
+      case "addTemplate":  //when activeView state is set to addTemplate
         if (!hasReset) {
           resetEverything();
           setHasReset(true);
         }
         return <CreateTemplate />;
 
-      case "fetchtemplate":
+      case "fetchtemplate": //when activeView state is set to fecthTemplate
         if (!hasReset) {
           resetEverything();
           setHasReset(true);
@@ -128,13 +135,12 @@ const DashboardPage = () => {
           />
         );
 
-      case "templatePreview": //preview the template in an iframe
+      case "templatePreview": //preview the template in an iframe - when activeView state is set to templatePreview
         return (
-          <div className="preview-section">
-            <h2>Preview: {selectedTemplate?.name}</h2>
+          <div className="">
             <div
               className="iframe-container"
-              style={{ height: "80vh", border: "1px solid #ccc" }}
+              style={{ height: "100vh", border: "1px solid #ccc", marginTop:"0"}}
             >
               <iframe
                 src={previewUrl}
@@ -142,11 +148,18 @@ const DashboardPage = () => {
                 sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
                 referrerPolicy="no-referrer"
                 allow="fullscreen"
-                width="100%"
-                height="100%"
-                style={{ width: "100%", height: "100%", border: "none" }}
+                style={{
+                  width: "100%",
+                  height: "100vh",
+                  border: "none",
+                  // Hide scrollbar for Webkit browsers (Chrome, Edge, Safari)
+                  scrollbarWidth: "none !important",
+                  msOverflowStyle: "none",
+                  overflow: "auto",
+                }}
               />
             </div>
+
             <div className="preview-actions">
               <a href={previewUrl} target="_blank" rel="noopener noreferrer">
                 Open in new tab
@@ -154,18 +167,17 @@ const DashboardPage = () => {
             </div>
           </div>
         );
-
-      case "processResults":
-        return (
-          <ProcessTemplateResults
-            templatesOrderedBySection={templatesOrderedBySection}
-            onPreview={(url, template) => {
-              setPreviewUrl(url);
-              setSelectedTemplate(template);
-              setActiveView("templatePreview");
-            }}
-          />
-        );
+      // case "processResults":  //when activeView state is set to processResults
+      //   return (
+      //     <ProcessTemplateResults
+      //       templatesOrderedBySection={templatesOrderedBySection}
+      //       onPreview={(url, template) => {
+      //         setPreviewUrl(url);
+      //         setSelectedTemplate(template);
+      //         setActiveView("templatePreview");
+      //       }}
+      //     />
+      //   );
 
       default:
         return (

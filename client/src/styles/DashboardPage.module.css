@@ -1,160 +1,165 @@
 /* Main Layout Styles */
 .leftPanelContent {
-    padding: 16px;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.rightPanelContent {
+  height: 100%;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+  overflow: auto !important;
+}
+
+.rightPanelContent::-webkit-scrollbar{
+  display: none !important;
+}
+
+/* Reset Button Styles */
+.resetButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  width: 100%;
+  border: 1px solid #e0e0e0;
+  background-color: white;
+  color: #37352f;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 16px;
+}
+
+.resetButton:hover {
+  background-color: #f7f6f3;
+  border-color: #d0d0d0;
+}
+
+.resetButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f7f6f3;
+}
+
+.resetIcon {
+  color: #5e5e5e;
+  transition: transform 0.3s ease;
+}
+
+.dashboardoptions {
+  list-style: none;
+  border-bottom: 1px solid #e0e0e0;
+  width: 100%;
+}
+
+.menuList {
+  display: flex;
+  flex-direction: column;
+  display: flex;
+  gap: 10px;
+  justify-content: start;
+  margin-left: 0;
+  padding-left: 0;
+}
+
+
+
+.resetButton:hover .resetIcon {
+  transform: rotate(-45deg);
+}
+
+/* Current Info Section */
+.currentInfo {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.currentInfo h3 {
+  font-size: 12px;
+  font-weight: 600;
+  color: #5e5e5e;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.currentInfo p {
+  font-size: 12px;
+  color: #8a8a8a;
+  word-break: break-all;
+  margin: 0;
+}
+
+/* Loading Spinner Styles */
+.loadingSpinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top-color: #37352f;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
-  
-  .rightPanelContent {
-    height: 100%;
-    overflow-y: auto;
-    margin:0;
-    padding:0;
+}
+
+.loadingSpinner p {
+  color: #5e5e5e;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+/* Section Headers */
+.leftPanelContent h3 {
+  font-size: 12px;
+  font-weight: 600;
+  color: #5e5e5e;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .leftPanelContent {
+    padding: 12px;
   }
-  
-  /* Reset Button Styles */
+
   .resetButton {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    width: 100%;
-    border: 1px solid #e0e0e0;
-    background-color: white;
-    color: #37352f;
-    border-radius: 6px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-bottom: 16px;
+    padding: 6px 10px;
+    font-size: 14px;
   }
-  
-  .resetButton:hover {
-    background-color: #f7f6f3;
-    border-color: #d0d0d0;
+
+  .loadingSpinner {
+    gap: 12px;
   }
-  
-  .resetButton:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background-color: #f7f6f3;
+
+  .spinner {
+    width: 32px;
+    height: 32px;
   }
-  
-  .resetIcon {
-    color: #5e5e5e;
-    transition: transform 0.3s ease;
-  }
-  
+
   .dashboardoptions {
     list-style: none;
-    border-bottom: 1px solid #e0e0e0;
-    width:100%;
   }
-
-  .menuList{
-    display: flex;
-    flex-direction: column;
-    display: flex;
-    gap:10px;
-    justify-content: start;
-    margin-left:0;
-    padding-left:0;
-  }
-
-  .rightPanel{
-    margin:5px !important;
-  }
-
-  .resetButton:hover .resetIcon {
-    transform: rotate(-45deg);
-  }
-  
-  /* Current Info Section */
-  .currentInfo {
-    margin-top: auto;
-    padding-top: 16px;
-    border-top: 1px solid #f0f0f0;
-  }
-  
-  .currentInfo h3 {
-    font-size: 12px;
-    font-weight: 600;
-    color: #5e5e5e;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  
-  .currentInfo p {
-    font-size: 12px;
-    color: #8a8a8a;
-    word-break: break-all;
-    margin: 0;
-  }
-  
-  /* Loading Spinner Styles */
-  .loadingSpinner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    gap: 16px;
-  }
-  
-  .spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid rgba(0, 0, 0, 0.1);
-    border-radius: 50%;
-    border-top-color: #37352f;
-    animation: spin 1s ease-in-out infinite;
-  }
-  
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-  
-  .loadingSpinner p {
-    color: #5e5e5e;
-    font-size: 14px;
-    margin-top: 8px;
-  }
-  
-  /* Section Headers */
-  .leftPanelContent h3 {
-    font-size: 12px;
-    font-weight: 600;
-    color: #5e5e5e;
-    margin-bottom: 16px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  
-  /* Responsive Adjustments */
-  @media (max-width: 768px) {
-    .leftPanelContent {
-      padding: 12px;
-    }
-    
-    .resetButton {
-      padding: 6px 10px;
-      font-size: 14px;
-    }
-    
-    .loadingSpinner {
-      gap: 12px;
-    }
-    
-    .spinner {
-      width: 32px;
-      height: 32px;
-    }
-
-    .dashboardoptions {
-      list-style: none;
-    }
-  }
+}
