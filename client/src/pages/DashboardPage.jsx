@@ -62,7 +62,7 @@ const DashboardPage = () => {
       const templatesInOrder =
         response.data.data.templatesOrderedBySection;
 
-      console.log(templatesInOrder);
+      console.log('These are the templates in order:', templatesInOrder);
 
       // /preview route renders TemplatePreview Component
       navigate("/preview", {
