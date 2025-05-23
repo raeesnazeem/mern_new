@@ -408,62 +408,56 @@ const TemplatePreviewPage = () => {
     }, 0);
   };
 
-  const handleApplyPreviewChangesToBackend = async () => {
-    // ... (function remains the same)
-    if (!originalJsonProcessed || !allColorInstances.length) {
-      alert(
-        "Original JSON data or color instance data is missing. Cannot apply changes."
-      );
+  const handleApplyPreviewChangesToBackend = async (changes = []) => {
+    if (
+      !originalJsonProcessed ||
+      !allColorInstances.length ||
+      changes.length === 0
+    ) {
+      alert("No valid changes or JSON data available.");
       return;
     }
+
     let modifiedJsonStructure = JSON.parse(
       JSON.stringify(originalJsonProcessed)
     );
-    const colorChangesMap = new Map();
-    displayPalette.forEach((pItem) => {
-      if (pItem.originalHex !== pItem.currentHex) {
-        colorChangesMap.set(pItem.originalHex, pItem.currentHex);
-      }
-    });
-    if (colorChangesMap.size === 0) {
-      alert("No colors have been changed in the palette.");
-      return;
-    }
-    setIsPageLoading(true);
+
     let changesApplied = 0;
-    allColorInstances.forEach((instance) => {
-      if (colorChangesMap.has(instance.originalValue)) {
-        const newColor = colorChangesMap.get(instance.originalValue);
-        setValueByPath(modifiedJsonStructure, instance.path, newColor);
-        changesApplied++;
-      }
+
+    changes.forEach(({ originalHex, currentHex }) => {
+      allColorInstances.forEach((instance) => {
+        if (instance.originalValue === originalHex) {
+          setValueByPath(modifiedJsonStructure, instance.path, currentHex);
+          changesApplied++;
+        }
+      });
     });
-    console.log(`${changesApplied} color instances updated in JSON.`);
-    console.log(
-      "Sending globally modified JSON to backend:",
-      modifiedJsonStructure
-    );
+
+    console.log(`${changesApplied} color instances updated in JSON`);
+
     try {
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      alert(
-        "Simulated API call successful. WordPress page would be updated. Reloading iframe..."
-      );
+      alert("Colors applied successfully. Reloading preview...");
+
       if (iframeRef.current) {
         const newSrc = iframeUrl.split("?")[0] + "?t=" + new Date().getTime();
         iframeRef.current.src = newSrc;
       }
-      setOriginalJsonProcessed(modifiedJsonStructure);
+
+      // Update displayPalette with applied values
       setDisplayPalette((prevPalette) =>
-        prevPalette.map((pItem) => ({
-          ...pItem,
-          originalHex: pItem.currentHex,
-        }))
+        prevPalette.map((pItem) => {
+          const match = changes.find(
+            (change) => change.originalHex === pItem.originalHex
+          );
+          return match ? { ...pItem, originalHex: match.currentHex } : pItem;
+        })
       );
+
+      setOriginalJsonProcessed(modifiedJsonStructure);
     } catch (error) {
-      console.error("Error applying global color changes to WordPress:", error);
-      alert("Failed to apply global color changes to WordPress.");
-    } finally {
-      setIsPageLoading(false);
+      console.error("Error applying color changes:", error);
+      alert("Failed to apply color changes.");
     }
   };
 
