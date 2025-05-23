@@ -1,0 +1,28 @@
+.iframe-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.iframe-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y: scroll;
+  /* Hide scrollbar for modern browsers */
+  scrollbar-width: none; /* Firefox */
+}
+
+.iframe-wrapper::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+.iframe-wrapper iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}

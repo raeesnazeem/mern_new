@@ -125,7 +125,7 @@ const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
   }, [templatesOrderedBySection]);
 
   const sendToWordPress = async (rawTemplatesBySection) => {
-    console.log("sendToWordPress called with:", rawTemplatesBySection);
+    // console.log("sendToWordPress called with:", rawTemplatesBySection);
     setLoading(true);
     setShowLoader(true); // Show loader immediately
     setError(null);
@@ -157,10 +157,10 @@ const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
         json: fullJsonStructure,
       };
 
-      console.log(
-        "Sending to WordPress:",
-        JSON.stringify(requestData, null, 2)
-      );
+      // console.log(
+      //   "Sending to WordPress:",
+      //   JSON.stringify(requestData, null, 2)
+      // );
 
       const response = await axios.post(
         `${import.meta.env.VITE_WP_IMPORT_API_URL}`,
@@ -173,7 +173,7 @@ const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
         }
       );
 
-      console.log('returned data from wordpress api:', response.data)
+      // console.log('returned data from wordpress api:', response.data)
 
       if (!response.data?.public_url) {
         throw new Error(

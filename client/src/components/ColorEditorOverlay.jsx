@@ -1,77 +1,97 @@
-import React, { useState } from 'react';
-import { SketchPicker } from 'react-color'; // Or your preferred color picker
+import React, { useState } from "react";
+import { SketchPicker } from "react-color";
 
 const ColorEditorOverlay = ({
   isOpen,
   onClose,
-  palette, // This is displayPalette from parent [{ id, originalHex, currentHex }, ...]
-  onPaletteColorChange, // (paletteItemId (originalHex), newHexValue) => void
+  categorizedPalette,
+  onPaletteColorChange,
   onApplyChanges,
-  // onSaveChangesToWordPress // If you have a separate save
 }) => {
-  if (!isOpen) return null;
+  const [pickerVisibleFor, setPickerVisibleFor] = useState(null);
+  const [pickerColor, setPickerColor] = useState("");
 
-  const [pickerVisibleFor, setPickerVisibleFor] = useState(null); // Stores the id (originalHex) of the color being edited
-  const [pickerColor, setPickerColor] = useState('');
+  if (!isOpen || !categorizedPalette) return null;
 
-  const handleSwatchClick = (paletteItem) => {
-    setPickerColor(paletteItem.currentHex);
-    setPickerVisibleFor(paletteItem.id); // id is originalHex
+  const handleSwatchClick = (colorObj) => {
+    setPickerColor(colorObj.currentHex || colorObj.originalValue);
+    setPickerVisibleFor(colorObj.id); // id = originalHex
   };
 
   const handlePickerChangeComplete = (color) => {
-    // Update immediately in the picker for live feedback
     setPickerColor(color.hex);
-    // Call parent to update the displayPalette state
     if (pickerVisibleFor) {
       onPaletteColorChange(pickerVisibleFor, color.hex);
     }
   };
 
   const handlePickerClose = () => {
-    // The change is already committed by onPaletteColorChange via handlePickerChangeComplete
     setPickerVisibleFor(null);
   };
 
+  const formatCategoryTitle = (key) => {
+    return key
+      .replace(/([A-Z])/g, " $1")
+      .replace(/^./, (str) => str.toUpperCase())
+      .replace("background", "Background")
+      .replace("overlay", "Overlay")
+      .replace("menuDropdown", "Menu & Dropdown");
+  };
 
   return (
-    <div style={{ position: 'fixed', top: '80px', right: '20px', width: '300px', maxHeight: '80vh', overflowY: 'auto', background: 'white', border: '1px solid #ccc', padding: '15px', zIndex: 1000, boxShadow: '0 0 10px rgba(0,0,0,0.2)' }}>
-      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+    <div className="color-editor-overlay">
+      <div className="overlay-header">
         <h3>Edit Palette</h3>
-        <button onClick={onClose} style={{background:'none', border:'none', fontSize:'1.5em', cursor:'pointer'}}>&times;</button>
+        <button className="close-btn" onClick={onClose}>
+          &times;
+        </button>
       </div>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {palette.map(item => (
-          <li key={item.id} style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{display: 'flex', alignItems: 'center'}}>
-              <div
-                style={{
-                  width: '30px', height: '30px',
-                  backgroundColor: item.currentHex,
-                  border: '1px solid #ddd', cursor: 'pointer',
-                  marginRight: '10px'
-                }}
-                onClick={() => handleSwatchClick(item)}
-              />
-              <span>{item.originalHex} <small>(Initially)</small> &rarr; {item.currentHex}</span>
-            </div>
-            {pickerVisibleFor === item.id && (
-              <div style={{ position: 'absolute', right: '100%', top: 0, zIndex: 1002 }}> {/* Position picker next to the panel */}
-                <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 0, zIndex:1001 }} onClick={handlePickerClose} />
-                <SketchPicker
-                  color={pickerColor}
-                  onChangeComplete={handlePickerChangeComplete}
-                  // presetColors={[]} /* You can add preset colors */
-                />
+
+      {/* Render Each Category */}
+      <div className="category-sections">
+        {Object.entries(categorizedPalette).map(([categoryName, colors]) => {
+          if (!colors || colors.length === 0) return null;
+
+          return (
+            <div key={categoryName} className="category-group">
+              <h4>{formatCategoryTitle(categoryName)}</h4>
+              <div className="swatch-palette">
+                {colors.map((colorObj) => (
+                  <div key={colorObj.id} className="swatch-wrapper">
+                    <div
+                      className="swatch"
+                      style={{
+                        backgroundColor:
+                          colorObj.currentHex || colorObj.originalValue,
+                      }}
+                      title={colorObj.originalValue}
+                      onClick={() => handleSwatchClick(colorObj)}
+                    />
+                    {pickerVisibleFor === colorObj.id && (
+                      <div className="color-picker-popup">
+                        <div
+                          className="backdrop"
+                          onClick={handlePickerClose}
+                        />
+                        <SketchPicker
+                          color={pickerColor}
+                          onChangeComplete={handlePickerChangeComplete}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-            )}
-          </li>
-        ))}
-      </ul>
-      <button onClick={onApplyChanges} style={{ width: '100%', padding: '10px', marginTop: '10px' }}>
-        Apply Changes to Preview & Reload Iframe
-      </button>
-      {/* <button onClick={onSaveChangesToWordPress}>Save to WordPress</button> */}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="overlay-footer">
+        <button onClick={onApplyChanges} className="apply-btn">
+          Apply Changes
+        </button>
+      </div>
     </div>
   );
 };

@@ -62,7 +62,7 @@ const DashboardPage = () => {
       const templatesInOrder =
         response.data.data.templatesOrderedBySection;
 
-      console.log('These are the templates in order:', templatesInOrder);
+      // console.log('These are the templates in order:', templatesInOrder);
 
       // /preview route renders TemplatePreview Component
       navigate("/preview", {
@@ -167,18 +167,7 @@ const DashboardPage = () => {
             </div>
           </div>
         );
-      // case "processResults":  //when activeView state is set to processResults
-      //   return (
-      //     <ProcessTemplateResults
-      //       templatesOrderedBySection={templatesOrderedBySection}
-      //       onPreview={(url, template) => {
-      //         setPreviewUrl(url);
-      //         setSelectedTemplate(template);
-      //         setActiveView("templatePreview");
-      //       }}
-      //     />
-      //   );
-
+  
       default:
         return (
           <div>

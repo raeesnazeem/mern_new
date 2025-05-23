@@ -7,8 +7,8 @@ function ColorExtractor({ jsonData }) {
         if (jsonData) {
             const extractedColors = extractColors(jsonData);
             setColors(extractedColors);
-            console.log(jsonData)
-            console.log(extractedColors)
+            // console.log(jsonData)
+            // console.log(extractedColors)
         }
     }, [jsonData])
 

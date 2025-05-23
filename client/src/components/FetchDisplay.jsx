@@ -23,7 +23,7 @@ const FetchTemplateDisplay = ({ onPreview }) => {
 
     try {
       const req_api = import.meta.env.VITE_TO_SERVER_API_URL;
-      console.log('API URL:', req_api);
+      // console.log('API URL:', req_api);
       
       const response = await axios.get(
         `${import.meta.env.VITE_TO_SERVER_API_URL}/template/fetch-template?sectionType=${sectionType}`,
@@ -36,7 +36,7 @@ const FetchTemplateDisplay = ({ onPreview }) => {
         ? response.data.data
         : [];
 
-      console.log("rawdb fetched data", theData);
+      // console.log("rawdb fetched data", theData);
 
       // Clean each template's JSON data individually
       const cleanedTemplates = theData.map((template) => ({
@@ -44,7 +44,7 @@ const FetchTemplateDisplay = ({ onPreview }) => {
         json: prepareTemplateForImport(template.json),
       }));
 
-      console.log("Json Cleaned Template:", cleanedTemplates); // Debugging
+      // console.log("Json Cleaned Template:", cleanedTemplates); // Debugging
       setTemplates(cleanedTemplates);
     } catch (err) {
       console.error("Fetch error:", err);
@@ -151,7 +151,7 @@ const FetchTemplateDisplay = ({ onPreview }) => {
         json: template.json,
       };
 
-      console.log('single Template Data', requestData)
+      // console.log('single Template Data', requestData)
       
       const response = await axios.post(
         `${import.meta.env.VITE_WP_IMPORT_API_URL}`,
