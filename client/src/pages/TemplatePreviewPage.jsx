@@ -299,7 +299,7 @@ const TemplatePreviewPage = () => {
     );
     if (location.state && location.state.templatesOrderedBySection) {
       // console.log("Setting initialRawTemplates from location.state");
-      setInitialRawTemplates(location.state.templatesOrderedBySection);
+      setInitialRawTemplates(location.state.templatesOrderedBySection); // initial raw templates to be compared for change from colorpicker
       setShowIframe(false);
       setOriginalJsonProcessed(null);
       setAllColorInstances([]);

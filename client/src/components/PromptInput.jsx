@@ -11,7 +11,7 @@ const PromptInput = ({ onSubmit }) => {
 
   return (
     <div className={styles.promptContainer}>
-      <h2>Describe your website</h2>
+      <h2 style={{display:"flex", justifyContent:"start"}}>Describe your website</h2>
       <form onSubmit={handleSubmit}>
         <textarea
           value={prompt}

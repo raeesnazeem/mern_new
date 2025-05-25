@@ -182,14 +182,14 @@ const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
         );
       }
 
-      // Delay hiding the loader if less than 5s have passed
+      // Delay hiding the loader if less than 8s have passed
       const timer = setTimeout(() => {
         onPreview(response.data.public_url, {
           name: requestData.name,
           json: fullJsonStructure,
         });
         setShowLoader(false);
-      }, 5000);
+      }, 8000);
 
       return () => clearTimeout(timer);
     } catch (err) {
