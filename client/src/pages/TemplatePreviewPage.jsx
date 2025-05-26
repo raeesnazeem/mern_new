@@ -8,6 +8,8 @@ import CategorizedColorPalette from "../components/CategorizedColorPalette";
 import ColorEditorOverlay from "../components/ColorEditorOverlay";
 import "../styles/TemplatePreviewPage.css";
 import "../styles/ColorEditorOverlay.css";
+import axios from "axios";
+import AILoader from "../components/AiLoader";
 
 // ----- Helper Constants and Functions (COLOR_KEYS, REGEXES, generateContextName, extractColorsRecursively, setValueByPath) -----
 
@@ -278,6 +280,7 @@ const TemplatePreviewPage = () => {
   const [currentTemplateTitle, setCurrentTemplateTitle] = useState("");
   const [isColorEditorOpen, setIsColorEditorOpen] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
+  const [isApplyingChanges, setIsApplyingChanges] = useState(false);
   const [categorizedColorInstances, setCategorizedColorInstances] =
     useState(null);
   const [showApplyButton, setShowApplyButton] = useState(false);
@@ -409,55 +412,91 @@ const TemplatePreviewPage = () => {
   };
 
   const handleApplyPreviewChangesToBackend = async (changes = []) => {
-    if (
-      !originalJsonProcessed ||
-      !allColorInstances.length ||
-      changes.length === 0
-    ) {
-      alert("No valid changes or JSON data available.");
+    if (!originalJsonProcessed || !allColorInstances.length) {
+      console.warn("Original JSON or color instance data missing.");
       return;
     }
+
+    if (changes.length === 0) {
+      console.log("No color changes detected.");
+      return;
+    }
+
+    // Start loading - show AI Loader
+    setIsPageLoading(true);
 
     let modifiedJsonStructure = JSON.parse(
       JSON.stringify(originalJsonProcessed)
     );
 
-    let changesApplied = 0;
-
+    // Apply all color changes to JSON
     changes.forEach(({ originalHex, currentHex }) => {
       allColorInstances.forEach((instance) => {
         if (instance.originalValue === originalHex) {
           setValueByPath(modifiedJsonStructure, instance.path, currentHex);
-          changesApplied++;
         }
       });
     });
 
-    console.log(`${changesApplied} color instances updated in JSON`);
-
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      alert("Colors applied successfully. Reloading preview...");
+      const username = `${import.meta.env.VITE_WP_USERNAME}`;
+      const appPassword = `${import.meta.env.VITE_WP_PASS}`;
+      const token = btoa(`${username}:${appPassword}`);
 
+      const fullJsonStructure = {
+        content: modifiedJsonStructure.json.content,
+        page_settings: modifiedJsonStructure.json.page_settings,
+        version: modifiedJsonStructure.json.version,
+        type: modifiedJsonStructure.json.type,
+      };
+
+      const requestData = {
+        name: `Generated Template ${Math.floor(Math.random() * 100000000000)}`,
+        json: fullJsonStructure,
+      };
+
+      console.log("Sending updated template to WordPress:", requestData);
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_WP_IMPORT_API_URL}`,
+        requestData,
+        {
+          headers: {
+            Authorization: `Basic ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("WordPress API Response:", response.data);
+
+      if (!response.data?.public_url) {
+        throw new Error("No post URL returned from WordPress.");
+      }
+
+      // Update iframe URL to show updated template
+      const newSrc = response.data.public_url + "?t=" + Date.now();
+      setIframeUrl(newSrc);
       if (iframeRef.current) {
-        const newSrc = iframeUrl.split("?")[0] + "?t=" + new Date().getTime();
         iframeRef.current.src = newSrc;
       }
 
-      // Update displayPalette with applied values
-      setDisplayPalette((prevPalette) =>
-        prevPalette.map((pItem) => {
+      // Update local state for future editing
+      setOriginalJsonProcessed(modifiedJsonStructure);
+      setDisplayPalette((prev) =>
+        prev.map((pItem) => {
           const match = changes.find(
             (change) => change.originalHex === pItem.originalHex
           );
           return match ? { ...pItem, originalHex: match.currentHex } : pItem;
         })
       );
-
-      setOriginalJsonProcessed(modifiedJsonStructure);
-    } catch (error) {
-      console.error("Error applying color changes:", error);
-      alert("Failed to apply color changes.");
+    } catch (err) {
+      console.error("Error applying color changes to WordPress:", err);
+      alert("Failed to apply changes to WordPress. Check console for details.");
+    } finally {
+      // Stop loader
+      setIsPageLoading(false);
     }
   };
 
@@ -564,10 +603,17 @@ const TemplatePreviewPage = () => {
   }
 
   let rightPanelDisplay;
-  if (showIframe) {
-    rightPanelDisplay = (
-      /* ... iframe JSX ... */
 
+  if (isPageLoading || (!initialRawTemplates && !originalJsonProcessed)) {
+    // Show loader when page is loading or no data yet
+    rightPanelDisplay = (
+      <AILoader
+        heading="Your page is being generated"
+        subHeading="powered by Buildbot from Growth99"
+      />
+    );
+  } else if (showIframe) {
+    rightPanelDisplay = (
       <div className="iframe-container">
         <div className="iframe-wrapper">
           <iframe
@@ -589,43 +635,25 @@ const TemplatePreviewPage = () => {
       />
     );
   } else {
-    // This means !initialRawTemplates but isPageLoading is true (very initial render)
-    rightPanelDisplay = <div>Preparing template generation...</div>;
+    rightPanelDisplay = (
+      <AILoader
+        heading="No templates found"
+        subHeading="Redirecting to dashboard..."
+      />
+    );
   }
 
   return (
     <DashboardLayout
       topBar={<TopBar />}
       leftPanel={leftPanelContent}
-      rightPanel={
-        showIframe ? (
-          <div
-            className="iframe-container"
-          >
-            <iframe
-              ref={iframeRef}
-              src={iframeUrl}
-              title={currentTemplateTitle}
-              sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
-              referrerPolicy="no-referrer"
-              allow="fullscreen"
-              style={{ width: "100%", height: "100%", border: "none" }}
-            />
-          </div>
-        ) : initialRawTemplates ? (
-          <ProcessTemplateResults
-            templatesOrderedBySection={initialRawTemplates}
-            onPreview={handleWordPressPageGenerated}
-          />
-        ) : (
-          <div>Preparing template generation...</div>
-        )
-      }
+      rightPanel={rightPanelDisplay}
     >
       {console.log(
         "categorizeColorInstances before passing onto ColorEditorOverlay:",
         categorizeColorInstances
       )}
+      {/* Overlay components */}
       {originalJsonProcessed && categorizedColorInstances && (
         <ColorEditorOverlay
           isOpen={isColorEditorOpen}
