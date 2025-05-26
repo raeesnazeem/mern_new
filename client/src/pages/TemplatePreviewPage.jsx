@@ -601,7 +601,6 @@ const TemplatePreviewPage = () => {
         showIframe ? (
           <div
             className="iframe-container"
-            style={{ height: "100vh", border: "1px solid #ccc" }}
           >
             <iframe
               ref={iframeRef}
