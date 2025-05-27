@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import styles from "../styles/InputMethodSelector.module.css";
 
 const InputMethodSelector = ({ onMethodSelect }) => {

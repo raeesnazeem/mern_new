@@ -286,14 +286,7 @@ const TemplatePreviewPage = () => {
   const [showApplyButton, setShowApplyButton] = useState(false);
   const [hasColorChanges, setHasColorChanges] = useState(false);
 
-  console.log("TemplatePreviewPage RENDER - States:", {
-    isPageLoading,
-    initialRawTemplates: !!initialRawTemplates,
-    originalJsonProcessed: !!originalJsonProcessed,
-    showIframe,
-    isColorEditorOpen,
-    displayPaletteLength: displayPalette.length,
-  });
+
 
   useEffect(() => {
     console.log(

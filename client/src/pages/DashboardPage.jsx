@@ -13,10 +13,8 @@ import ProcessTemplateResults from "../components/ProcessTemplateResults";
 
 import axios from "axios";
 
-
-
-const DashboardPage = () => { 
-  const navigate = useNavigate()
+const DashboardPage = () => {
+  const navigate = useNavigate();
   const [inputMethod, setInputMethod] = useState(null);
   const [templates, setTemplates] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -50,7 +48,8 @@ const DashboardPage = () => {
     setIsLoading(true);
     setCurrentPrompt(prompt);
 
-    try { // This should return a data object with keys allTemplates, templatesOrderedBySection, suggestedOrder and matchedConditions object
+    try {
+      // This should return a data object with keys allTemplates, templatesOrderedBySection, suggestedOrder and matchedConditions object
       const response = await axios.post(
         `${
           import.meta.env.VITE_TO_SERVER_API_URL
@@ -59,17 +58,14 @@ const DashboardPage = () => {
       );
 
       // from the response data - Extract templatesOrderedBySection alone
-      const templatesInOrder =
-        response.data.data.templatesOrderedBySection;
+      const templatesInOrder = response.data.data.templatesOrderedBySection;
 
       // console.log('These are the templates in order:', templatesInOrder);
 
       // /preview route renders TemplatePreview Component
       navigate("/preview", {
-        state: { templatesOrderedBySection: templatesInOrder }
+        state: { templatesOrderedBySection: templatesInOrder },
       });
-
-
     } catch (error) {
       console.error("Error:", error.message);
       alert("Failed to generate templates.");
@@ -79,102 +75,111 @@ const DashboardPage = () => {
   };
 
   // Logic for rendering the right panel of the layout
+
   const renderRightPanel = () => {
-    if (isLoading) {
-      return (
-        <div className={styles.loadingSpinner}>
-          <div className={styles.spinner}></div>
-          <p>Generating your template...</p>
+    return (
+      <div className={styles.rightPanelWrapper}>
+        {/* Top Bar */}
+        <div className={styles.topBarTitle}>
+          <h4>BuildBot V 0.1</h4>
         </div>
-      );
-    }
-    // change the state of activeView (rightpanel) as per the cases.
-    switch (activeView) {
-      case "home":
-        if (!inputMethod) {
-          return (
-            <InputMethodSelector onMethodSelect={handlePromptOrQuestionnaire} />
-          );
-        }
-        if (inputMethod === "prompt") {
-          // return <PromptInput onSubmit={handlePromptSubmit} />;
-          return <PromptInput onSubmit={handlePromptSubmit} />;;
-        }
-        if (inputMethod === "questionnaire") {
-          return <Questionnaire onSubmit={handlePromptSubmit} />;
-        }
-        return null;
 
-      case "allTemplates":  //when activeView state is set to allTemplates
-        return (
-          <div>
-            <h2>All Templates (Coming Soon)</h2>
-          </div>
-        );
-
-      case "addTemplate":  //when activeView state is set to addTemplate
-        if (!hasReset) {
-          resetEverything();
-          setHasReset(true);
-        }
-        return <CreateTemplate />;
-
-      case "fetchtemplate": //when activeView state is set to fecthTemplate
-        if (!hasReset) {
-          resetEverything();
-          setHasReset(true);
-        }
-        return (
-          <FetchTemplateDisplay
-            onPreview={(url, template) => {
-              //passing the onPreview function to the child component, to be called there
-              setPreviewUrl(url);
-              setSelectedTemplate(template);
-              setActiveView("templatePreview"); // Switch view to preview
-            }}
-          />
-        );
-
-      case "templatePreview": //preview the template in an iframe - when activeView state is set to templatePreview
-        return (
-          <div className="">
-            <div
-              className="iframe-container"
-              style={{ height: "100vh", border: "1px solid #ccc", marginTop:"0"}}
-            >
-              <iframe
-                src={previewUrl}
-                title="Elementor Preview"
-                sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
-                referrerPolicy="no-referrer"
-                allow="fullscreen"
-                style={{
-                  width: "100%",
-                  height: "100vh",
-                  border: "none",
-                  // Hide scrollbar for Webkit browsers (Chrome, Edge, Safari)
-                  scrollbarWidth: "none !important",
-                  msOverflowStyle: "none",
-                  overflow: "auto",
-                }}
-              />
+        {/* Main Content Area */}
+        <div className={styles.rightPanelContent}>
+          {/* logic for rendering different views */}
+          {isLoading ? (
+            <div className={styles.loadingSpinner}>
+              <div className={styles.spinner}></div>
+              <p>Generating your template...</p>
             </div>
+          ) : (
+            (() => {
+              switch (activeView) {
+                case "home":
+                  if (!inputMethod) {
+                    return (
+                      <InputMethodSelector
+                        onMethodSelect={handlePromptOrQuestionnaire}
+                      />
+                    );
+                  }
+                  if (inputMethod === "prompt") {
+                    return <PromptInput onSubmit={handlePromptSubmit} />;
+                  }
+                  if (inputMethod === "questionnaire") {
+                    return <Questionnaire onSubmit={handlePromptSubmit} />;
+                  }
+                  return null;
 
-            <div className="preview-actions">
-              <a href={previewUrl} target="_blank" rel="noopener noreferrer">
-                Open in new tab
-              </a>
-            </div>
-          </div>
-        );
-  
-      default:
-        return (
-          <div>
-            <p>Unknown view</p>
-          </div>
-        );
-    }
+                case "allTemplates":
+                  return <h2>All Templates (Coming Soon)</h2>;
+
+                case "addTemplate":
+                  if (!hasReset) {
+                    resetEverything();
+                    setHasReset(true);
+                  }
+                  return <CreateTemplate />;
+
+                case "fetchtemplate":
+                  if (!hasReset) {
+                    resetEverything();
+                    setHasReset(true);
+                  }
+                  return (
+                    <FetchTemplateDisplay
+                      onPreview={(url, template) => {
+                        setPreviewUrl(url);
+                        setSelectedTemplate(template);
+                        setActiveView("templatePreview");
+                      }}
+                    />
+                  );
+
+                case "templatePreview":
+                  return (
+                    <div>
+                      <div
+                        className="iframe-container"
+                        style={{ height: "100vh", border: "1px solid #ccc" }}
+                      >
+                        <iframe
+                          src={previewUrl}
+                          title="Elementor Preview"
+                          sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
+                          referrerPolicy="no-referrer"
+                          allow="fullscreen"
+                          style={{
+                            width: "100%",
+                            height: "100vh",
+                            border: "none",
+                            scrollbarWidth: "none !important",
+                            msOverflowStyle: "none",
+                            overflow: "auto",
+                          }}
+                        />
+                      </div>
+
+                      <div className="preview-actions">
+                        <a
+                          href={previewUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Open in new tab
+                        </a>
+                      </div>
+                    </div>
+                  );
+
+                default:
+                  return <p>Unknown view</p>;
+              }
+            })()
+          )}
+        </div>
+      </div>
+    );
   };
 
   const leftPanelContent = (

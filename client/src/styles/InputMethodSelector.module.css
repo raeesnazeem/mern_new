@@ -1,48 +1,76 @@
-.methodSelector {
-    max-width: 800px;
-    margin: 0 auto;
-  }
-  
-  .methodSelector h2 {
-    font-size: 20px;
-    font-weight: 600;
-    margin-bottom: 24px;
-    color: #37352f;
-    margin-top:-220px;
-  }
-  
-  .buttons {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-  }
-  
-  .methodButton {
-    padding: 12px 24px;
-    border-radius: 6px;
-    border: 1px solid #e0e0e0;
-    background-color: #37352f;
-    color: white;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    min-width: 180px;
-  }
-  
-  .methodButton:hover {
-    background-color: #f7f6f3;
-    border-color: #d0d0d0;
-    color: #37352f;
-  }
-  
-  .methodButton:active {
-    background-color: #f0efec;
-  }
-
-  .methodSelectorWrapper{
-  min-height: 100vh; /* or a fixed height */
+.methodSelectorWrapper {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  }
+  background-color: white;
+  border-radius: 50px !important;
+  overflow: hidden;
+  position: relative;
+  width: 90%;
+  max-width: 800px;
+  margin: auto;
+  margin-top:-200px;
+}
+
+/* Top Bar */
+.topBar {
+  height: 100px;
+  width: 100%;
+  background: linear-gradient(135deg, #ffffff, #f8f9fa);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 32px;
+  box-sizing: border-box;
+}
+
+.topBarTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #37352f;
+  margin: 0;
+}
+
+.methodSelector {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.methodSelector h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  color: #37352f;
+}
+
+.buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.methodButton {
+  padding: 12px 24px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  background-color: #37352f;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 180px;
+}
+
+.methodButton:hover {
+  background-color: #f7f6f3;
+  border-color: #d0d0d0;
+  color: #37352f;
+}
+
+.methodButton:active {
+  background-color: #f0efec;
+}
