@@ -530,6 +530,7 @@ const TemplatePreviewPage = () => {
       {originalJsonProcessed && (
         <button
           onClick={handleEditColorsClick}
+          className="editColorsButton"
           style={{
             marginTop: "10px",
             display: "block",
@@ -553,6 +554,7 @@ const TemplatePreviewPage = () => {
 
       {/* Back to Dashboard Button */}
       <button
+      className="backToDashboard"
         onClick={() => navigate("/")}
         style={{
           marginTop: "10px",

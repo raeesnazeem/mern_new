@@ -11,7 +11,7 @@
   padding: 0;
   margin: 0.25px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  margin-top:-15px;
+  margin-top: -15px;
   height: 100vh;
   border-radius: 30px !important;
 }
@@ -20,16 +20,16 @@
   display: none !important;
 }
 
-.topBarTitle{
+.topBarTitle {
   background: transparent;
-  margin-top:20px;
+  margin-top: 20px;
 }
 
-.topBarTitle h4{
+.topBarTitle h4 {
   font-size: 14px;
-  line-height:30px;
-  font-weight:500;
-  padding-left:32px;
+  line-height: 30px;
+  font-weight: 500;
+  padding-left: 32px;
   padding-top: 20px;
   opacity: 0.8;
 }
@@ -176,4 +176,224 @@
   .dashboardoptions {
     list-style: none;
   }
+}
+
+
+
+/* Sidebar base styles */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1rem;
+  border-left: 1px solid #eaeaea;
+  transition: width 0.3s ease-in-out;
+  position: relative;
+  width: 250px;
+  border-radius: 16px;
+
+}
+
+
+.sidebar.collapsed {
+  width: 60px;
+  padding: 0.5rem 0;
+}
+
+.sidebar .sidebarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.sidebar .sidebarHeader h3 {
+  font-size: 1rem;
+  color: #333;
+  margin: 0;
+}
+
+.sidebar .toggleButton {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5rem;
+  color: #666;
+  transition: color 0.2s ease-in-out;
+  outline: none;
+  padding: 0.75rem 1.25rem;
+}
+
+.sidebar .toggleButton:hover {
+  color: #92C0B199;
+  outline: none;
+}
+
+.sidebarMenu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+
+
+.sidebarItem {
+  width: 100%;
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #333;
+  transition: background 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+  outline: none;
+}
+
+.sidebarItem:hover,
+.sidebarItem:focus,
+.sidebarItem.active {
+  background-color: rgb(147, 191, 178, 0.15);
+  outline: none;
+}
+
+.sidebarItem .icon {
+  font-size: 1.1rem;
+  outline: none;
+}
+
+.sidebarItem span.icon {
+  min-width: 1.2rem;
+
+}
+
+.sidebarItem span {
+  white-space: nowrap;
+}
+
+/* Tooltip for collapsed state */
+.sidebar.collapsed .sidebarItem[title]::after {
+  content: attr(title);
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: #333;
+  color: #fff;
+  padding: 4px 8px;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+  outline: none;
+}
+
+.sidebar.collapsed button.sidebarItem {
+  border-radius: 0px !important;
+}
+
+.sidebar.collapsed .sidebarItem:hover::after {
+  opacity: 1;
+  border-radius: 0px;
+}
+
+/* Footer section */
+.sidebarFooter {
+  padding-top: 1rem;
+  border-top: 1px solid #eaeaea;
+  margin-top: auto;
+}
+
+.sidebarFooter h4 {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0 0 0.25rem 0;
+}
+
+.sidebarFooter p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.adminSection {
+  padding: 0.5rem 1rem;
+}
+
+.adminToggleContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  color: #333;
+}
+
+/* Toggle Switch Styles */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 20px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked+.slider {
+  background-color: #007bff;
+}
+
+input:checked+.slider:before {
+  transform: translateX(20px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+.divider {
+  margin: 0.5rem 1rem;
+  border: none;
+  border-top: 1px solid #ddd;
 }

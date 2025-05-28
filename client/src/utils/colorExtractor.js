@@ -1,4 +1,4 @@
-// List of keys that typically hold color values in your Elementor-like JSON
+// List of keys that typically hold color values in Elementor-like JSON
 const COLOR_KEYS = [
   'background_color',
   'background_color_b', // For gradients

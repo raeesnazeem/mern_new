@@ -366,7 +366,7 @@ const templateController = {
         
         // This is a simplified example - actual implementation would need to 
         // traverse the Elementor JSON structure and update color values
-        // based on your specific Elementor template structure
+        // based on specific Elementor template structure
         
         // Example: Replace primary color
         const jsonString = JSON.stringify(processedJson);

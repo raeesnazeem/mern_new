@@ -1,6 +1,8 @@
 import { createBrowserRouter } from "react-router-dom";
-import DashboardPage from "./pages/DashboardPage"; // Path to your SIMPLIFIED DashboardPage.jsx
+import DashboardPage from "./pages/DashboardPage";
 import TemplatePreviewPage from "./pages/TemplatePreviewPage";
+import FrameBuilder from "./pages/FrameBuilderPage";
+
 
 const router = createBrowserRouter([
   {
@@ -10,6 +12,10 @@ const router = createBrowserRouter([
   {
     path: "/preview",
     element: <TemplatePreviewPage />,
+  },
+  {
+    path: "/frame-builder",
+    element: <FrameBuilder />
   },
 ]);
 

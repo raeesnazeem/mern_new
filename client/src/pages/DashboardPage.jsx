@@ -6,10 +6,20 @@ import CreateTemplate from "../components/CreateTemplate";
 import PromptInput from "../components/PromptInput";
 import Questionnaire from "../components/Questionnaire";
 import TopBar from "../components/TopBar";
+import {
+  FiPlus,
+  FiLayers,
+  FiGrid,
+  FiLayout,
+  FiCopy,
+  FiFolderPlus,
+} from "react-icons/fi";
+import AddSectionForm from "../components/AddSectionForm";
 
 import styles from "../styles/DashboardPage.module.css";
 import FetchTemplateDisplay from "../components/FetchDisplay";
 import ProcessTemplateResults from "../components/ProcessTemplateResults";
+import "../styles/AddSectionForm.module.css";
 
 import axios from "axios";
 
@@ -27,6 +37,8 @@ const DashboardPage = () => {
   const [matchedConditions, setMatchedConditions] = useState(null);
   const [templatesOrderedBySection, setTemplatesOrderedBySection] =
     useState(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // reset function
   const resetEverything = () => {
@@ -35,6 +47,11 @@ const DashboardPage = () => {
     setIsLoading(false);
     setCurrentPrompt("");
     setWebpageId(null);
+  };
+
+  // to toggle left collapsible bar
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
   };
 
   // To select which input method (prompt box or questionnaire)
@@ -81,7 +98,7 @@ const DashboardPage = () => {
       <div className={styles.rightPanelWrapper}>
         {/* Top Bar */}
         <div className={styles.topBarTitle}>
-          <h4>BuildBot V 0.1</h4>
+          <h4>G99-BuildBot-1.0.1</h4>
         </div>
 
         {/* Main Content Area */}
@@ -172,6 +189,9 @@ const DashboardPage = () => {
                     </div>
                   );
 
+                case "addSectionForm":
+                  return <AddSectionForm />;
+
                 default:
                   return <p>Unknown view</p>;
               }
@@ -182,45 +202,126 @@ const DashboardPage = () => {
     );
   };
 
-  const leftPanelContent = (
-    <div className={styles.leftPanelContent}>
-      <h3>Actions</h3>
-      <ul className={styles.menuList}>
-        <li className={styles.dashboardoptions}>
-          <button onClick={() => setActiveView("addTemplate")}>
-            Add New Template(s)
-          </button>
-        </li>
-        <li className={styles.dashboardoptions}>
-          <button onClick={() => setActiveView("home")}>
-            Generate Template
-          </button>
-        </li>
-        <li className={styles.dashboardoptions}>
-          <button onClick={() => setActiveView("fetchtemplate")}>
-            See Template(s)
-          </button>
-        </li>
-        <li className={styles.dashboardoptions}>
+const leftPanelContent = (
+  <div className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ""}`}>
+    {/* Sidebar Header */}
+    <div className={styles.sidebarHeader}>
+      {!isCollapsed && <h3>Actions</h3>}
+      <button className={styles.toggleButton} onClick={toggleSidebar}>
+        <FiLayout />
+      </button>
+    </div>
+
+    {/* Flex container for content + admin */}
+    <div className={styles.sidebarBody}>
+      {/* Main Menu Items */}
+      <ul className={styles.sidebarMenu}>
+        {/* Generate Template */}
+        <li>
           <button
+            className={`${styles.sidebarItem} ${
+              activeView === "home" ? styles.active : ""
+            }`}
             onClick={() => {
               resetEverything();
               setActiveView("home");
             }}
+            title={isCollapsed ? "Generate Template" : ""}
           >
-            Reload
+            <span className={styles.icon}>
+              <FiLayers />
+            </span>
+            {!isCollapsed && <span>Generate Template</span>}
+          </button>
+        </li>
+
+
+        {/* Frame Builder */}
+        <li>
+          <button
+            className={styles.sidebarItem}
+            onClick={() => navigate("/frame-builder")}
+          >
+            <span className={styles.icon}>
+              <FiCopy />
+            </span>
+            {!isCollapsed && <span>Frame Builder</span>}
           </button>
         </li>
       </ul>
 
-      {templates.length > 0 && (
-        <div className={styles.currentInfo}>
-          <h3>Current Page</h3>
-          <p>ID: {webpageId || "Not generated"}</p>
+      {/* Bottom Section: Admin Area */}
+      <div className={styles.sidebarFooterSection}>
+        <hr className={styles.divider} />
+
+        {/* Admin Toggle */}
+        <div className={styles.adminSection}>
+          <div className={styles.adminToggleContainer}>
+            {!isCollapsed && <span>Admin</span>}
+            <label className={styles.switch}>
+              <input
+                type="checkbox"
+                checked={isAdmin}
+                onChange={(e) => setIsAdmin(e.target.checked)}
+              />
+              <span className={styles.slider}></span>
+            </label>
+          </div>
         </div>
-      )}
+
+        {/* Conditional Admin Actions */}
+        {isAdmin && (
+          <ul className={styles.sidebarMenu}>
+            {/* Add New Template */}
+            <li>
+              <button
+                className={`${styles.sidebarItem} ${
+                  activeView === "addTemplate" ? styles.active : ""
+                }`}
+                onClick={() => setActiveView("addTemplate")}
+                title={isCollapsed ? "Add New Template(s)" : ""}
+              >
+                <span className={styles.icon}>
+                  <FiPlus />
+                </span>
+                {!isCollapsed && <span>Add New Template(s)</span>}
+              </button>
+            </li>
+
+            {/* See Template(s) */}
+            <li>
+              <button
+                className={`${styles.sidebarItem} ${
+                  activeView === "fetchtemplate" ? styles.active : ""
+                }`}
+                onClick={() => setActiveView("fetchtemplate")}
+                title={isCollapsed ? "See Template(s)" : ""}
+              >
+                <span className={styles.icon}>
+                  <FiGrid />
+                </span>
+                {!isCollapsed && <span>See Template(s)</span>}
+              </button>
+            </li>
+
+            {/* Add Sections (Builder) */}
+            <li>
+              <button
+                className={styles.sidebarItem}
+                onClick={() => setActiveView("addSectionForm")}
+              >
+                <span className={styles.icon}>
+                  <FiFolderPlus />
+                </span>
+                {!isCollapsed && <span>Add Sections (Builder)</span>}
+              </button>
+            </li>
+          </ul>
+        )}
+      </div>
     </div>
-  );
+  </div>
+);
 
   return (
     <DashboardLayout

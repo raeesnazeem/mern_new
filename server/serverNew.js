@@ -7,6 +7,7 @@ const connectDB = require("./utils/db");
 
 const router = require("./router/authRouter");
 const tempRouter = require("./router/templateRouter");
+const frameBuilderRouter = require("./router/frameBuilderRouter");
 
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || "development"; // Default to 'development'
@@ -60,6 +61,7 @@ app.use(express.urlencoded({ extended: true, limit: "30mb" })); // Parse URL-enc
 // Routes
 app.use("/api/v1/auth", router);
 app.use("/api/v1/template", tempRouter);
+app.use("/api/v1/frame-builder", frameBuilderRouter); 
 
 // Health Check Endpoint
 app.get("/api/health", (req, res) => {

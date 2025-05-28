@@ -1,0 +1,17 @@
+.editColorsButton {
+    background-color: rgb(147, 191, 178, 0.15) !important;
+    border: 1px solid rgb(147, 191, 178, 0.15);
+
+}
+
+
+.editColorsButton:hover {
+    background-color: #fff;
+    outline: none;
+    border: 1px solid #333;
+}
+
+.backToDashboard {
+    background-color: #333;
+    color: #fff;
+}
