@@ -4,6 +4,8 @@
     align-items: center;
     padding: 20px 50px !important;
     background-color: #f9fafe !important;
+    width:100%;
+    max-width:100%;
   }
   
   .topBar h1 {

@@ -1,4 +1,5 @@
 import styles from '../styles/DashboardLayout.module.css';
+import TopBar from './TopBar';
 
 const DashboardLayout = ({ leftPanel, rightPanel, topBar, children }) => { // Add 'children' to destructuring
   return (
