@@ -8,7 +8,7 @@ const tempRouter = require('./router/templateRouter');
 const cors = require('cors');
 const connectDB = require('./utils/db');
 
-CORS Configuration
+//CORS Configuration
 const corsOptions = {
   origin: [
     process.env.SERVER_API_URL || 'http://localhost:5173',
