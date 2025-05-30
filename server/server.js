@@ -25,27 +25,27 @@ const allowedOrigins = [
   'https://g99buildbot.vercel.app'
 ].filter(Boolean);
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // allow non-browser requests (e.g., curl, Postman)
+// const corsOptions = {
+//   origin: function (origin, callback) {
+//     if (!origin) return callback(null, true); // allow non-browser requests (e.g., curl, Postman)
 
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.log(`CORS blocked for origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-};
+//     if (allowedOrigins.includes(origin)) {
+//       callback(null, true);
+//     } else {
+//       console.log(`CORS blocked for origin: ${origin}`);
+//       callback(new Error('Not allowed by CORS'));
+//     }
+//   },
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+//   credentials: true,
+// };
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'https://g99buildbot.vercel.app'
-];
+// const allowedOrigins = [
+//   'http://localhost:5173',
+//   'http://127.0.0.1:5173',
+//   'https://g99buildbot.vercel.app'
+// ];
 
 // const corsOptions = {
 //   origin: '*',
