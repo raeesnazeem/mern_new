@@ -90,7 +90,7 @@ const CreateTemplate = ({ onSuccess }) => {
         onSuccess();
       }
 
-      console.log('Template created:', response.data);
+      // console.log('Template created:', response.data);
     } catch (error) {
       console.error('Error creating template:', error);
       

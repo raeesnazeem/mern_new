@@ -46,16 +46,20 @@ const transformTemplatesToWorkingFormat = (templatesBySectionType) => {
   const finalContentArray = [];
   // Define the order in which section types should appear on the page.
   // For each type, ONE template variation will be randomly selected if multiple exist.
-  const sectionOrder = [
-    "header",
-    "herospace",
-    "about",
-    "services",
-    "cta",
-    "testimonials",
-    "map",
-    "footer",
-  ];
+  // const sectionOrder = [
+  //   "header",
+  //   "herospace",
+  //   "about",
+  //   "services",
+  //   "cta",
+  //   "testimonials",
+  //   "map",
+  //   "footer",
+  // ];
+
+  const sectionOrder = Object.keys(templatesBySectionType).filter(key =>
+  ["full template", "header", "about", "cta", "features", "testimonials", "contact", "footer", "faq", "map", "breadcrumbs", "services", "conditions", "gallery", "before and afters", "form", "blog", "cards", "meet the team", "social feed", "mission and vision", "herospace", "herospace slider"].includes(key.toLowerCase())
+);
 
   sectionOrder.forEach((sectionKey) => {
     const availableSectionsForType = templatesBySectionType?.[sectionKey];
@@ -125,7 +129,7 @@ const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
   }, [templatesOrderedBySection]);
 
   const sendToWordPress = async (rawTemplatesBySection) => {
-    console.log("sendToWordPress called with:", rawTemplatesBySection);
+    // console.log("sendToWordPress called with:", rawTemplatesBySection);
     setLoading(true);
     setShowLoader(true); // Show loader immediately
     setError(null);
@@ -157,10 +161,10 @@ const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
         json: fullJsonStructure,
       };
 
-      console.log(
-        "Sending to WordPress:",
-        JSON.stringify(requestData, null, 2)
-      );
+      // console.log(
+      //   "Sending to WordPress:",
+      //   JSON.stringify(requestData, null, 2)
+      // );
 
       const response = await axios.post(
         `${import.meta.env.VITE_WP_IMPORT_API_URL}`,
@@ -173,7 +177,7 @@ const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
         }
       );
 
-      console.log('returned data from wordpress api:', response.data)
+      // console.log('returned data from wordpress api:', response.data)
 
       if (!response.data?.public_url) {
         throw new Error(
@@ -182,14 +186,14 @@ const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
         );
       }
 
-      // Delay hiding the loader if less than 5s have passed
+      // Delay hiding the loader if less than 8s have passed
       const timer = setTimeout(() => {
         onPreview(response.data.public_url, {
           name: requestData.name,
           json: fullJsonStructure,
         });
         setShowLoader(false);
-      }, 5000);
+      }, 8000);
 
       return () => clearTimeout(timer);
     } catch (err) {
@@ -226,4 +230,4 @@ const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
   return null;
 };
 
-export default ProcessTemplateResults; // Assuming this is a default export
+export default ProcessTemplateResults; 

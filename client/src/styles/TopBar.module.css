@@ -1,10 +1,12 @@
 .topBar {
-    width:100vw;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 24px;
-    background-color: white;
+    padding: 20px 50px !important;
+    /* background-color: #f9fafe !important; */
+    background-color: #fcfcfc !important;
+    width:100%;
+    max-width:100%;
   }
   
   .topBar h1 {

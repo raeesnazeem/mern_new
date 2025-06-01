@@ -5,7 +5,6 @@ import logo from '../assets/growth99-black-logo.svg'
 const TopBar = () => {
   return (
     <div className={styles.topBar}>
-      <h1>BuildBot</h1>
       <div className="logoClass">
         <img src={logo} alt="Growth99 Logo" />
       </div>

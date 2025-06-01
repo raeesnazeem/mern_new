@@ -1,0 +1,32 @@
+.categorized-color-palette {
+  /* font-family: sans-serif; */
+  font-family: "Manrope", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  padding: 16px;
+}
+
+.palette-category {
+  margin-bottom: 10px;
+}
+
+.palette-category h4 {
+  margin-bottom: 8px;
+}
+
+.color-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.color-swatch {
+  width: 15px;
+  height: 15px;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.color-swatch:hover {
+  transform: scale(1.1);
+}

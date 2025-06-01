@@ -1,13 +1,18 @@
 .promptContainer {
-    max-width: 700px;
-    margin: 0 auto;
-  }
-  
+  max-width: 900px;
+  height: auto; /* Adjust as needed */
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Vertically center children inside */
+  height: 100vh; /* Or inherit from parent with height: 100% */
+  margin: 0 auto;
+}
   .promptContainer h2 {
-    font-size: 20px;
+    font-size: 28px;
     font-weight: 600;
     margin-bottom: 16px;
     color: #37352f;
+    margin-top:-400px;
   }
   
   .promptTextarea {
@@ -21,6 +26,8 @@
     resize: none;
     margin-bottom: 16px;
     transition: border 0.2s ease;
+    background-color: white;
+    color: #000;
   }
   
   .promptTextarea:focus {

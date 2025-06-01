@@ -1,0 +1,179 @@
+/* Main Layout */
+.three_layout {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+  width: 100vw;
+  background-color: #f9f9f9;
+  overflow-x: hidden;
+  font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Left Panel */
+.three_leftPanel {
+  width: 250px;
+  min-width: 250px;
+  background-color: #fff;
+  padding: 1rem;
+  overflow-y: auto;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  margin-left: 20px;
+  margin-right: 20px;
+  border-radius: 16px;
+   max-height:90vh;
+}
+
+/* Section List in Left Panel */
+.sectionList {
+  list-style: none;
+  padding: 0;
+  margin-top: 1rem;
+}
+
+.sectionItem {
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.sectionItem:hover {
+  background-color: #e6e6eb;
+}
+
+/* Middle Panel (Screenshot Preview) */
+.three_middlePanel {
+  width: 300px;
+  min-width: 300px;
+  background-color: #fff;
+  padding: 1rem;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.04);
+  transition: transform 0.3s ease-in-out;
+  margin-right:20px;
+  border-radius: 16px;
+   max-height: 90vh !important;
+}
+
+/* animation slide-in effect */
+/* .three_middlePanel.show { */
+
+/* } */
+
+/* Close Button inside middle panel */
+.middlePanelCloseButton {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  z-index: 1000;
+}
+
+.middlePanelCloseButton:hover {
+  color: #888;
+}
+
+/* Right Panel – Dynamic Width */
+.three_rightPanel {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  background-color: #fff;
+  transition: flex 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-right:20px;
+  border-radius: 16px;
+  height: 90vh !important;
+}
+
+.three_rightPanel::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Edge */
+}
+
+/* Reduce width slightly when middle panel is visible */
+.hasMiddle .three_rightPanel {
+  flex: 1;
+  min-width: 0;
+}
+
+
+
+.three_middlePanel img {
+  max-width: 250px;
+  height: auto;
+}
+
+.three_rightPanel img {
+  max-width: 709px;
+  height: auto;
+}
+
+.selectedStack,
+.selectedStack>div {
+  display: flex;
+}
+
+.selectedStack {
+  flex-direction: column;
+  max-height: calc(100vh - 60px) !important;
+  overflow-y: scroll;
+  -ms-overflow-style: none;
+  /* Internet Explorer 10+ */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.selectedStack::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Edge */
+}
+
+.selectedStack button {
+  height: 20px;
+  max-height: 50px;
+  align-self: center;
+  background-color: transparent;
+  transition: 0.5s linear ease-in-out;
+  border: 0px;
+  
+}
+
+.selectedStack button:focus{
+   outline:none !important;
+   border: 0px;
+}
+
+.selectedStack button:hover {
+  transform: scale(1.2);
+  outline: none;
+  border: 0px;
+}
+
+/* Reorder Controls */
+.reorderControls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 1rem;
+}
+
+.reorderButton {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.reorderButton:hover {
+  color: #888;
+}

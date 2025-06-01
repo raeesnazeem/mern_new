@@ -1,17 +1,17 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import styles from '../styles/PromptInput.module.css'
 
-const PromptInput = ({ onSubmit }) => {
+const PromptInput = ({ promptRead }) => {
   const [prompt, setPrompt] = useState('')
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSubmit(prompt)
+    promptRead(prompt)
   };
 
   return (
     <div className={styles.promptContainer}>
-      <h2>Describe your website</h2>
+      <h2 style={{display:"flex", justifyContent:"start"}}>Describe your website</h2>
       <form onSubmit={handleSubmit}>
         <textarea
           value={prompt}

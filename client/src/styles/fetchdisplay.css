@@ -75,8 +75,9 @@
     padding-bottom: 56.25%; /* 16:9 aspect ratio */
     height: 0;
     overflow: hidden;
-    border: 1px solid #ddd;
-    margin-top: 15px;
+    border-radius:16px;
+    /* background: #f9fafe; */
+    background: #f9fbfa;
   }
   
   .iframe-container iframe {
