@@ -1,12 +1,12 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import styles from '../styles/PromptInput.module.css'
 
-const PromptInput = ({ onSubmit }) => {
+const PromptInput = ({ promptRead }) => {
   const [prompt, setPrompt] = useState('')
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSubmit(prompt)
+    promptRead(prompt)
   };
 
   return (

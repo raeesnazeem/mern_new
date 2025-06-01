@@ -1,6 +1,7 @@
 /* Base styles for :root (only typographic/foundation styles) */
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* font-family: system-ui, Avenir, Helvetica, Arial, sans-serif; */
+  font-family: "Manrope", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   font-synthesis: none;

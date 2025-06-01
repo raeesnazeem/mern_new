@@ -13,6 +13,7 @@ import {
   FiLayout,
   FiCopy,
   FiFolderPlus,
+  FiBarChart,
 } from "react-icons/fi";
 import AddSectionForm from "../components/AddSectionForm";
 
@@ -66,7 +67,7 @@ const DashboardPage = () => {
     setCurrentPrompt(prompt);
 
     try {
-      // This should return a data object with keys allTemplates, templatesOrderedBySection, suggestedOrder and matchedConditions object
+      // This returns a data object with keys allTemplates, templatesOrderedBySection, suggestedOrder and matchedConditions object
       const response = await axios.post(
         `${
           import.meta.env.VITE_TO_SERVER_API_URL
@@ -74,12 +75,13 @@ const DashboardPage = () => {
         { prompt }
       );
 
+      console.log('The actual prompt:', prompt);
       // from the response data - Extract templatesOrderedBySection alone
       const templatesInOrder = response.data.data.templatesOrderedBySection;
 
-      // console.log('These are the templates in order:', templatesInOrder);
+      console.log('These are the templates in order:', templatesInOrder);
 
-      // /preview route renders TemplatePreview Component
+      //preview route renders TemplatePreview Component
       navigate("/preview", {
         state: { templatesOrderedBySection: templatesInOrder },
       });
@@ -121,7 +123,7 @@ const DashboardPage = () => {
                     );
                   }
                   if (inputMethod === "prompt") {
-                    return <PromptInput onSubmit={handlePromptSubmit} />;
+                    return <PromptInput promptRead={handlePromptSubmit} />;
                   }
                   if (inputMethod === "questionnaire") {
                     return <Questionnaire onSubmit={handlePromptSubmit} />;
@@ -246,6 +248,19 @@ const leftPanelContent = (
               <FiCopy />
             </span>
             {!isCollapsed && <span>Frame Builder</span>}
+          </button>
+        </li>
+
+         {/* BuildBlocks */}
+        <li>
+          <button
+            className={styles.sidebarItem}
+            onClick={() => navigate("/build-blocks")}
+          >
+            <span className={styles.icon}>
+              <FiBarChart />
+            </span>
+            {!isCollapsed && <span>Build Blocks</span>}
           </button>
         </li>
       </ul>

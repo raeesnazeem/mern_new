@@ -141,7 +141,7 @@ function categorizeColorInstances(colorInstances) {
 
   // Helper to check if a color is fully transparent white
   // Process all color instances
-  // Helper to check if a color is transparent or semi-transparent white
+  // Also to check if a color is transparent or semi-transparent white
   function isTransparentWhite(color) {
     color = color.trim().toLowerCase();
 
@@ -289,10 +289,10 @@ const TemplatePreviewPage = () => {
 
 
   useEffect(() => {
-    console.log(
-      "Effect for location.state - location.state exists:",
-      !!location.state
-    );
+    // console.log(
+    //   "Effect for location.state - location.state exists:",
+    //   !!location.state  //just checking if location.state is truthy
+    // );
     if (location.state && location.state.templatesOrderedBySection) {
       // console.log("Setting initialRawTemplates from location.state");
       setInitialRawTemplates(location.state.templatesOrderedBySection); // initial raw templates to be compared for change from colorpicker
@@ -311,10 +311,10 @@ const TemplatePreviewPage = () => {
   }, [location.state]);
 
   useEffect(() => {
-    console.log(
-      "Effect for color extraction - originalJsonProcessed changed:",
-      !!originalJsonProcessed
-    );
+    // console.log(
+    //   "Effect for color extraction - originalJsonProcessed changed:",
+    //   !!originalJsonProcessed
+    // );
     if (
       originalJsonProcessed &&
       originalJsonProcessed.json &&
@@ -346,10 +346,10 @@ const TemplatePreviewPage = () => {
 
       const categorizedColorInstances =
         categorizeColorInstances(extractedInstances);
-      console.log(
-        "extractedInstances which needs to be passed onto categorization",
-        extractedInstances
-      );
+      // console.log(
+      //   "extracted color Instances which needs to be passed onto categorization",
+      //   extractedInstances
+      // );
       setCategorizedColorInstances(categorizedColorInstances);
       console.log("categorized colors", categorizedColorInstances);
     } else {
@@ -644,10 +644,10 @@ const TemplatePreviewPage = () => {
       leftPanel={leftPanelContent}
       rightPanel={rightPanelDisplay}
     >
-      {console.log(
+      {/* {console.log(
         "categorizeColorInstances before passing onto ColorEditorOverlay:",
         categorizeColorInstances
-      )}
+      )} */}
       {/* Overlay components */}
       {originalJsonProcessed && categorizedColorInstances && (
         <ColorEditorOverlay

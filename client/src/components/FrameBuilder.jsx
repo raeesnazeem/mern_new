@@ -13,7 +13,11 @@ const FrameBuilder = () => {
   // Fetch screenshots grouped by sectionType
   useEffect(() => {
     axios
-      .get(`${import.meta.env.VITE_TO_SERVER_API_URL}/frame-builder/get-all-sections`)
+      .get(
+        `${
+          import.meta.env.VITE_TO_SERVER_API_URL
+        }/frame-builder/get-all-sections`
+      )
       .then((response) => {
         const data = response.data.data;
 
@@ -33,10 +37,31 @@ const FrameBuilder = () => {
       });
   }, []);
 
+  // Handle mouse enter in right panel - hide middle panel immediately
+useEffect(() => {
+  const rightPanelElement = rightPanelRef.current;
+
+  const handleMouseEnter = () => {
+    setHoveredSectionType(null); 
+  };
+
+  if (rightPanelElement) {
+    rightPanelElement.addEventListener("mouseenter", handleMouseEnter);
+  }
+
+  return () => {
+    if (rightPanelElement) {
+      rightPanelElement.removeEventListener("mouseenter", handleMouseEnter);
+    }
+  };
+}, [hoveredSectionType]);
+
   // Handle hover over section types on the left panel
   const handleSectionHover = (sectionType) => {
     setHoveredSectionType(sectionType);
   };
+
+  
 
   // Add selected image to right panel
   const handleAddScreenshot = (url) => {
@@ -47,6 +72,25 @@ const FrameBuilder = () => {
   // Remove image from right panel
   const handleRemoveScreenshot = (index) => {
     setSelectedScreenshots((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Handle reorder actions
+  const handleReorder = (index, direction) => {
+    if (direction === "up" && index > 0) {
+      // Swap with previous item
+      const updatedScreenshots = [...selectedScreenshots];
+      const temp = updatedScreenshots[index - 1];
+      updatedScreenshots[index - 1] = selectedScreenshots[index];
+      updatedScreenshots[index] = temp;
+      setSelectedScreenshots(updatedScreenshots);
+    } else if (direction === "down" && index < selectedScreenshots.length - 1) {
+      // Swap with next item
+      const updatedScreenshots = [...selectedScreenshots];
+      const temp = updatedScreenshots[index + 1];
+      updatedScreenshots[index + 1] = selectedScreenshots[index];
+      updatedScreenshots[index] = temp;
+      setSelectedScreenshots(updatedScreenshots);
+    }
   };
 
   // Derive unique section types
@@ -102,16 +146,37 @@ const FrameBuilder = () => {
   // Right Panel Content
   const rightPanelContent = (
     <div ref={rightPanelRef} className={styles.three_rightPanel}>
-      {!selectedScreenshots && <h2>Selected Screenshots</h2>}
       <div className={styles.selectedStack}>
         {selectedScreenshots.length > 0 ? (
           selectedScreenshots.map((url, index) => (
             <div key={index} className={styles.selectedItem}>
-              <img
-                src={url}
-                alt="Selected"
-                className={styles.selectedImage}
-              />
+              {/* Reorder controls */}
+              <div className={styles.reorderControls}>
+                {/* Up arrow */}
+                {index > 0 && (
+                  <button
+                    className={styles.reorderButton}
+                    onClick={() => handleReorder(index, "up")}
+                  >
+                    ↑
+                  </button>
+                )}
+
+                {/* Down arrow */}
+                {index < selectedScreenshots.length - 1 && (
+                  <button
+                    className={styles.reorderButton}
+                    onClick={() => handleReorder(index, "down")}
+                  >
+                    ↓
+                  </button>
+                )}
+              </div>
+
+              {/* Preview image */}
+              <img src={url} alt="Selected" className={styles.selectedImage} />
+
+              {/* Delete button */}
               <button
                 className={styles.deleteButton}
                 onClick={() => handleRemoveScreenshot(index)}
@@ -121,7 +186,10 @@ const FrameBuilder = () => {
             </div>
           ))
         ) : (
-          <p>No sections added yet.</p>
+          <div style={{textAlign:"center", display:"flex", flexDirection:"column"}}>
+            <h2>Start Building!!</h2>
+            <p>No sections added yet.</p>
+          </div>
         )}
       </div>
     </div>

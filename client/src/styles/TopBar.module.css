@@ -3,7 +3,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px 50px !important;
-    background-color: #f9fafe !important;
+    /* background-color: #f9fafe !important; */
+    background-color: #fcfcfc !important;
     width:100%;
     max-width:100%;
   }

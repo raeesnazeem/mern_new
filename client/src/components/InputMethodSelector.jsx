@@ -7,7 +7,7 @@ const InputMethodSelector = ({ onMethodSelect }) => {
         <h2>How would you like to create your template?</h2>
         <div className={styles.buttons}>
           <button
-            className={styles.methodButton}
+            className={styles.methodButton1}
             onClick={() => onMethodSelect("prompt")}
           >
             Enter a Prompt

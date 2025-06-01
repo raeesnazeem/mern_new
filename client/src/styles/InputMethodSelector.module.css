@@ -15,16 +15,16 @@
 }
 
 /* Top Bar */
-.topBar {
+/* .topBar {
   height: 100px;
   width: 100%;
-  background: linear-gradient(135deg, #ffffff, #f8f9fa);
+  background: #fcfcfc;
   display: flex;
   align-items: center;
   justify-content: flex-start;
   padding-left: 32px;
   box-sizing: border-box;
-}
+} */
 
 .topBarTitle {
   font-size: 1.5rem;
@@ -53,7 +53,8 @@
   justify-content: center;
 }
 
-.methodButton {
+.methodButton,
+.methodButton1 {
   padding: 12px 24px;
   border-radius: 6px;
   border: 1px solid #e0e0e0;
@@ -65,12 +66,18 @@
   min-width: 180px;
 }
 
-.methodButton:hover {
+.methodButton1{
+  background-color: #008188;
+}
+
+.methodButton:hover,
+.methodButton1:hover {
   background-color: #f7f6f3;
   border-color: #d0d0d0;
   color: #37352f;
 }
 
-.methodButton:active {
+.methodButton:active,
+.methodButton1:active {
   background-color: #f0efec;
 }

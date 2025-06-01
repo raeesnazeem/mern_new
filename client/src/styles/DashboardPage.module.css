@@ -1,12 +1,12 @@
 /* Main Layout Styles */
-.leftPanelContent {
+/* .leftPanelContent {
   padding: 16px;
   height: 100%;
   display: flex;
   flex-direction: column;
-}
+} */
 
-.rightPanel {
+/* .rightPanel {
   flex: 1;
   padding: 0;
   margin: 0.25px;
@@ -14,7 +14,9 @@
   margin-top: -15px;
   height: 100vh;
   border-radius: 30px !important;
-}
+  display: none !important;
+
+} */
 
 .rightPanelContent::-webkit-scrollbar {
   display: none !important;
@@ -191,7 +193,13 @@
   position: relative;
   width: 250px;
   border-radius: 16px;
+  box-shadow: rgba(0, 30, 43, 0.3) 0px 4px 10px -4px;
 
+
+}
+
+.sidebar svg{
+  color: teal;
 }
 
 
@@ -199,6 +207,8 @@
   width: 60px;
   padding: 0.5rem 0;
 }
+
+
 
 .sidebar .sidebarHeader {
   display: flex;
@@ -210,8 +220,12 @@
 
 .sidebar .sidebarHeader h3 {
   font-size: 1rem;
-  color: #333;
+  color: teal;
   margin: 0;
+  color: #008188;
+  font-size: 14px;
+  line-height: 20px;
+  text-transform: uppercase;
 }
 
 .sidebar .toggleButton {
@@ -249,8 +263,10 @@
   padding: 0.75rem 1.25rem;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 0.95rem;
-  color: #333;
+  font-size: 13px;
+  line-height: 20px;
+  color: rgb(0,30,43);
+  font-weight: 400;
   transition: background 0.2s ease-in-out;
   display: flex;
   align-items: center;
@@ -259,10 +275,20 @@
   outline: none;
 }
 
-.sidebarItem:hover,
+.sidebarItem:hover{
+  background-color: rgb(232, 237, 235);
+  color: rgb(0,30,43);
+  outline:none;
+}
+
+
 .sidebarItem:focus,
 .sidebarItem.active {
-  background-color: rgb(147, 191, 178, 0.15);
+  /* background-color: rgb(147, 191, 178, 0.15); */
+  background-color: #B6FFF6;
+  background-color: #E0F2F1	;
+  color: teal;
+  font-weight: bold;
   outline: none;
 }
 
@@ -335,7 +361,11 @@
   justify-content: space-between;
   align-items: center;
   font-weight: bold;
-  color: #333;
+  color: #008188;
+  font-size: 14px;
+  line-height: 20px;
+  text-transform: uppercase;
+
 }
 
 /* Toggle Switch Styles */
@@ -355,13 +385,14 @@
 .slider {
   position: absolute;
   cursor: pointer;
-  top: 0;
+  top: 5px;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: -5px;
   background-color: #ccc;
   transition: .4s;
   border-radius: 34px;
+
 }
 
 .slider:before {
@@ -377,7 +408,8 @@
 }
 
 input:checked+.slider {
-  background-color: #007bff;
+  /* background-color: rgb(147, 191, 178, 0.3); */
+  background-color: #B2DFDB;
 }
 
 input:checked+.slider:before {
@@ -396,4 +428,9 @@ input:checked+.slider:before {
   margin: 0.5rem 1rem;
   border: none;
   border-top: 1px solid #ddd;
+}
+
+*{
+  /* font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; */
+  font-family: "Manrope", "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
 }

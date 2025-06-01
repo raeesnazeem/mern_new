@@ -5,7 +5,8 @@
   justify-content: center;
   min-height: 100vh;
   background-color: white;
-  font-family: 'Segoe UI', sans-serif;
+  /* font-family: 'Segoe UI', sans-serif; */
+  font-family: "Manrope", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color: #333;
   border-radius: 40px;
   overflow: hidden;

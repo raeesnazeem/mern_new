@@ -76,7 +76,8 @@
     height: 0;
     overflow: hidden;
     border-radius:16px;
-    background: #f9fafe
+    /* background: #f9fafe; */
+    background: #f9fbfa;
   }
   
   .iframe-container iframe {

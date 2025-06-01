@@ -46,16 +46,20 @@ const transformTemplatesToWorkingFormat = (templatesBySectionType) => {
   const finalContentArray = [];
   // Define the order in which section types should appear on the page.
   // For each type, ONE template variation will be randomly selected if multiple exist.
-  const sectionOrder = [
-    "header",
-    "herospace",
-    "about",
-    "services",
-    "cta",
-    "testimonials",
-    "map",
-    "footer",
-  ];
+  // const sectionOrder = [
+  //   "header",
+  //   "herospace",
+  //   "about",
+  //   "services",
+  //   "cta",
+  //   "testimonials",
+  //   "map",
+  //   "footer",
+  // ];
+
+  const sectionOrder = Object.keys(templatesBySectionType).filter(key =>
+  ["full template", "header", "about", "cta", "features", "testimonials", "contact", "footer", "faq", "map", "breadcrumbs", "services", "conditions", "gallery", "before and afters", "form", "blog", "cards", "meet the team", "social feed", "mission and vision", "herospace", "herospace slider"].includes(key.toLowerCase())
+);
 
   sectionOrder.forEach((sectionKey) => {
     const availableSectionsForType = templatesBySectionType?.[sectionKey];

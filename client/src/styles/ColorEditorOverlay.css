@@ -10,7 +10,8 @@
   padding: 15px;
   z-index: 1000;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-  font-family: sans-serif;
+  /* font-family: sans-serif; */
+  font-family: "Manrope", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 .overlay-header {

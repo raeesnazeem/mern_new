@@ -6,6 +6,7 @@
   width: 100vw;
   background-color: #f9f9f9;
   overflow-x: hidden;
+  font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 /* Left Panel */
@@ -155,4 +156,24 @@
   transform: scale(1.2);
   outline: none;
   border: 0px;
+}
+
+/* Reorder Controls */
+.reorderControls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 1rem;
+}
+
+.reorderButton {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.reorderButton:hover {
+  color: #888;
 }
