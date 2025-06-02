@@ -42,26 +42,119 @@ function normalizeImageData(data) {
 }
 
 // 2 - helper function
-const transformTemplatesToWorkingFormat = (templatesBySectionType) => {
+// const transformTemplatesToWorkingFormat = (templatesBySectionType) => {
+//   const finalContentArray = [];
+//   // Define the order in which section types should appear on the page.
+//   // For each type, ONE template variation will be randomly selected if multiple exist.
+//   // const sectionOrder = [
+//   //   "header",
+//   //   "herospace",
+//   //   "about",
+//   //   "services",
+//   //   "cta",
+//   //   "testimonials",
+//   //   "map",
+//   //   "footer",
+//   // ];
+
+//   const sectionOrder = Object.keys(templatesBySectionType).filter(key =>
+//   ["full template", "header", "about", "cta", "features", "testimonials", "contact", "footer", "faq", "map", "breadcrumbs", "services", "conditions", "gallery", "before and afters", "form", "blog", "cards", "meet the team", "social feed", "mission and vision", "herospace", "herospace slider"].includes(key.toLowerCase())
+// );
+
+//   sectionOrder.forEach((sectionKey) => {
+//     const availableSectionsForType = templatesBySectionType?.[sectionKey];
+
+//     if (
+//       availableSectionsForType &&
+//       Array.isArray(availableSectionsForType) &&
+//       availableSectionsForType.length > 0
+//     ) {
+//       // If there are one or more sections for this type, randomly pick one.
+//       const randomIndex = Math.floor(
+//         Math.random() * availableSectionsForType.length
+//       );
+//       const chosenSectionObject = availableSectionsForType[randomIndex];
+
+//       // Check if the chosen section object and its json.content are valid
+//       if (
+//         chosenSectionObject &&
+//         chosenSectionObject.json &&
+//         Array.isArray(chosenSectionObject.json.content)
+//       ) {
+//         // BEFORE pushing, normalize the image data within this section's content
+//         const normalizedSectionContent = normalizeImageData(
+//           chosenSectionObject.json.content
+//         );
+//         finalContentArray.push(...normalizedSectionContent);
+//       } else {
+//         console.warn(
+//           `The randomly chosen section for '${sectionKey}' is missing or has invalid 'json.content'. Chosen object:`,
+//           chosenSectionObject
+//         );
+//       }
+//     } else if (
+//       templatesBySectionType &&
+//       Object.prototype.hasOwnProperty.call(templatesBySectionType, sectionKey)
+//     ) {
+//       // This condition means the key exists, but it's not a non-empty array.
+//       console.warn(
+//         `No usable sections found for section type '${sectionKey}'. Expected a non-empty array, but found:`,
+//         availableSectionsForType
+//       );
+//     }
+//     // If templatesBySectionType[sectionKey] does not exist, it's silently skipped.
+//   });
+
+//   return finalContentArray;
+// };
+
+const transformTemplatesToWorkingFormat = (
+  templatesBySectionType,
+  suggestedOrder
+) => {
+  // <-- ACCEPT suggestedOrder
   const finalContentArray = [];
-  // Define the order in which section types should appear on the page.
-  // For each type, ONE template variation will be randomly selected if multiple exist.
-  // const sectionOrder = [
-  //   "header",
-  //   "herospace",
-  //   "about",
-  //   "services",
-  //   "cta",
-  //   "testimonials",
-  //   "map",
-  //   "footer",
-  // ];
+  let sectionOrderToUse; // Renamed from sectionOrder for clarity
 
-  const sectionOrder = Object.keys(templatesBySectionType).filter(key =>
-  ["full template", "header", "about", "cta", "features", "testimonials", "contact", "footer", "faq", "map", "breadcrumbs", "services", "conditions", "gallery", "before and afters", "form", "blog", "cards", "meet the team", "social feed", "mission and vision", "herospace", "herospace slider"].includes(key.toLowerCase())
-);
+  // USE THE PROVIDED suggestedOrder IF AVAILABLE AND VALID
+  if (suggestedOrder && suggestedOrder.length > 0) {
+    sectionOrderToUse = suggestedOrder;
+  } else {
+    // FALLBACK TO ORIGINAL LOGIC IF suggestedOrder IS NOT PROVIDED
+    console.warn(
+      "ProcessTemplateResults: suggestedOrder not provided or empty. Falling back to default internal order generation."
+    );
+    sectionOrderToUse = Object.keys(templatesBySectionType).filter((key) =>
+      [
+        "full template",
+        "header",
+        "about",
+        "cta",
+        "features",
+        "testimonials",
+        "contact",
+        "footer",
+        "faq",
+        "map",
+        "breadcrumbs",
+        "services",
+        "conditions",
+        "gallery",
+        "before and afters",
+        "form",
+        "blog",
+        "cards",
+        "meet the team",
+        "social feed",
+        "mission and vision",
+        "herospace",
+        "herospace slider",
+      ].includes(key.toLowerCase())
+    );
+  }
 
-  sectionOrder.forEach((sectionKey) => {
+  sectionOrderToUse.forEach((sectionKey) => {
+    // <-- USE sectionOrderToUse
     const availableSectionsForType = templatesBySectionType?.[sectionKey];
 
     if (
@@ -69,19 +162,16 @@ const transformTemplatesToWorkingFormat = (templatesBySectionType) => {
       Array.isArray(availableSectionsForType) &&
       availableSectionsForType.length > 0
     ) {
-      // If there are one or more sections for this type, randomly pick one.
       const randomIndex = Math.floor(
         Math.random() * availableSectionsForType.length
       );
       const chosenSectionObject = availableSectionsForType[randomIndex];
 
-      // Check if the chosen section object and its json.content are valid
       if (
         chosenSectionObject &&
         chosenSectionObject.json &&
         Array.isArray(chosenSectionObject.json.content)
       ) {
-        // BEFORE pushing, normalize the image data within this section's content
         const normalizedSectionContent = normalizeImageData(
           chosenSectionObject.json.content
         );
@@ -96,13 +186,12 @@ const transformTemplatesToWorkingFormat = (templatesBySectionType) => {
       templatesBySectionType &&
       Object.prototype.hasOwnProperty.call(templatesBySectionType, sectionKey)
     ) {
-      // This condition means the key exists, but it's not a non-empty array.
       console.warn(
         `No usable sections found for section type '${sectionKey}'. Expected a non-empty array, but found:`,
         availableSectionsForType
       );
     }
-    // If templatesBySectionType[sectionKey] does not exist, it's silently skipped.
+    // If sectionKey from suggestedOrder is not in templatesBySectionType, it will be skipped if templatesBySectionType?.[sectionKey] is undefined.
   });
 
   return finalContentArray;
@@ -113,36 +202,39 @@ const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
   const [showLoader, setShowLoader] = useState(false); // To control minimum display time
   const [error, setError] = useState(null);
 
+
   //make sure that the request is sent only once
   const hasSentRequest = useRef(false);
 
   // Start loading when templates are available
-  useEffect(() => {
-    // Only proceed if:
-    // - templates exist
-    // - request hasn't already been sent
-    // - we're not already loading
-    if (templatesOrderedBySection && !hasSentRequest.current && !loading) {
-      hasSentRequest.current = true; // Mark as called
-      sendToWordPress(templatesOrderedBySection);
+useEffect(() => {
+    // MODIFY CONDITION AND CALL TO sendToWordPress
+    if (templatesOrderedBySection && !hasSentRequest.current && !loading) { // suggestedOrderProp presence checked inside sendToWordPress or by transform function
+      hasSentRequest.current = true; 
+      sendToWordPress(templatesOrderedBySection, suggestedOrderProp); // <-- PASS suggestedOrderProp
     }
-  }, [templatesOrderedBySection]);
+  }, [templatesOrderedBySection, suggestedOrderProp, loading]); // <-- ADD suggestedOrderProp TO DEPENDENCY ARRAY
 
-  const sendToWordPress = async (rawTemplatesBySection) => {
-    // console.log("sendToWordPress called with:", rawTemplatesBySection);
+  // MODIFY sendToWordPress SIGNATURE
+  const sendToWordPress = async (rawTemplatesBySection, currentSuggestedOrder) => {
     setLoading(true);
-    setShowLoader(true); // Show loader immediately
+    setShowLoader(true); 
     setError(null);
 
     try {
       const username = `${import.meta.env.VITE_WP_USERNAME}`;
       const appPassword = `${import.meta.env.VITE_WP_PASS}`;
       const token = btoa(`${username}:${appPassword}`);
-      
+
+      // const transformedContent = transformTemplatesToWorkingFormat(
+      //   rawTemplatesBySection
+      // );
 
       const transformedContent = transformTemplatesToWorkingFormat(
-        rawTemplatesBySection
+        rawTemplatesBySection,
+        currentSuggestedOrder 
       );
+
 
       const fullJsonStructure = {
         content: transformedContent,
@@ -230,4 +322,4 @@ const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
   return null;
 };
 
-export default ProcessTemplateResults; 
+export default ProcessTemplateResults;

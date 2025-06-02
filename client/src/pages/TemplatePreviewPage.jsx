@@ -272,6 +272,7 @@ const TemplatePreviewPage = () => {
   const navigate = useNavigate();
   const iframeRef = useRef(null);
   const [initialRawTemplates, setInitialRawTemplates] = useState(null);
+  const [initialSuggestedOrder, setInitialSuggestedOrder] = useState([]);
   const [originalJsonProcessed, setOriginalJsonProcessed] = useState(null);
   const [allColorInstances, setAllColorInstances] = useState([]);
   const [displayPalette, setDisplayPalette] = useState([]);
@@ -286,7 +287,36 @@ const TemplatePreviewPage = () => {
   const [showApplyButton, setShowApplyButton] = useState(false);
   const [hasColorChanges, setHasColorChanges] = useState(false);
 
-
+  useEffect(() => {
+    if (location.state && location.state.templatesOrderedBySection) {
+      setInitialRawTemplates(location.state.templatesOrderedBySection);
+      // ADD THE FOLLOWING LINES FOR SUGGESTED ORDER
+      if (
+        location.state.suggestedOrder &&
+        Array.isArray(location.state.suggestedOrder)
+      ) {
+        setInitialSuggestedOrder(location.state.suggestedOrder);
+      } else {
+        console.warn(
+          "No suggestedOrder in location.state or it's not an array. Page might not use backend's logical order."
+        );
+        setInitialSuggestedOrder([]); // Default to empty if not found, ProcessTemplateResults will use its fallback
+      }
+      // END OF ADDED LINES
+      setShowIframe(false);
+      setOriginalJsonProcessed(null);
+      setAllColorInstances([]);
+      setDisplayPalette([]);
+      setIsPageLoading(false);
+    } else {
+      console.warn(
+        "No templatesOrderedBySection in location.state for PreviewPage."
+      );
+      setInitialRawTemplates(null);
+      setInitialSuggestedOrder([]); // <-- ADD THIS LINE (ensure it's reset if no state)
+      setIsPageLoading(false);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     // console.log(
@@ -554,7 +584,7 @@ const TemplatePreviewPage = () => {
 
       {/* Back to Dashboard Button */}
       <button
-      className="backToDashboard"
+        className="backToDashboard"
         onClick={() => navigate("/")}
         style={{
           marginTop: "10px",
@@ -622,10 +652,12 @@ const TemplatePreviewPage = () => {
         </div>
       </div>
     );
-  } else if (initialRawTemplates) {
+  } else if (initialRawTemplates && initialSuggestedOrder) {
+    // Check for initialSuggestedOrder too
     rightPanelDisplay = (
       <ProcessTemplateResults
         templatesOrderedBySection={initialRawTemplates}
+        suggestedOrderProp={initialSuggestedOrder} // <-- PASS THE SUGGESTED ORDER
         onPreview={handleWordPressPageGenerated}
       />
     );
