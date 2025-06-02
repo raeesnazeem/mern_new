@@ -78,12 +78,16 @@ const DashboardPage = () => {
       console.log('The actual prompt:', prompt);
       // from the response data - Extract templatesOrderedBySection alone
       const templatesInOrder = response.data.data.templatesOrderedBySection;
+      const orderForTemplates = response.data.data.suggestedOrder;
 
       console.log('These are the templates in order:', templatesInOrder);
 
       //preview route renders TemplatePreview Component
       navigate("/preview", {
-        state: { templatesOrderedBySection: templatesInOrder },
+          state: {
+          templatesOrderedBySection: templatesInOrder,
+          suggestedOrder: orderForTemplates 
+        },
       });
     } catch (error) {
       console.error("Error:", error.message);
