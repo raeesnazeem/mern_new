@@ -5,121 +5,13 @@ const templateController = {
   /* ----------------------------------------------------*
    * Process user prompt and find matching templates
    * ----------------------------------------------------*/
+
   // makeTemplatesByPrompt: async (req, res) => {
-  //   try {
-  //     const { prompt } = req.body
-
-  //     if (!prompt) {
-  //       return res.status(400).json({
-  //         success: false,
-  //         message: 'Prompt is required'
-  //       })
-  //     }
-
-  //     // Extract relevant data from prompt
-  //     const { styles, colors, sectionTypes, keywords } = analyzePrompt(prompt);
-
-  //     // Use first detected style from prompt or fallback to null
-  //     const finalStyle = styles?.[0] || []
-
-  //     // Use detected section types from prompt or fallback to null
-  //     const finalSectionTypes = sectionTypes || []
-
-  //     // Get first color from prompt (or empty string if none)
-  //     const promptColor = colors?.[0] || "";
-
-  //     // STEP 1: Try to find templates that match BOTH color AND style criteria
-  //     if (finalSectionTypes.length > 0 && finalStyle && promptColor) {
-  //       const colorAndStyleQuery = {
-  //         isActive: true,
-  //         sectionType: {
-  //           $in: finalSectionTypes.map(type => type.toLowerCase())
-  //         },
-  //         style: finalStyle.toLowerCase(),
-  //         tags: promptColor.toLowerCase()
-  //       };
-
-  //       // Find templates matching both color AND style
-  //       matchingTemplates = await Template.find(colorAndStyleQuery)
-  //         .sort({
-  //           popularity: -1,
-  //           updatedAt: -1
-  //         })
-  //         .limit(50);
-  //     }
-
-  //     // STEP 2: If no results, try with JUST the color and sectionTypes (ignoring style)
-  //     if (matchingTemplates.length === 0 && promptColor && finalSectionTypes.length > 0) {
-  //       const colorOnlyQuery = {
-  //         isActive: true,
-  //         sectionType: {
-  //           $in: finalSectionTypes.map(type => type.toLowerCase())
-  //         },
-  //         tags: promptColor.toLowerCase()
-  //       };
-
-  //       // Find templates matching color only
-  //       matchingTemplates = await Template.find(colorOnlyQuery)
-  //         .sort({
-  //           popularity: -1,
-  //           updatedAt: -1
-  //         })
-  //         .limit(50);
-  //     }
-
-  //     // STEP 3: If still no results, fall back to just sectionTypes
-  //     if (matchingTemplates.length === 0 && finalSectionTypes.length > 0) {
-  //       const sectionOnlyQuery = {
-  //         isActive: true,
-  //         sectionType: {
-  //           $in: finalSectionTypes.map(type => type.toLowerCase())
-  //         }
-  //       };
-
-  //       // Find templates matching sectionTypes only
-  //       matchingTemplates = await Template.find(sectionOnlyQuery)
-  //         .sort({
-  //           popularity: -1,
-  //           updatedAt: -1
-  //         })
-  //         .limit(50);
-  //     }
-
-  //     // Group templates by section and suggest an order
-  //     const templatesBySection = groupTemplatesBySection(matchingTemplates);
-
-  //     res.status(200).json({
-  //       success: true,
-  //       data: {
-  //         allTemplates: matchingTemplates,
-  //         templatesBySection,
-  //         suggestedOrder: suggestTemplateOrder(Object.keys(templatesBySection)),
-  //         matchedConditions: {
-  //           style: finalStyle,
-  //           color: promptColor,
-  //           sectionTypes: finalSectionTypes,
-  //           keywords
-  //         }
-  //       }
-  //     });
-
-  //   } catch (error) {
-  //     console.error('Error finding templates:', error)
-  //     res.status(500).json({
-  //       success: false,
-  //       message: 'Server error while processing template search',
-  //       error: error.message
-  //     })
-  //   }
-  // },
-
   makeTemplatesByPrompt: async (req, res) => {
     try {
       console.log("Request received - makeTemplatesByPrompt");
-
       const { prompt } = req.body;
       console.log("Prompt received:", prompt);
-
       if (!prompt) {
         console.warn(" No prompt provided in the request body");
         return res.status(400).json({
@@ -137,17 +29,9 @@ const templateController = {
         keywords,
       });
 
-      // Use first detected style from prompt or fallback to null
       const finalStyle = styles?.[0] || null;
-      console.log("Final style selected:", finalStyle);
-
-      // Use detected section types from prompt or fallback to empty array
       const finalSectionTypes = sectionTypes || [];
-      console.log("Final section types selected:", finalSectionTypes);
-
-      // Get first color from prompt (or empty string if none)
       const promptColor = colors?.[0] || "";
-      console.log("Final color selected:", promptColor);
 
       let matchingTemplates = [];
 
@@ -162,13 +46,10 @@ const templateController = {
           style: finalStyle.toLowerCase(),
           tags: promptColor.toLowerCase(),
         };
-
         console.log("QUERY (STEP 1):", colorAndStyleQuery);
-
         matchingTemplates = await Template.find(colorAndStyleQuery)
           .sort({ popularity: -1, updatedAt: -1 })
           .limit(50);
-
         console.log(`Found ${matchingTemplates.length} templates in STEP 1`);
       }
 
@@ -181,7 +62,6 @@ const templateController = {
         console.log(
           "STEP 2: Falling back to search by color and section types only"
         );
-
         const colorOnlyQuery = {
           isActive: true,
           sectionType: {
@@ -189,33 +69,26 @@ const templateController = {
           },
           tags: promptColor.toLowerCase(),
         };
-
         console.log("QUERY (STEP 2):", colorOnlyQuery);
-
         matchingTemplates = await Template.find(colorOnlyQuery)
           .sort({ popularity: -1, updatedAt: -1 })
           .limit(50);
-
         console.log(`✅ Found ${matchingTemplates.length} templates in STEP 2`);
       }
 
       // STEP 3: If still no results, fall back to just sectionTypes
       if (matchingTemplates.length === 0 && finalSectionTypes.length > 0) {
         console.log("STEP 3: Falling back to section types only");
-
         const sectionOnlyQuery = {
           isActive: true,
           sectionType: {
             $in: finalSectionTypes.map((type) => type.toLowerCase()),
           },
         };
-
         console.log("QUERY (STEP 3):", sectionOnlyQuery);
-
         matchingTemplates = await Template.find(sectionOnlyQuery)
           .sort({ popularity: -1, updatedAt: -1 })
           .limit(50);
-
         console.log(`Found ${matchingTemplates.length} templates in STEP 3`);
       }
 
@@ -224,14 +97,53 @@ const templateController = {
         console.log("No templates found after all steps.");
       }
 
+      /* ----------------------------------------------------*
+       * NEW: Additional Filtering Based on Prompt Intent
+       * ----------------------------------------------------*/
+      let filteredByTag = [...matchingTemplates]; // Start with current matches
+
+      const promptLower = prompt.toLowerCase();
+
+      let tagPrefix = null;
+
+      // Detect intent based on keywords
+      if (/home|landing|main/i.test(promptLower)) {
+        tagPrefix = "home";
+      } else if (/service|product/i.test(promptLower)) {
+        tagPrefix = "services-";
+      } else if (/contact|reach out/i.test(promptLower)) {
+        tagPrefix = "contact-";
+      } else {
+        // Default to 'home' if no specific intent found
+        tagPrefix = "home";
+      }
+
+      console.log(`Detected tagPrefix: "${tagPrefix}"`);
+
+      if (tagPrefix) {
+        console.log(`Filtering templates by tag prefix: "${tagPrefix}"`);
+        filteredByTag = filteredByTag.filter((template) =>
+          Array.isArray(template.tags)
+            ? template.tags.some(
+                (tag) =>
+                  tag === "general" || // Always include general templates
+                  tag.startsWith(tagPrefix.toLowerCase()) // Include matching tag prefix
+              )
+            : false
+        );
+        console.log(
+          `Filtered down to ${filteredByTag.length} templates based on tag prefix`
+        );
+      }
+
       // Group templates by section and suggest an order
-      const templatesBySection = groupTemplatesBySection(matchingTemplates);
+      const templatesBySection = groupTemplatesBySection(filteredByTag);
       console.log("Templates grouped by section:", templatesBySection);
 
       res.status(200).json({
         success: true,
         data: {
-          allTemplates: matchingTemplates,
+          allTemplates: filteredByTag,
           templatesOrderedBySection: templatesBySection,
           suggestedOrder: suggestTemplateOrder(Object.keys(templatesBySection)),
           matchedConditions: {
@@ -239,13 +151,13 @@ const templateController = {
             color: promptColor,
             sectionTypes: finalSectionTypes,
             keywords,
+            tagPrefix,
           },
         },
       });
     } catch (error) {
       console.error("Error finding templates:", error.message);
       console.error("Full error object:", error); // Optional: log full error for debugging
-
       res.status(500).json({
         success: false,
         message: "Server error while processing template search",
@@ -253,6 +165,146 @@ const templateController = {
       });
     }
   },
+
+  //   try {
+  //     console.log("Request received - makeTemplatesByPrompt");
+
+  //     const { prompt } = req.body;
+  //     console.log("Prompt received:", prompt);
+
+  //     if (!prompt) {
+  //       console.warn(" No prompt provided in the request body");
+  //       return res.status(400).json({
+  //         success: false,
+  //         message: "Prompt is required",
+  //       });
+  //     }
+
+  //     // Extract relevant data from prompt
+  //     const { styles, colors, sectionTypes, keywords } = analyzePrompt(prompt);
+  //     console.log("Analyzed prompt result:", {
+  //       styles,
+  //       colors,
+  //       sectionTypes,
+  //       keywords,
+  //     });
+
+  //     // Use first detected style from prompt or fallback to null
+  //     const finalStyle = styles?.[0] || null;
+  //     console.log("Final style selected:", finalStyle);
+
+  //     // Use detected section types from prompt or fallback to empty array
+  //     const finalSectionTypes = sectionTypes || [];
+  //     console.log("Final section types selected:", finalSectionTypes);
+
+  //     // Get first color from prompt (or empty string if none)
+  //     const promptColor = colors?.[0] || "";
+  //     console.log("Final color selected:", promptColor);
+
+  //     let matchingTemplates = [];
+
+  //     // STEP 1: Try to find templates that match BOTH color AND style criteria
+  //     if (finalSectionTypes.length > 0 && finalStyle && promptColor) {
+  //       console.log("STEP 1: Searching by color, style, and section types");
+  //       const colorAndStyleQuery = {
+  //         isActive: true,
+  //         sectionType: {
+  //           $in: finalSectionTypes.map((type) => type.toLowerCase()),
+  //         },
+  //         style: finalStyle.toLowerCase(),
+  //         tags: promptColor.toLowerCase(),
+  //       };
+
+  //       console.log("QUERY (STEP 1):", colorAndStyleQuery);
+
+  //       matchingTemplates = await Template.find(colorAndStyleQuery)
+  //         .sort({ popularity: -1, updatedAt: -1 })
+  //         .limit(50);
+
+  //       console.log(`Found ${matchingTemplates.length} templates in STEP 1`);
+  //     }
+
+  //     // STEP 2: If no results, try with JUST the color and sectionTypes (ignoring style)
+  //     if (
+  //       matchingTemplates.length === 0 &&
+  //       promptColor &&
+  //       finalSectionTypes.length > 0
+  //     ) {
+  //       console.log(
+  //         "STEP 2: Falling back to search by color and section types only"
+  //       );
+
+  //       const colorOnlyQuery = {
+  //         isActive: true,
+  //         sectionType: {
+  //           $in: finalSectionTypes.map((type) => type.toLowerCase()),
+  //         },
+  //         tags: promptColor.toLowerCase(),
+  //       };
+
+  //       console.log("QUERY (STEP 2):", colorOnlyQuery);
+
+  //       matchingTemplates = await Template.find(colorOnlyQuery)
+  //         .sort({ popularity: -1, updatedAt: -1 })
+  //         .limit(50);
+
+  //       console.log(`✅ Found ${matchingTemplates.length} templates in STEP 2`);
+  //     }
+
+  //     // STEP 3: If still no results, fall back to just sectionTypes
+  //     if (matchingTemplates.length === 0 && finalSectionTypes.length > 0) {
+  //       console.log("STEP 3: Falling back to section types only");
+
+  //       const sectionOnlyQuery = {
+  //         isActive: true,
+  //         sectionType: {
+  //           $in: finalSectionTypes.map((type) => type.toLowerCase()),
+  //         },
+  //       };
+
+  //       console.log("QUERY (STEP 3):", sectionOnlyQuery);
+
+  //       matchingTemplates = await Template.find(sectionOnlyQuery)
+  //         .sort({ popularity: -1, updatedAt: -1 })
+  //         .limit(50);
+
+  //       console.log(`Found ${matchingTemplates.length} templates in STEP 3`);
+  //     }
+
+  //     // Final check
+  //     if (matchingTemplates.length === 0) {
+  //       console.log("No templates found after all steps.");
+  //     }
+
+  //     // Group templates by section and suggest an order
+  //     const templatesBySection = groupTemplatesBySection(matchingTemplates);
+  //     console.log("Templates grouped by section:", templatesBySection);
+
+  //     res.status(200).json({
+  //       success: true,
+  //       data: {
+  //         allTemplates: matchingTemplates,
+  //         templatesOrderedBySection: templatesBySection,
+  //         suggestedOrder: suggestTemplateOrder(Object.keys(templatesBySection)),
+  //         matchedConditions: {
+  //           style: finalStyle,
+  //           color: promptColor,
+  //           sectionTypes: finalSectionTypes,
+  //           keywords,
+  //         },
+  //       },
+  //     });
+  //   } catch (error) {
+  //     console.error("Error finding templates:", error.message);
+  //     console.error("Full error object:", error); // Optional: log full error for debugging
+
+  //     res.status(500).json({
+  //       success: false,
+  //       message: "Server error while processing template search",
+  //       error: error.message,
+  //     });
+  //   }
+  // },
 
   /* ----------------------------------------------------*
    * Search for templates and display it in the frontend
@@ -402,93 +454,6 @@ const templateController = {
       });
     }
   },
-
-  /* ----------------------------------------------------*
-   * * Bulk upload templates
-   * POST /api/templates/bulk
-   * ----------------------------------------------------*/
-
-  // bulkUploadTemplates: async (req, res) => {
-  //   try {
-  //     const { templates } = req.body;
-
-  //     if (!templates || !Array.isArray(templates)) {
-  //       return res.status(400).json({
-  //         success: false,
-  //         message: 'Templates array is required'
-  //       });
-  //     }
-
-  //     // Validate each template
-  //     const validatedTemplates = [];
-  //     const errors = [];
-
-  //     for (const [index, template] of templates.entries()) {
-  //       try {
-  //         // Basic validation
-  //         if (!template.name || !template.sectionType || !template.json) {
-  //           throw new Error('Missing required fields (name, sectionType, or json)');
-  //         }
-
-  //         // Check for duplicates in the batch
-  //         const duplicateInBatch = validatedTemplates.some(
-  //           t => t.name === template.name.trim() &&
-  //             t.sectionType === template.sectionType.toLowerCase()
-  //         );
-
-  //         if (duplicateInBatch) {
-  //           throw new Error('Duplicate template in upload batch');
-  //         }
-
-  //         // Add to validated list
-  //         validatedTemplates.push({
-  //           name: template.name.trim(),
-  //           sectionType: template.sectionType.toLowerCase(),
-  //           json: template.json,
-  //           tags: template.tags ? [...new Set(template.tags.map(tag => tag.toLowerCase()))] : [],
-  //           style: template.style ? template.style.toLowerCase() : undefined,
-  //           isActive: template.isActive !== false // Default to true
-  //         });
-  //       } catch (error) {
-  //         errors.push({
-  //           index,
-  //           name: template.name || 'unnamed',
-  //           error: error.message
-  //         });
-  //       }
-  //     }
-
-  //     // Check if all templates failed validation
-  //     if (validatedTemplates.length === 0 && errors.length > 0) {
-  //       return res.status(400).json({
-  //         success: false,
-  //         message: 'All templates failed validation',
-  //         errors
-  //       });
-  //     }
-
-  //     // Insert validated templates
-  //     const result = await Template.insertMany(validatedTemplates, { ordered: false });
-
-  //     res.status(201).json({
-  //       success: true,
-  //       message: `Successfully uploaded ${result.length} templates`,
-  //       data: {
-  //         createdCount: result.length,
-  //         errorCount: errors.length,
-  //         errors: errors.length > 0 ? errors : undefined
-  //       }
-  //     });
-
-  //   } catch (error) {
-  //     console.error('Error during bulk upload:', error);
-  //     res.status(500).json({
-  //       success: false,
-  //       message: 'Server error during bulk upload',
-  //       error: process.env.NODE_ENV === 'development' ? error.message : undefined
-  //     });
-  //   }
-  // }
 };
 
 /* ----------------------------------------------------*
@@ -646,12 +611,12 @@ const analyzePrompt = (prompt) => {
       // Normalize 'grey' to 'gray'
       if (color === "grey") return "gray";
       return color;
-    })
+    });
 
   // Extract section types (all matches)
   const sectionTypes = possibleSections.filter((section) =>
     prompt.toLowerCase().includes(section)
-  )
+  );
 
   // Extract additional keywords
   const keywords = [

@@ -21,6 +21,19 @@
   margin-right: 20px;
   border-radius: 16px;
    max-height:90vh;
+   padding-top: 30px;
+   
+}
+
+.three_leftPanel h2{
+  padding-top: 30px;
+  font-size: 1rem;
+  color: teal;
+  margin: 0;
+  color: #008188;
+  font-size: 14px;
+  line-height: 20px;
+  text-transform: uppercase;
 }
 
 /* Section List in Left Panel */
@@ -30,16 +43,43 @@
   margin-top: 1rem;
 }
 
+.sectionList li {
+    width: 100%;
+
+}
+
 .sectionItem {
-  padding: 0.75rem;
-  margin-bottom: 0.5rem;
+   background: transparent;
+  border: none;
+  text-align: left;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
   cursor: pointer;
-  border-radius: 6px;
-  transition: background-color 0.2s ease;
+  font-size: 13px;
+  line-height: 20px;
+  color: rgb(0,30,43);
+  font-weight: 400;
+  transition: background 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  position: relative;
+  outline: none;
 }
 
 .sectionItem:hover {
-  background-color: #e6e6eb;
+   background-color: rgb(232, 237, 235);
+  color: rgb(0,30,43);
+  outline:none;
+}
+
+.sectionItem:focus,
+.sectionItem:active{
+    background-color: #B6FFF6;
+  background-color: #E0F2F1	;
+  color: teal;
+  font-weight: bold;
+  outline: none;
 }
 
 /* Middle Panel (Screenshot Preview) */
@@ -47,7 +87,8 @@
   width: 300px;
   min-width: 300px;
   background-color: #fff;
-  padding: 1rem;
+  padding: 0 1rem 1rem 1rem;
+  padding-top:30px;
   overflow-y: auto;
   position: relative;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.04);
@@ -69,9 +110,13 @@
   right: 10px;
   background: transparent;
   border: none;
-  font-size: 1.2rem;
+  font-size: 0.8rem;
+  padding:3px 5px;
+  border: 1px solid teal;
+  border-radius: 3px;
   cursor: pointer;
   z-index: 1000;
+  color: teal;
 }
 
 .middlePanelCloseButton:hover {

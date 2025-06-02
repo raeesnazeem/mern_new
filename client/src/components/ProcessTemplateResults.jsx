@@ -146,6 +146,16 @@ const transformTemplatesToWorkingFormat = (
         "mission and vision",
         "herospace",
         "herospace slider",
+        "about-expertise",
+        "about-introduction",
+        "about-teams",
+        "services-intro",
+        "services-faq",
+        "services-box",
+        "services-benefits",
+        "services-experience",
+        "contact-info",
+        "contact-share",
       ].includes(key.toLowerCase())
     );
   }
