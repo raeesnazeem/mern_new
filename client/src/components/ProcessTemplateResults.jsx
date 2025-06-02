@@ -112,15 +112,12 @@ const transformTemplatesToWorkingFormat = (
   templatesBySectionType,
   suggestedOrder
 ) => {
-  // <-- ACCEPT suggestedOrder
   const finalContentArray = [];
-  let sectionOrderToUse; // Renamed from sectionOrder for clarity
+  let sectionOrderToUse;
 
-  // USE THE PROVIDED suggestedOrder IF AVAILABLE AND VALID
   if (suggestedOrder && suggestedOrder.length > 0) {
     sectionOrderToUse = suggestedOrder;
   } else {
-    // FALLBACK TO ORIGINAL LOGIC IF suggestedOrder IS NOT PROVIDED
     console.warn(
       "ProcessTemplateResults: suggestedOrder not provided or empty. Falling back to default internal order generation."
     );
@@ -154,9 +151,7 @@ const transformTemplatesToWorkingFormat = (
   }
 
   sectionOrderToUse.forEach((sectionKey) => {
-    // <-- USE sectionOrderToUse
     const availableSectionsForType = templatesBySectionType?.[sectionKey];
-
     if (
       availableSectionsForType &&
       Array.isArray(availableSectionsForType) &&
@@ -166,7 +161,6 @@ const transformTemplatesToWorkingFormat = (
         Math.random() * availableSectionsForType.length
       );
       const chosenSectionObject = availableSectionsForType[randomIndex];
-
       if (
         chosenSectionObject &&
         chosenSectionObject.json &&
@@ -191,34 +185,164 @@ const transformTemplatesToWorkingFormat = (
         availableSectionsForType
       );
     }
-    // If sectionKey from suggestedOrder is not in templatesBySectionType, it will be skipped if templatesBySectionType?.[sectionKey] is undefined.
   });
-
   return finalContentArray;
 };
 
-const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
+// const ProcessTemplateResults = ({ templatesOrderedBySection, onPreview }) => {
+//   const [loading, setLoading] = useState(false);
+//   const [showLoader, setShowLoader] = useState(false); // To control minimum display time
+//   const [error, setError] = useState(null);
+
+//   //make sure that the request is sent only once
+//   const hasSentRequest = useRef(false);
+
+//   // Start loading when templates are available
+//   useEffect(() => {
+//     // MODIFY CONDITION AND CALL TO sendToWordPress
+//     if (templatesOrderedBySection && !hasSentRequest.current && !loading) {
+//       // suggestedOrderProp presence checked inside sendToWordPress or by transform function
+//       hasSentRequest.current = true;
+//       sendToWordPress(templatesOrderedBySection, suggestedOrderProp); // <-- PASS suggestedOrderProp
+//     }
+//   }, [templatesOrderedBySection, suggestedOrderProp, loading]); // <-- ADD suggestedOrderProp TO DEPENDENCY ARRAY
+
+//   // MODIFY sendToWordPress SIGNATURE
+//   const sendToWordPress = async (
+//     rawTemplatesBySection,
+//     currentSuggestedOrder
+//   ) => {
+//     setLoading(true);
+//     setShowLoader(true);
+//     setError(null);
+
+//     try {
+//       const username = `${import.meta.env.VITE_WP_USERNAME}`;
+//       const appPassword = `${import.meta.env.VITE_WP_PASS}`;
+//       const token = btoa(`${username}:${appPassword}`);
+
+//       // const transformedContent = transformTemplatesToWorkingFormat(
+//       //   rawTemplatesBySection
+//       // );
+
+//       const transformedContent = transformTemplatesToWorkingFormat(
+//         rawTemplatesBySection,
+//         currentSuggestedOrder
+//       );
+
+//       const fullJsonStructure = {
+//         content: transformedContent,
+//         page_settings: {
+//           external_header_footer: true,
+//           hide_title: true,
+//           page_layout: "full_width",
+//           ui_theme_style: "no",
+//         },
+//         version: "0.4",
+//         type: "wp-page",
+//       };
+
+//       const requestData = {
+//         name: `Generated Template ${Math.floor(Math.random() * 100000000000)}`,
+//         json: fullJsonStructure,
+//       };
+
+//       // console.log(
+//       //   "Sending to WordPress:",
+//       //   JSON.stringify(requestData, null, 2)
+//       // );
+
+//       const response = await axios.post(
+//         `${import.meta.env.VITE_WP_IMPORT_API_URL}`,
+//         requestData,
+//         {
+//           headers: {
+//             Authorization: `Basic ${token}`,
+//             "Content-Type": "application/json",
+//           },
+//         }
+//       );
+
+//       // console.log('returned data from wordpress api:', response.data)
+
+//       if (!response.data?.public_url) {
+//         throw new Error(
+//           "No post URL returned from WordPress. Response: " +
+//             JSON.stringify(response.data)
+//         );
+//       }
+
+//       // Delay hiding the loader if less than 8s have passed
+//       const timer = setTimeout(() => {
+//         onPreview(response.data.public_url, {
+//           name: requestData.name,
+//           json: fullJsonStructure,
+//         });
+//         setShowLoader(false);
+//       }, 8000);
+
+//       return () => clearTimeout(timer);
+//     } catch (err) {
+//       console.error("Error sending to WordPress:", err);
+//       let errorMessage = "Failed to import template.";
+//       if (err.response) {
+//         errorMessage =
+//           err.response.data?.message || `Server error: ${err.response.status}`;
+//       } else if (err.request) {
+//         errorMessage = "No response received from WordPress server.";
+//       } else {
+//         errorMessage = err.message;
+//       }
+//       setError(errorMessage);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   // Always show loader for at least 5s if loading was triggered
+//   if (showLoader || loading) {
+//     return (
+//       <AiLoader
+//         heading="Your page is being generated"
+//         subHeading="powered by Buildbot from Growth99"
+//       />
+//     );
+//   }
+
+//   if (error) {
+//     return <div style={{ color: "red" }}>Error: {error}</div>;
+//   }
+
+//   return null;
+// };
+
+// export default ProcessTemplateResults;
+
+const ProcessTemplateResults = ({
+  templatesOrderedBySection,
+  suggestedOrderProp,
+  onPreview,
+}) => {
   const [loading, setLoading] = useState(false);
-  const [showLoader, setShowLoader] = useState(false); // To control minimum display time
+  const [showLoader, setShowLoader] = useState(false);
   const [error, setError] = useState(null);
+  const hasSentRequest = useRef(false); // This was in your original code
 
-
-  //make sure that the request is sent only once
-  const hasSentRequest = useRef(false);
-
-  // Start loading when templates are available
-useEffect(() => {
-    // MODIFY CONDITION AND CALL TO sendToWordPress
-    if (templatesOrderedBySection && !hasSentRequest.current && !loading) { // suggestedOrderProp presence checked inside sendToWordPress or by transform function
-      hasSentRequest.current = true; 
-      sendToWordPress(templatesOrderedBySection, suggestedOrderProp); // <-- PASS suggestedOrderProp
+  useEffect(() => {
+    // 'suggestedOrderProp' is now available here because it's destructured above.
+    if (templatesOrderedBySection && !hasSentRequest.current && !loading) {
+      hasSentRequest.current = true;
+      sendToWordPress(templatesOrderedBySection, suggestedOrderProp); // 'suggestedOrderProp' is passed here
     }
-  }, [templatesOrderedBySection, suggestedOrderProp, loading]); // <-- ADD suggestedOrderProp TO DEPENDENCY ARRAY
+    // 'suggestedOrderProp' is correctly used in the dependency array.
+  }, [templatesOrderedBySection, suggestedOrderProp, loading]); // Make sure 'loading' is also a dependency if its change should re-evaluate
 
-  // MODIFY sendToWordPress SIGNATURE
-  const sendToWordPress = async (rawTemplatesBySection, currentSuggestedOrder) => {
+  const sendToWordPress = async (
+    rawTemplatesBySection,
+    currentSuggestedOrder
+  ) => {
     setLoading(true);
-    setShowLoader(true); 
+    setShowLoader(true);
     setError(null);
 
     try {
@@ -226,15 +350,10 @@ useEffect(() => {
       const appPassword = `${import.meta.env.VITE_WP_PASS}`;
       const token = btoa(`${username}:${appPassword}`);
 
-      // const transformedContent = transformTemplatesToWorkingFormat(
-      //   rawTemplatesBySection
-      // );
-
       const transformedContent = transformTemplatesToWorkingFormat(
         rawTemplatesBySection,
-        currentSuggestedOrder 
+        currentSuggestedOrder // 'currentSuggestedOrder' (which is 'suggestedOrderProp') is used here
       );
-
 
       const fullJsonStructure = {
         content: transformedContent,
@@ -253,11 +372,6 @@ useEffect(() => {
         json: fullJsonStructure,
       };
 
-      // console.log(
-      //   "Sending to WordPress:",
-      //   JSON.stringify(requestData, null, 2)
-      // );
-
       const response = await axios.post(
         `${import.meta.env.VITE_WP_IMPORT_API_URL}`,
         requestData,
@@ -269,8 +383,6 @@ useEffect(() => {
         }
       );
 
-      // console.log('returned data from wordpress api:', response.data)
-
       if (!response.data?.public_url) {
         throw new Error(
           "No post URL returned from WordPress. Response: " +
@@ -278,7 +390,6 @@ useEffect(() => {
         );
       }
 
-      // Delay hiding the loader if less than 8s have passed
       const timer = setTimeout(() => {
         onPreview(response.data.public_url, {
           name: requestData.name,
@@ -300,12 +411,12 @@ useEffect(() => {
         errorMessage = err.message;
       }
       setError(errorMessage);
+      setShowLoader(false); // Ensure loader hidden on error
     } finally {
       setLoading(false);
     }
   };
 
-  // Always show loader for at least 5s if loading was triggered
   if (showLoader || loading) {
     return (
       <AiLoader
