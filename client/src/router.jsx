@@ -4,7 +4,7 @@ import TemplatePreviewPage from "./pages/TemplatePreviewPage";
 import FrameBuilder from "./pages/FrameBuilderPage";
 import BuildBlocks from "./components/BuildBlocks/BuildBlocks";
 import IntermediateComponent from "./components/BuildBlocks/intermediateComponent";
-
+import BlockPreview from "./components/BuildBlocks/BlockPreview";
 
 const router = createBrowserRouter([
   {
@@ -17,17 +17,19 @@ const router = createBrowserRouter([
   },
   {
     path: "/frame-builder",
-    element: <FrameBuilder />
+    element: <FrameBuilder />,
   },
   {
     path: "/build-blocks",
-    element: <BuildBlocks />
+    element: <BuildBlocks />,
   },
   {
     path: "/intermediate-component",
-    element: <IntermediateComponent />
+    element: <IntermediateComponent />,
   },
-
+  { path: "/builder-block-preview", 
+    element: <BlockPreview />,
+   },
 ]);
 
 export default router;
