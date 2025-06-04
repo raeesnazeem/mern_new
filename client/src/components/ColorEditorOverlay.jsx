@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { SketchPicker } from "react-color";
 
 const ColorEditorOverlay = ({

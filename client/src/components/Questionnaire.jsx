@@ -7,6 +7,7 @@ const Questionnaire = ({ onSubmit }) => {
     feel: "",
     color: "",
     sections: [],
+    pageName: "",
   });
 
   const themes = ["Dark", "Light"];
@@ -38,14 +39,29 @@ const Questionnaire = ({ onSubmit }) => {
     });
   };
 
+  // const handleSubmit = (e) => {
+  //   e.preventDefault();
+  //   // Construct a prompt from the answers
+  //   const prompt = `I want a ${answers.theme.toLowerCase()}-themed website with a ${answers.feel.toLowerCase()} feel and a primary color of ${
+  //     answers.color || "default"
+  //   }. It should include the following sections: ${answers.sections.join(
+  //     ", "
+  //   )}.`;
+  //   onSubmit(prompt);
+  // };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Construct a prompt from the answers
+
+    // Build the prompt including the page name
     const prompt = `I want a ${answers.theme.toLowerCase()}-themed website with a ${answers.feel.toLowerCase()} feel and a primary color of ${
       answers.color || "default"
-    }. It should include the following sections: ${answers.sections.join(
+    }. It should be a "${
+      answers.pageName
+    }" page and include the following sections: ${answers.sections.join(
       ", "
     )}.`;
+
     onSubmit(prompt);
   };
 
@@ -67,6 +83,25 @@ const Questionnaire = ({ onSubmit }) => {
                 onClick={() => handleChange("theme", theme)}
               >
                 {theme}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Page Name */}
+        <div className={styles.questionGroup}>
+          <label>What type of page is this?</label>
+          <div className={styles.options}>
+            {["Home", "Services", "Contact"].map((name) => (
+              <button
+                key={name}
+                type="button"
+                className={`${styles.optionButton} ${
+                  answers.pageName === name ? styles.selected : ""
+                }`}
+                onClick={() => handleChange("pageName", name)}
+              >
+                {name}
               </button>
             ))}
           </div>

@@ -107,7 +107,7 @@ const templateController = {
       let tagPrefix = null;
 
       // Detect intent based on keywords
-      if (/home|landing|main/i.test(promptLower)) {
+      if (/home|landing|main|homepage/i.test(promptLower)) {
         tagPrefix = "home";
       } else if (/service|product/i.test(promptLower)) {
         tagPrefix = "services-";

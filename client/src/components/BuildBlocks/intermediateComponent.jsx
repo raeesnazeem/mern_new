@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 // React Flow imports are removed
 
@@ -184,7 +184,7 @@ const SectionItemHTML5 = ({
         }`}
       >
         <div className="section-info">
-          <div className="section-name">{section.name}</div>
+          <div className="section-name">{section.sectionType.toUpperCase() + " SECTION" }</div>
           <div
             className="section-type-changer"
             // onClick={() => onChangeType(index)}  // will activate when implementing section change in node
@@ -611,7 +611,7 @@ const IntermediateComponent = () => {
       "Applying final order:",
       currentSections.map((s) => ({ name: s.name, type: s.sectionType }))
     );
-    navigate("/builder-block-preview", {
+    navigate("/builder-block-preview-main", {
       state: {
         templatesOrderedBySection: {
           ...(location.state?.templatesOrderedBySection || {}),
@@ -624,6 +624,7 @@ const IntermediateComponent = () => {
   return (
     <div className="reorder-list-app-container">
       <div className="reorder-list-content">
+   
         <h2>Reorder Your Sections</h2>
         <div className="sections-list-html5">
           {currentSections.map((section, index) => (

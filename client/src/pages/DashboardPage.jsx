@@ -66,6 +66,36 @@ const DashboardPage = () => {
     setIsLoading(true);
     setCurrentPrompt(prompt);
 
+    // try {
+    //   // This returns a data object with keys allTemplates, templatesOrderedBySection, suggestedOrder and matchedConditions object
+    //   const response = await axios.post(
+    //     `${
+    //       import.meta.env.VITE_TO_SERVER_API_URL
+    //     }/template/make-template-prompt`,
+    //     { prompt }
+    //   );
+
+    //   console.log('The actual prompt:', prompt);
+    //   // from the response data - Extract templatesOrderedBySection alone
+    //   const templatesInOrder = response.data.data.templatesOrderedBySection;
+    //   const orderForTemplates = response.data.data.suggestedOrder;
+
+    //   console.log('These are the templates in order:', templatesInOrder);
+
+    //   //preview route renders TemplatePreview Component
+    //   navigate("/preview-main", {
+    //       state: {
+    //       templatesOrderedBySection: templatesInOrder,
+    //       suggestedOrder: orderForTemplates 
+    //     },
+    //   });
+    // } catch (error) {
+    //   console.error("Error:", error.message);
+    //   alert("Failed to generate templates.");
+    // } finally {
+    //   setIsLoading(false);
+    // }
+
     try {
       // This returns a data object with keys allTemplates, templatesOrderedBySection, suggestedOrder and matchedConditions object
       const response = await axios.post(
@@ -75,26 +105,26 @@ const DashboardPage = () => {
         { prompt }
       );
 
-      console.log('The actual prompt:', prompt);
+
       // from the response data - Extract templatesOrderedBySection alone
       const templatesInOrder = response.data.data.templatesOrderedBySection;
-      const orderForTemplates = response.data.data.suggestedOrder;
 
-      console.log('These are the templates in order:', templatesInOrder);
+      console.log("data is sent including section names: ", templatesInOrder)
 
-      //preview route renders TemplatePreview Component
-      navigate("/preview", {
-          state: {
-          templatesOrderedBySection: templatesInOrder,
-          suggestedOrder: orderForTemplates 
-        },
+      // console.log('These are the templates in order:', templatesInOrder);
+
+      // /preview route renders TemplatePreview Component
+      navigate("/intermediate-component", {
+        state: { templatesOrderedBySection: templatesInOrder },
       });
     } catch (error) {
       console.error("Error:", error.message);
+      console.error("Full error response:", error.response?.data); 
       alert("Failed to generate templates.");
     } finally {
       setIsLoading(false);
     }
+
   };
 
   // Logic for rendering the right panel of the layout
@@ -246,28 +276,28 @@ const leftPanelContent = (
         <li>
           <button
             className={styles.sidebarItem}
-            onClick={() => navigate("/frame-builder")}
+            onClick={() => navigate("/build-blocks-main")}
           >
             <span className={styles.icon}>
               <FiCopy />
             </span>
-            {!isCollapsed && <span>Frame Builder</span>}
+            {!isCollapsed && <span>Build Blocks</span>}
           </button>
         </li>
 
          {/* BuildBlocks */}
-        <li>
+      {/*  <li>
           <button
             className={styles.sidebarItem}
-            onClick={() => navigate("/build-blocks")}
+            onClick={() => navigate("/build-blocks-main")}
           >
             <span className={styles.icon}>
               <FiBarChart />
             </span>
             {!isCollapsed && <span>Build Blocks</span>}
           </button>
-        </li>
-      </ul>
+        </li>*/}
+      </ul> 
 
       {/* Bottom Section: Admin Area */}
       <div className={styles.sidebarFooterSection}>

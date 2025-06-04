@@ -12,7 +12,7 @@ const router = createBrowserRouter([
     element: <DashboardPage />,
   },
   {
-    path: "/preview",
+    path: "/preview-main",
     element: <TemplatePreviewPage />,
   },
   {
@@ -20,14 +20,14 @@ const router = createBrowserRouter([
     element: <FrameBuilder />,
   },
   {
-    path: "/build-blocks",
+    path: "/build-blocks-main",
     element: <BuildBlocks />,
   },
   {
     path: "/intermediate-component",
     element: <IntermediateComponent />,
   },
-  { path: "/builder-block-preview", 
+  { path: "/builder-block-preview-main", 
     element: <BlockPreview />,
    },
 ]);

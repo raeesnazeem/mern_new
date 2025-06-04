@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef } from "react"; 
+import { useState, useEffect, useRef } from "react";
 import AiLoader from "../AiLoader"; 
 import axios from "axios";
 
-// Helper function - normalize image data without breaking dynamic fields
 function normalizeImageData(data) {
   if (Array.isArray(data)) {
     return data.map((item) => normalizeImageData(item));
@@ -11,236 +10,230 @@ function normalizeImageData(data) {
       "__dynamic__" in data ||
       (data.background_image && "id" in data.background_image) ||
       data.source === "library"
-    ) {
+    )
       return data;
-    }
     const result = {};
     for (const key in data) {
-      if (Object.prototype.hasOwnProperty.call(data, key)) {
+      if (Object.prototype.hasOwnProperty.call(data, key))
         result[key] = normalizeImageData(data[key]);
-      }
     }
     return result;
   }
   return data;
 }
 
-// Transform templates into a valid Elementor-compatible content array
-const transformTemplatesToWorkingFormat = (templatesBySection) => {
+const transformTemplatesToWorkingFormat = (
+  templatesBySectionType,
+  suggestedOrder
+) => {
   const finalContentArray = [];
-  let processedFromReordered = false;
+  let sectionOrderToUse;
+  let pageSettingsFromInput = null; // Variable to store page_settings from special section
 
   console.log(
-    "ProcessTemplateResults: Received templatesBySection:",
-    templatesBySection
+    "[ProcessBlockResults] transformTemplatesToWorkingFormat. templatesBySectionType received:",
+    templatesBySectionType ? "Exists" : "null/undefined"
   );
 
-  // 1. Prioritize 'reorderedGlobalSections'
-  if (
-    templatesBySection &&
-    templatesBySection.reorderedGlobalSections &&
-    Array.isArray(templatesBySection.reorderedGlobalSections) &&
-    templatesBySection.reorderedGlobalSections.length > 0
-  ) {
-    console.log("ProcessTemplateResults: Using reorderedGlobalSections");
-    templatesBySection.reorderedGlobalSections.forEach((section) => {
-      if (
-        section &&
-        section.json?.content &&
-        Array.isArray(section.json.content)
-      ) {
-        try {
-          const normalizedSectionContent = normalizeImageData(
-            section.json.content
-          );
-          finalContentArray.push(...normalizedSectionContent);
-          processedFromReordered = true;
-        } catch (err) {
-          console.error(
-            `Error normalizing content for a section in reorderedGlobalSections:`,
-            err.message,
-            section
-          );
-        }
-      } else {
-        console.warn(
-          "Skipping section in reorderedGlobalSections due to missing or invalid json.content:",
-          section
-        );
-      }
-    });
-  }
-  // 2. Fallback to 'reorderedSections' if 'reorderedGlobalSections' is not present or empty
-  else if (
-    templatesBySection &&
-    templatesBySection.reorderedSections &&
-    Array.isArray(templatesBySection.reorderedSections) &&
-    templatesBySection.reorderedSections.length > 0
-  ) {
-    console.log("ProcessTemplateResults: Using fallback reorderedSections");
-    templatesBySection.reorderedSections.forEach((section) => {
-      if (
-        section &&
-        section.json?.content &&
-        Array.isArray(section.json.content)
-      ) {
-        try {
-          const normalizedSectionContent = normalizeImageData(
-            section.json.content
-          );
-          finalContentArray.push(...normalizedSectionContent);
-          processedFromReordered = true;
-        } catch (err) {
-          console.error(
-            `Error normalizing content for a section in reorderedSections:`,
-            err.message,
-            section
-          );
-        }
-      } else {
-        console.warn(
-          "Skipping section in reorderedSections due to missing or invalid json.content:",
-          section
-        );
-      }
-    });
-  }
-
-  //  If no reordered list was processed, use the original fallback (random pick per type)
-  if (
-    !processedFromReordered &&
-    typeof templatesBySection === "object" &&
-    !Array.isArray(templatesBySection)
-  ) {
+  if (templatesBySectionType?.reorderedGlobalSections?.length > 0) {
     console.log(
-      "ProcessTemplateResults: Using original fallback (random pick per type)"
+      "[ProcessBlockResults] Using reorderedGlobalSections. Count:",
+      templatesBySectionType.reorderedGlobalSections.length
     );
-    const sectionKeys = Object.keys(templatesBySection).filter(
-      (key) =>
-        key !== "reorderedGlobalSections" &&
-        key !== "reorderedSections" &&
-        Array.isArray(templatesBySection[key])
-    );
-    console.log(
-      "ProcessTemplateResults: Available section types for fallback:",
-      sectionKeys
-    );
-
-    for (const sectionKey of sectionKeys) {
-      const availableSectionsForType = templatesBySection[sectionKey];
-      if (availableSectionsForType.length > 0) {
-        const randomIndex = Math.floor(
-          Math.random() * availableSectionsForType.length
+    templatesBySectionType.reorderedGlobalSections.forEach(
+      (section, sectionIdx) => {
+        console.log(
+          `[ProcessBlockResults] Processing reorderedGlobalSection ${sectionIdx}: Name: ${section?.name}, Type: ${section?.sectionType}`
         );
-        const chosenSectionObject = availableSectionsForType[randomIndex];
-        if (
-          chosenSectionObject &&
-          chosenSectionObject.json?.content &&
-          Array.isArray(chosenSectionObject.json.content)
-        ) {
-          try {
-            const normalizedSectionContent = normalizeImageData(
-              chosenSectionObject.json.content
+      
+        // console.log(`[ProcessBlockResults]   Section JSON for reorderedGlobalSection ${sectionIdx}:`, section?.json ? JSON.parse(JSON.stringify(section.json)) : "No section.json");
+
+        if (section?.json?.content && Array.isArray(section.json.content)) {
+          // console.log(`[ProcessBlockResults]   Extracting content from reorderedGlobalSection ${sectionIdx}. Content items: ${section.json.content.length}`);
+          finalContentArray.push(...normalizeImageData(section.json.content));
+
+          // If this section IS our special "fullPageContentUpdate", grab its page_settings
+          if (
+            section.sectionType === "fullPageContentUpdate" &&
+            section.json.page_settings
+          ) {
+            console.log(
+              "[ProcessBlockResults]   Detected 'fullPageContentUpdate' section. Using its page_settings:",
+              JSON.parse(JSON.stringify(section.json.page_settings))
             );
-            finalContentArray.push(...normalizedSectionContent);
-          } catch (err) {
-            console.error(
-              `Error normalizing content for ${sectionKey} (fallback):`,
-              err.message
-            );
+            pageSettingsFromInput = structuredClone(section.json.page_settings); // Deep clone
           }
         } else {
           console.warn(
-            `Invalid or missing .json.content for section type (fallback): ${sectionKey}`,
-            chosenSectionObject
+            `[ProcessBlockResults] Skipping section in reorderedGlobalSections (idx ${sectionIdx}) due to invalid/empty section.json.content.`
           );
         }
-      } else {
-        console.warn(`No usable sections found for (fallback): ${sectionKey}`);
       }
+    );
+  } else {
+    console.log(
+      "[ProcessBlockResults] No reorderedGlobalSections or empty. Using suggestedOrder/fallback for section iteration."
+    );
+    if (suggestedOrder?.length > 0) {
+      sectionOrderToUse = suggestedOrder;
+    } else {
+      sectionOrderToUse = Object.keys(templatesBySectionType || {}).filter(
+        (key) =>
+          key !== "reorderedGlobalSections" &&
+          key !== "reorderedSections" &&
+          Array.isArray(templatesBySectionType[key]) &&
+          [
+            "full template",
+            "header",
+            "about",
+            "cta",
+            "features",
+            "testimonials",
+            "contact",
+            "footer",
+            "faq",
+            "map",
+            "breadcrumbs",
+            "services",
+            "conditions",
+            "gallery",
+            "before and afters",
+            "form",
+            "blog",
+            "cards",
+            "meet the team",
+            "social feed",
+            "mission and vision",
+            "herospace",
+            "herospace slider",
+          ].includes(key.toLowerCase())
+      );
     }
+    sectionOrderToUse.forEach((sectionKey) => {
+      const availableSectionsForType = templatesBySectionType?.[sectionKey];
+      if (availableSectionsForType?.length > 0) {
+        const chosenSectionObject =
+          availableSectionsForType[
+            Math.floor(Math.random() * availableSectionsForType.length)
+          ];
+        if (
+          chosenSectionObject?.json?.content &&
+          Array.isArray(chosenSectionObject.json.content)
+        ) {
+          finalContentArray.push(
+            ...normalizeImageData(chosenSectionObject.json.content)
+          );
+          // If this chosen section also has page_settings, and it's the first one we process, consider using them.
+          // This part of logic might need refinement if multiple sections could contribute page_settings.
+          // For now, the primary source of page_settings_from_input is the "fullPageContentUpdate" section.
+          if (
+            !pageSettingsFromInput &&
+            chosenSectionObject.json.page_settings
+          ) {
+            // pageSettingsFromInput = chosenSectionObject.json.page_settings;
+          }
+        }
+      }
+    });
   }
 
-  console.log(
-    "ProcessTemplateResults: Final content array to be sent:",
-    finalContentArray
-  );
-  return finalContentArray;
+  if (finalContentArray.length === 0) {
+    console.warn(
+      "[ProcessBlockResults] Transformed content array is empty. Adding fallback."
+    );
+    finalContentArray.push({
+      id: "fallback-empty-" + Date.now(),
+      elType: "section",
+      elements: [
+        {
+          id: "fallback-head-" + Date.now(),
+          elType: "widget",
+          widgetType: "heading",
+          settings: {
+            title: "Content could not be generated.",
+            alignment: "center",
+          },
+        },
+      ],
+    });
+  }
+  return { content: finalContentArray, pageSettings: pageSettingsFromInput };
 };
 
-const ProcessBlockResults = ({ templatesOrderedBySection, onPreview }) => {
-  const [loading, setLoading] = useState(false); // Should be true initially if we auto-start
+const ProcessBlockResults = ({
+  templatesOrderedBySection,
+  suggestedOrderProp,
+  onPreview,
+}) => {
+  const [loading, setLoading] = useState(false);
   const [showLoader, setShowLoader] = useState(false);
   const [error, setError] = useState(null);
-  const hasSentRequest = useRef(false); // To prevent multiple requests
+  const hasSentRequest = useRef(false);
 
   useEffect(() => {
-    // Auto-send request when component mounts and receives templates
-    if (templatesOrderedBySection && !hasSentRequest.current) {
-      console.log(
-        "ProcessTemplateResults: templatesOrderedBySection received, initiating sendToWordPress."
-      );
-      hasSentRequest.current = true; // Mark as sent immediately
-      sendToWordPress(templatesOrderedBySection);
-    }
-  }, [templatesOrderedBySection]); // Dependency on templatesOrderedBySection
+    hasSentRequest.current = false;
+  }, [templatesOrderedBySection, suggestedOrderProp]);
 
-  const sendToWordPress = async (rawTemplatesBySection) => {
+  useEffect(() => {
+    if (templatesOrderedBySection && !hasSentRequest.current && !loading) {
+      hasSentRequest.current = true;
+      sendToWordPress(templatesOrderedBySection, suggestedOrderProp);
+    }
+  }, [templatesOrderedBySection, suggestedOrderProp, loading, onPreview]);
+
+  const sendToWordPress = async (
+    rawTemplatesBySection,
+    currentSuggestedOrder
+  ) => {
     setLoading(true);
-    setShowLoader(true); // Show loader animation
+    setShowLoader(true);
     setError(null);
+    console.log(
+      "[ProcessBlockResults] sendToWordPress. Name on rawTemplates:",
+      rawTemplatesBySection?.name
+    );
 
     try {
       const username = import.meta.env.VITE_WP_USERNAME;
       const appPassword = import.meta.env.VITE_WP_PASS;
       const token = btoa(`${username}:${appPassword}`);
 
-      const transformedContent = transformTemplatesToWorkingFormat(
-        rawTemplatesBySection
-      );
-
-      if (transformedContent.length === 0) {
-        console.warn(
-          "ProcessTemplateResults: Transformed content is empty. Adding fallback section."
+      const { content: transformedContent, pageSettings: inputPageSettings } =
+        transformTemplatesToWorkingFormat(
+          rawTemplatesBySection,
+          currentSuggestedOrder
         );
-        transformedContent.push({
-          id: "fallback-section-" + Date.now(), // Unique ID for fallback
-          elType: "section",
-          elements: [
-            {
-              id: "fallback-heading-" + Date.now(),
-              elType: "widget",
-              widgetType: "heading",
-              settings: {
-                title:
-                  "No sections were processed or found based on your request.",
-                alignment: "center",
-              },
-            },
-          ],
-        });
-      }
+
+      const finalPageSettings = inputPageSettings || {
+        // Use input page_settings if found, else default
+        external_header_footer: true,
+        hide_title: true,
+        page_layout: "full_width", // For BlockPreview, "elementor_canvas" might be better if it's just blocks
+        ui_theme_style: "no",
+      };
+      console.log(
+        "[ProcessBlockResults] Using finalPageSettings for WP API:",
+        JSON.parse(JSON.stringify(finalPageSettings))
+      );
 
       const fullJsonStructure = {
         content: transformedContent,
-        page_settings: {
-          external_header_footer: true,
-          hide_title: true,
-          page_layout: "full_width",
-          ui_theme_style: "no",
-        },
+        page_settings: finalPageSettings,
         version: "0.4",
         type: "wp-page",
       };
-
       const requestData = {
-        name: `Generated Template ${Math.floor(Math.random() * 100000000000)}`,
-        json: structuredClone(fullJsonStructure), // Send a deep clone
+        name:
+          rawTemplatesBySection?.name ||
+          `Generated Page ${Math.floor(Math.random() * 1000000000)}`,
+        json: structuredClone(fullJsonStructure),
       };
 
       console.log(
-        "ProcessTemplateResults: Sending to WordPress API:",
-        requestData
+        "[ProcessBlockResults] Sending to WordPress. Name:",
+        requestData.name,
+        "Content items:",
+        requestData.json.content.length
       );
 
       const response = await axios.post(
@@ -255,51 +248,42 @@ const ProcessBlockResults = ({ templatesOrderedBySection, onPreview }) => {
       );
 
       if (!response.data?.public_url) {
-        throw new Error("No post URL returned from WordPress.");
+        throw new Error(
+          "No post URL from WP. Response: " + JSON.stringify(response.data)
+        );
       }
       console.log(
-        "ProcessTemplateResults: WordPress API success:",
-        response.data
+        "[ProcessBlockResults] WP API success. URL:",
+        response.data.public_url
       );
 
-      // Ensure loader shows for a minimum duration for better UX
-      const minimumLoadTime = 5000; // 5 seconds
+      const minimumLoadTime = 1500;
       const loadStartTime = Date.now();
-
       const checkAndProceed = () => {
-        const elapsedTime = Date.now() - loadStartTime;
-        if (elapsedTime >= minimumLoadTime) {
+        if (Date.now() - loadStartTime >= minimumLoadTime) {
           onPreview(response.data.public_url, {
-            name: requestData.name, // Pass the name used
-            json: fullJsonStructure, // Pass the structure that was sent
+            name: response.data.name || requestData.name,
+            json: fullJsonStructure, // Pass back the JSON that was ACTUALLY SENT to WordPress
           });
           setShowLoader(false);
           setLoading(false);
         } else {
-          setTimeout(checkAndProceed, minimumLoadTime - elapsedTime);
+          setTimeout(
+            checkAndProceed,
+            minimumLoadTime - (Date.now() - loadStartTime)
+          );
         }
       };
       checkAndProceed();
     } catch (err) {
-      console.error("Error sending to WordPress:", err);
-      let errorMessage = "Failed to import template.";
-      if (err.response) {
-        errorMessage =
-          err.response.data?.message || `Server error: ${err.response.status}`;
-      } else if (err.request) {
-        errorMessage = "No response received from WordPress server.";
-      } else {
-        errorMessage = err.message;
-      }
-      setError(errorMessage);
-      setLoading(false); // Stop loading on error
-      setShowLoader(false); // Hide loader on error
+      console.error("[ProcessBlockResults] Error in sendToWordPress:", err);
+      setError(err.message || "Failed to import template.");
+      setShowLoader(false);
+      setLoading(false);
     }
-    // `finally` block removed as setLoading(false) is handled in try/catch
   };
 
   if (showLoader || loading) {
-    // Keep showing loader if showLoader is true or still loading
     return (
       <AiLoader
         heading="Your page is being generated"
@@ -307,19 +291,14 @@ const ProcessBlockResults = ({ templatesOrderedBySection, onPreview }) => {
       />
     );
   }
-
   if (error) {
     return (
       <div style={{ color: "red", padding: "20px", textAlign: "center" }}>
-        ⚠️ Error: {error}
+        <h4>⚠️ Page Gen Error</h4>
+        <p>{error}</p>
       </div>
     );
   }
-
-  // If not loading, no error, and request has been attempted, but onPreview hasn't been called yet
-  // (e.g. waiting for minimum load time), this component might render null briefly.
-  // Or, if initial templates were never passed, it would render null.
   return null;
 };
-
 export default ProcessBlockResults;
