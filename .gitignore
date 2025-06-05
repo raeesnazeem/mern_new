@@ -51,3 +51,4 @@ server/coverage/
 .cache/
 client/.cache/
 server/.cache/
+repo-dev.code-workspace

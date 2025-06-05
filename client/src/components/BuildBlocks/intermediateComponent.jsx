@@ -261,7 +261,7 @@ const SectionItemHTML5 = ({
   );
 };
 
-// This component now directly manages the reorderable list using HTML5 D&D
+// This component directly manages the reorderable list using HTML5 D&D
 const IntermediateComponent = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -305,10 +305,9 @@ const IntermediateComponent = () => {
       const preferredOrder = [
         "header",
         "herospace",
-        "hero",
-        "cta",
-        "services",
         "about",
+        "services",
+        "cta",
         "testimonials",
         "contact",
         "footer",

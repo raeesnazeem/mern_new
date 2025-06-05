@@ -1,0 +1,73 @@
+.modalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050; /* Higher z-index */
+}
+
+.modalContent {
+  background-color: white;
+  padding: 25px 30px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 480px; /* Slightly wider for better text flow */
+  text-align: center;
+}
+
+.modalContent h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.3rem;
+  color: #333;
+}
+
+.modalContent p {
+  margin-bottom: 25px;
+  font-size: 0.95rem;
+  color: #555;
+  line-height: 1.6;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: space-around;
+  gap: 15px;
+}
+
+.modalButton { /* Base class for modal buttons */
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.modalButtonPrimary {
+  background-color: teal; /* Teal color */
+  color: white;
+}
+.modalButtonPrimary:hover {
+  background-color: #006666; /* Darker teal */
+}
+
+.modalButtonSecondary {
+  background-color: #f0f0f0; /* Light grey */
+  color: #333;
+  border: 1px solid #ccc;
+}
+.modalButtonSecondary:hover {
+  background-color: #e0e0e0;
+}
+
+.modalButton:active {
+    transform: translateY(1px);
+}

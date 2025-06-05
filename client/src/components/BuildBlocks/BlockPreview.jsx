@@ -1,21 +1,23 @@
-// BlockPreview.jsx
 import { useState, useEffect, useRef, useCallback } from "react";
-import ProcessBlockResults from "./ProcessBlockResults"; // Your ProcessBlockResults.jsx (File 4 from your last prompt)
+import ProcessBlockResults from "./ProcessBlockResults";
 import DashboardLayout from "../../components/DashboardLayout";
 import TopBar from "../../components/TopBar";
-import ColorEditorOverlay from "../../components/ColorEditorOverlay"; // Your ColorEditorOverlay.jsx (File 1 from your last prompt)
+import ColorEditorOverlay from "../../components/ColorEditorOverlay";
 import AILoader from "../../components/AiLoader";
 import "../../styles/TemplatePreviewPage.css";
 import "../../styles/ColorEditorOverlay.css";
-import axios from "axios";
+import styles from "../../styles/BlockPreviewModals.module.css"; // CSS Modules for modals
+
+
 import { useLocation, useNavigate } from "react-router-dom";
 
 // ----- Helper Constants and Functions -----
+// (isTransparentWhite, COLOR_KEYS, REGEXES, generateContextName, setValueByPath - from previous correct version)
 function isTransparentWhite(color) {
   if (typeof color !== "string") return true;
   color = color.trim().toLowerCase();
   if (color === "#ffffff" || color === "#fff" || color === "white")
-    return false; // KEEP solid white
+    return false;
   if (color === "transparent") return true;
   const rgbaMatch = color.match(/rgba?\(([^)]+)\)/);
   if (rgbaMatch) {
@@ -37,7 +39,7 @@ function isTransparentWhite(color) {
   return false;
 }
 const COLOR_KEYS = [
-  /* Your list from previous file */ "background_color",
+  "background_color",
   "background_color_b",
   "background_overlay_color",
   "background_overlay_color_b",
@@ -76,84 +78,67 @@ function generateContextName(node, key, path) {
   const pathParts = path.split(".");
   return pathParts.slice(Math.max(pathParts.length - 3, 0)).join(" > ");
 }
-
 const setValueByPath = (obj, path, value) => {
   if (typeof path !== "string" || path.trim() === "") {
-    console.error("setValueByPath Error: Path is empty or not a string.", {
-      obj,
-      path,
-      value,
-    });
+    console.error("setValueByPath Error: Path is empty", { obj, path, value });
     return false;
   }
   if (!obj || (typeof obj !== "object" && !Array.isArray(obj))) {
-    // Allow obj to be an array
     console.error(
-      `setValueByPath Error: Initial object is not valid (is ${typeof obj}). Path: ${path}`,
+      `setValueByPath Error: Initial obj not valid (is ${typeof obj}). Path: ${path}`,
       { obj, path, value }
     );
     return false;
   }
-
   const keys = path.replace(/\[(\d+)\]/g, ".$1").split(".");
   let current = obj;
-
   for (let i = 0; i < keys.length - 1; i++) {
     const key = keys[i];
     const nextKey = keys[i + 1];
     const nextKeyIsArrayIndex = !isNaN(parseInt(nextKey, 10));
-
     if (!current || (typeof current !== "object" && !Array.isArray(current))) {
       console.error(
-        `setValueByPath Error: Cannot traverse. Current segment for "${keys
+        `setValueByPath Error: Traverse fail. Seg for "${keys
           .slice(0, i)
-          .join(".")}" is not an object/array. Path: ${path}. Current:`,
+          .join(".")}" not object/array. Path: ${path}. Curr:`,
         current
       );
       return false;
     }
-
     if (Array.isArray(current)) {
       const numKey = parseInt(key, 10);
       if (isNaN(numKey) || numKey < 0) {
         console.error(
-          `setValueByPath Error: Trying to access non-numeric or invalid key "${key}" on an array. Path: ${path}`
+          `setValueByPath Error: Non-numeric key "${key}" on array. Path: ${path}`
         );
         return false;
       }
-      // Ensure array is long enough, fill with null if needed (or objects/arrays based on nextKeyIsArrayIndex)
       while (numKey >= current.length) {
         current.push(null);
       }
       if (!current[numKey] || typeof current[numKey] !== "object") {
-        // console.log(`setValueByPath: Creating segment at array index "${numKey}" as ${nextKeyIsArrayIndex ? "array" : "object"}`);
         current[numKey] = nextKeyIsArrayIndex ? [] : {};
       }
       current = current[numKey];
     } else {
-      // current is an object
       if (
         !current.hasOwnProperty(key) ||
         (typeof current[key] !== "object" && current[key] !== null)
       ) {
-        // Allow null to be overwritten
-        // console.log(`setValueByPath: Creating object segment "${key}" as ${nextKeyIsArrayIndex ? "array" : "object"}`);
         current[key] = nextKeyIsArrayIndex ? [] : {};
       } else if (nextKeyIsArrayIndex && !Array.isArray(current[key])) {
-        // console.warn(`setValueByPath: Overwriting non-array with array at "${key}" for path: ${path}`);
         current[key] = [];
       }
       current = current[key];
     }
   }
-
   const finalKey = keys[keys.length - 1];
   if (
     current &&
     (typeof current === "object" || Array.isArray(current)) &&
     finalKey !== undefined
   ) {
-    const numFinalKey = parseInt(finalKey, 10); // For arrays
+    const numFinalKey = parseInt(finalKey, 10);
     if (Array.isArray(current) && !isNaN(numFinalKey) && numFinalKey >= 0) {
       while (numFinalKey >= current.length) current.push(null);
       current[numFinalKey] = value;
@@ -161,14 +146,14 @@ const setValueByPath = (obj, path, value) => {
       current[finalKey] = value;
     } else {
       console.error(
-        `setValueByPath Error: Cannot set final key "${finalKey}" on array with non-numeric key. Path: ${path}`
+        `setValueByPath Error: Cannot set final key "${finalKey}" on array. Path: ${path}`
       );
       return false;
     }
     return true;
   } else {
     console.error(
-      `setValueByPath Error: Failed to set final key "${finalKey}" for path "${path}". 'current' is not an object/array or finalKey undefined. Current:`,
+      `setValueByPath Error: Failed set final key "${finalKey}" for path "${path}". Curr not object/array or finalKey undef. Curr:`,
       current,
       "FinalKey:",
       finalKey
@@ -193,9 +178,63 @@ const BlockPreview = () => {
   const [showIframe, setShowIframe] = useState(false);
   const [currentTemplateTitle, setCurrentTemplateTitle] =
     useState("Loading...");
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   const locationTemplatesRef = useRef(null);
   const initialRawTemplatesFromLocationCacheRef = useRef(null);
+  const allowNextPopState = useRef(false); // Ref to manage programmatic back navigation
+
+  // Effect to manage browser back button behavior
+  useEffect(() => {
+    // Push a new state to history on mount, specific to this page instance
+    // This ensures that the first back button press will trigger our popstate handler
+    window.history.pushState(
+      { page: "BlockPreviewLoaded" },
+      "",
+      window.location.href
+    );
+    console.log(
+      "[BlockPreview] Initial history state pushed for popstate trapping."
+    );
+
+    const handleBrowserBack = (event) => {
+      // Check if this popstate was expected due to an in-app back navigation
+      if (allowNextPopState.current) {
+        console.log(
+          "[BlockPreview] Popstate allowed (flagged as programmatic navigation)."
+        );
+        allowNextPopState.current = false; // Reset the flag
+        // Do NOT pushState here; let the browser complete the back navigation.
+        // The component might unmount if navigation is successful.
+        return;
+      }
+
+      // If the flag is not set, this was a user-initiated browser back button press.
+      // Prevent it by pushing the current state again.
+      console.log(
+        "[BlockPreview] Popstate trapped (user browser back). Pushing state again to stay."
+      );
+      window.history.pushState(
+        { page: "BlockPreviewLoaded" },
+        "",
+        window.location.href
+      );
+      // Optionally, you could show a custom message to the user here if desired,
+      // but often just preventing the back navigation is sufficient.
+    };
+
+    window.addEventListener("popstate", handleBrowserBack);
+    console.log("[BlockPreview] Popstate listener ADDED.");
+
+    return () => {
+      window.removeEventListener("popstate", handleBrowserBack);
+      console.log("[BlockPreview] Popstate listener REMOVED.");
+      // When the component unmounts (e.g., user navigates away via an in-app link
+      // other than our special back buttons), allowNextPopState should ideally be false.
+      // If allowNextPopState.current is true when unmounting, it means we programmatically
+      // initiated a back navigation, and it's proceeding.
+    };
+  }, []); // Empty dependency array: run on mount and cleanup on unmount only.
 
   const extractColorsRecursively = useCallback(
     (node, currentPath, foundColors, idCounter) => {
@@ -358,7 +397,6 @@ const BlockPreview = () => {
       return;
     }
     if (!isPageLoading) setIsPageLoading(true);
-    // console.groupCollapsed("[BlockPreview] Effect_BuildOJP: Processing initialRawTemplates");
     const finalContentArray = [];
     let processedSomething = false;
     let pageName =
@@ -386,9 +424,10 @@ const BlockPreview = () => {
     if (!processedSomething || finalContentArray.length === 0) {
       setOriginalJsonProcessed(null);
       setIsPageLoading(false);
-      /*console.groupEnd();*/ return;
+      return;
     }
-    let pageSettings = {
+    let pageSettings = initialRawTemplates.reorderedGlobalSections[0]?.json
+      ?.page_settings || {
       external_header_footer: true,
       hide_title: true,
       page_layout: "elementor_canvas",
@@ -408,13 +447,11 @@ const BlockPreview = () => {
       type: "wp-page",
     };
     setOriginalJsonProcessed({ name: pageName, json: fullJsonStructure });
-    // console.groupEnd();
   }, [initialRawTemplates]);
 
   useEffect(() => {
     // Effect 3
     if (originalJsonProcessed?.json) {
-      // console.groupCollapsed("[BlockPreview] Effect_ColorExtraction");
       const idCounter = { current: 0 };
       const foundColors = [];
       if (originalJsonProcessed.json.content) {
@@ -435,7 +472,6 @@ const BlockPreview = () => {
       }
       setAllColorInstances(foundColors);
       setCategorizedColorPalette(categorizeColorInstances(foundColors));
-      // console.groupEnd();
     } else {
       setAllColorInstances([]);
       setCategorizedColorPalette({});
@@ -469,29 +505,17 @@ const BlockPreview = () => {
         setIsColorEditorOpen(false);
         return;
       }
-
-      console.groupCollapsed("[BlockPreview] applyChangesAndRegenerate");
-      console.log("Applying changesArray:", changesArray);
-      console.log(
-        "OJP.json (BEFORE MODIFICATION):",
-        JSON.parse(JSON.stringify(originalJsonProcessed.json))
-      );
+      // console.groupCollapsed("[BlockPreview] applyChangesAndRegenerate");
+      // console.log("Applying changesArray:", changesArray);
 
       const modifiedPageJson = structuredClone(originalJsonProcessed.json);
       let actualModificationsCount = 0;
-
-      console.log("--- Starting modification loop for setValueByPath ---");
       changesArray.forEach(({ originalHex, currentHex }) => {
-        console.log(`Processing change: ${originalHex} -> ${currentHex}`);
         allColorInstances
           .filter((inst) => inst.originalValue === originalHex)
           .forEach((inst) => {
             let relativePath = inst.path;
             let targetObjectForSetValue;
-            console.log(
-              `  Attempting to modify instance at path: ${inst.path}`
-            );
-
             if (relativePath.startsWith("json.content")) {
               relativePath = relativePath.substring("json.content.".length);
               targetObjectForSetValue = modifiedPageJson.content;
@@ -504,78 +528,24 @@ const BlockPreview = () => {
               relativePath = relativePath.substring("json.".length);
               targetObjectForSetValue = modifiedPageJson;
             } else {
-              console.warn(
-                `  Path "${inst.path}" does not start with "json.*". Using modifiedPageJson as target.`
-              );
               targetObjectForSetValue = modifiedPageJson;
             }
-
             if (targetObjectForSetValue === undefined) {
-              console.error(
-                `  Target object for path prefix of "${inst.path}" is UNDEFINED. Cannot set value. Skipping.`
-              );
               return;
             }
-            // console.log(`    Calling setValueByPath on target (type ${typeof targetObjectForSetValue}) with relativePath: "${relativePath}"`);
-
             if (
               setValueByPath(targetObjectForSetValue, relativePath, currentHex)
-            ) {
+            )
               actualModificationsCount++;
-              // console.log(`    SUCCESS: setValueByPath for ${inst.path}`);
-            } else {
+            else {
               console.error(
-                `    FAILED: setValueByPath for ${inst.path} (relative: ${relativePath})`
+                `setValueByPath FAILED for inst.path="${inst.path}"`
               );
             }
           });
       });
-      console.log(
-        `--- Finished modification loop. Total successful setValueByPath calls: ${actualModificationsCount} ---`
-      );
-
-      // **** MOST IMPORTANT LOG TO VERIFY THE ACTUAL MODIFICATION ****
-      console.log(
-        "VERIFY THIS OBJECT (modifiedPageJson after ALL changes):",
-        JSON.parse(JSON.stringify(modifiedPageJson))
-      );
-      // For easier debugging, you can pick one known path that *should* have changed and log its value
-      // For example, if changesArray[0] was { originalHex: '#ABCDEF', currentHex: '#123456' }
-      // and allColorInstances had an entry with originalValue '#abcdef' at path 'json.content[0].settings.color'
-      if (changesArray.length > 0 && allColorInstances.length > 0) {
-        const firstChangeToVerify = changesArray[0];
-        const instanceToVerify = allColorInstances.find(
-          (inst) => inst.originalValue === firstChangeToVerify.originalHex
-        );
-        if (instanceToVerify) {
-          let pathToVerify = instanceToVerify.path;
-          let tempObj = modifiedPageJson;
-          if (pathToVerify.startsWith("json.content")) {
-            tempObj = tempObj.content;
-            pathToVerify = pathToVerify.substring("json.content.".length);
-          } else if (pathToVerify.startsWith("json.page_settings")) {
-            tempObj = tempObj.page_settings;
-            pathToVerify = pathToVerify.substring("json.page_settings.".length);
-          } else if (pathToVerify.startsWith("json.")) {
-            pathToVerify = pathToVerify.substring("json.".length);
-          }
-          try {
-            const valAfter = pathToVerify
-              .split(".")
-              .reduce((o, k) => o && o[k.replace(/\[(\d+)\]/g, "$1")], tempObj);
-            console.log(
-              `VERIFICATION LOG: Path ${instanceToVerify.path} - Expected New: ${firstChangeToVerify.currentHex}, Value in modifiedPageJson: ${valAfter}`
-            );
-            if (valAfter !== firstChangeToVerify.currentHex) {
-              console.error(
-                "!!!!! VERIFICATION FAILED: Color at path did not change as expected. !!!!!"
-              );
-            }
-          } catch (e) {
-            console.error("Error during verification log reduce:", e);
-          }
-        }
-      }
+      // console.log(`Total successful calls to setValueByPath: ${actualModificationsCount}`);
+      // console.log("VERIFY THIS: `modifiedPageJson` after all changes:", JSON.parse(JSON.stringify(modifiedPageJson)));
 
       const newPageName = `${originalJsonProcessed.name || "Page"} (Colors V${
         Date.now() % 10000
@@ -586,7 +556,6 @@ const BlockPreview = () => {
         sectionType: "fullPageContentUpdate",
         json: modifiedPageJson,
       };
-
       const baseRawTemplatesSource =
         initialRawTemplatesFromLocationCacheRef.current || {};
       const newInitialRawTemplates = {
@@ -608,7 +577,7 @@ const BlockPreview = () => {
       setAllColorInstances(newAllColors);
       setCategorizedColorPalette(categorizeColorInstances(newAllColors));
       setIsColorEditorOpen(false);
-      console.groupEnd();
+      // console.groupEnd();
     },
     [
       originalJsonProcessed,
@@ -618,12 +587,12 @@ const BlockPreview = () => {
     ]
   );
 
-  const handleEditColorsClick = () => {
+  const handleAttemptEditColors = () => {
     const hasDisplayableColors =
       categorizedColorPalette &&
       Object.values(categorizedColorPalette).some((arr) => arr.length > 0);
     if (originalJsonProcessed && hasDisplayableColors) {
-      setIsColorEditorOpen(true);
+      setIsConfirmModalOpen(true);
     } else {
       alert(
         hasDisplayableColors
@@ -633,8 +602,23 @@ const BlockPreview = () => {
     }
   };
 
+  const handleConfirmFinalizeAndEdit = () => {
+    setIsConfirmModalOpen(false);
+    setIsColorEditorOpen(true);
+  };
+
+  const handleProgrammaticBackNavigation = () => {
+    // New handler for in-app back
+    allowNextPopState.current = true;
+    navigate(-1);
+  };
+
+  const handleCancelFinalize = () => {
+    setIsConfirmModalOpen(false);
+    handleProgrammaticBackNavigation(); // Use the new handler
+  };
+
   const leftPanelContent = (
-    /* ... Same ... */
     <div
       className="template-preview-left-panel"
       style={{
@@ -653,7 +637,7 @@ const BlockPreview = () => {
       {originalJsonProcessed && showIframe && (
         <button
           className="editColorsButton"
-          onClick={handleEditColorsClick}
+          onClick={handleAttemptEditColors}
           disabled={
             !(
               categorizedColorPalette &&
@@ -667,11 +651,13 @@ const BlockPreview = () => {
             width: "100%",
             padding: "10px",
             marginBottom: "15px",
-            backgroundColor: "#007bff",
+            backgroundColor: "teal", // Teal color
             color: "white",
             border: "none",
             borderRadius: "5px",
             cursor: "pointer",
+            fontSize: "1rem",
+            fontWeight: "bold",
           }}
         >
           {" "}
@@ -685,7 +671,7 @@ const BlockPreview = () => {
       <hr style={{ margin: "20px 0" }} />
       <button
         className="backToReorderButton"
-        onClick={() => navigate(-1)}
+        onClick={handleProgrammaticBackNavigation} // Use the new handler
         style={{
           display: "block",
           width: "100%",
@@ -698,12 +684,11 @@ const BlockPreview = () => {
           cursor: "pointer",
         }}
       >
-        {" "}
-        Back to Reorder Sections{" "}
+        Back to Reorder Sections
       </button>
       <button
         className="backToDashboardButton"
-        onClick={() => navigate("/")}
+        onClick={() => navigate("/")} // Standard navigation, popstate listener will handle if user tries to "back" into this page
         style={{
           display: "block",
           width: "100%",
@@ -715,8 +700,7 @@ const BlockPreview = () => {
           cursor: "pointer",
         }}
       >
-        {" "}
-        Back to Dashboard{" "}
+        Back to Dashboard
       </button>
       {showIframe && iframeUrl && (
         <p style={{ fontSize: "0.9em", marginTop: "15px" }}>
@@ -804,12 +788,45 @@ const BlockPreview = () => {
     );
   }
 
+  const renderConfirmModal = () => {
+    if (!isConfirmModalOpen) return null;
+    return (
+      <div className={styles.modalBackdrop}>
+        {" "}
+        {/* Uses CSS Module */}
+        <div className={styles.modalContent}>
+          <h4>Finalize Section Order?</h4>
+          <p>
+            Color customization is available only after the section order is
+            finalized. You won't be able to reorder sections in this preview
+            once you proceed.
+          </p>
+          <div className={styles.modalActions}>
+            <button
+              onClick={handleCancelFinalize}
+              className={`${styles.modalButton} ${styles.modalButtonSecondary}`}
+            >
+              Back to Reorder
+            </button>
+            <button
+              onClick={handleConfirmFinalizeAndEdit}
+              className={`${styles.modalButton} ${styles.modalButtonPrimary}`}
+            >
+              Finalize & Edit Colors
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <DashboardLayout
       topBar={<TopBar />}
       leftPanel={leftPanelContent}
       rightPanel={rightPanelDisplay}
     >
+      {renderConfirmModal()}
       {isColorEditorOpen && (
         <ColorEditorOverlay
           isOpen={isColorEditorOpen}
