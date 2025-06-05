@@ -593,10 +593,9 @@ const BlockPreview = () => {
 
   const handleCancelFinalize = () => {
     setIsConfirmModalOpen(false);
-    handleProgrammaticBackNavigation();
   };
 
-  // MODIFIED Left Panel Content
+  // Left Panel Content
   const leftPanelContent = (
     <div
       className="template-preview-left-panel"
@@ -606,9 +605,9 @@ const BlockPreview = () => {
         borderRight: "1px solid #eee",
       }}
     >
-      <h3 style={{ marginTop: 0, marginBottom: "10px" }}>Original Prompt:</h3>
+      <h3 style={{ marginTop: 0, marginBottom: "10px" }}>You said:</h3>
       {originalPrompt ? (
-        <Typewriter text={originalPrompt} speed={25} /> // Adjusted speed
+        <Typewriter text={originalPrompt} speed={25} />
       ) : (
         <p style={{ fontStyle: "italic", color: "#777" }}>
           {isPageLoading
@@ -617,11 +616,13 @@ const BlockPreview = () => {
         </p>
       )}
 
-      {/* Edit Colors Button appears if preview is shown AND order is NOT YET finalized */}
-      {originalJsonProcessed && showIframe && !isOrderFinalized && (
+      {/* "Edit Colors" button - always shown if conditions met, no longer replaced by text */}
+      {originalJsonProcessed && showIframe && (
         <button
           className="editColorsButton"
-          onClick={handleAttemptEditColors}
+          onClick={handleAttemptEditColors} // This opens the confirmation modal
+          // Disabled if no colors found OR page is currently loading.
+          // Not disabled by isOrderFinalized anymore.
           disabled={
             !(
               categorizedColorPalette &&
@@ -636,13 +637,12 @@ const BlockPreview = () => {
             padding: "10px",
             marginTop: "20px",
             marginBottom: "15px",
-            backgroundColor: "teal",
-            opacity:1,
+            backgroundColor: "teal", // Teal color
             color: "white",
             border: "none",
             borderRadius: "5px",
             cursor:
-              !(
+              !( // Duplicated disabled logic for cursor style for clarity
                 categorizedColorPalette &&
                 Object.values(categorizedColorPalette).some(
                   (arr) => arr.length > 0
@@ -653,7 +653,7 @@ const BlockPreview = () => {
             fontSize: "1rem",
             fontWeight: "bold",
             opacity:
-              !(
+              !( // Duplicated disabled logic for opacity style for clarity
                 categorizedColorPalette &&
                 Object.values(categorizedColorPalette).some(
                   (arr) => arr.length > 0
@@ -670,16 +670,19 @@ const BlockPreview = () => {
             : " (No colors found)"}
         </button>
       )}
-      {isOrderFinalized && ( // Show this message if order is finalized
+      
+      {/* Optional: Message if order is finalized, can be placed elsewhere or removed if button is always active */}
+      {isOrderFinalized && (
         <p
           style={{
-            marginTop: "20px",
+            marginTop: "0px", // Adjust if Edit Colors button is present above
             marginBottom: "15px",
-            color: "teal",
-            fontWeight: "bold",
+            color: "#555", // Subtler color
+            fontSize: "0.85rem",
+            textAlign: "center",
           }}
         >
-          Order finalized. Color editing active.
+          Section order is finalized. You can continue to edit colors.
         </p>
       )}
 
@@ -687,7 +690,7 @@ const BlockPreview = () => {
       <button
         className="backToReorderButton"
         onClick={handleProgrammaticBackNavigation}
-        disabled={isOrderFinalized}
+        disabled={isOrderFinalized} // This button IS still disabled if order is finalized
         style={{
           display: "block",
           width: "100%",
@@ -701,7 +704,7 @@ const BlockPreview = () => {
           opacity: isOrderFinalized ? 0.5 : 1,
         }}
       >
-        Back to Reorder Sections
+        Back One Step
       </button>
       <button
         className="backToDashboardButton"
@@ -820,7 +823,7 @@ const BlockPreview = () => {
               onClick={handleCancelFinalize}
               className={`${modalStyles.modalButton} ${modalStyles.modalButtonSecondary}`}
             >
-              Back to Reorder
+              Close & Go Back
             </button>
             <button
               onClick={handleConfirmFinalizeAndEdit}

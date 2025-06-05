@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 // React Flow imports are removed
 
-const AVAILABLE_SECTION_TYPES = [ //for implement change in sectionType
+const AVAILABLE_SECTION_TYPES = [
+  //for implement change in sectionType
   // "Verse",
   // "Chorus",
   // "Bridge",
@@ -10,8 +11,6 @@ const AVAILABLE_SECTION_TYPES = [ //for implement change in sectionType
   // "Outro",
   // "Solo",
 ];
-
-
 
 // Styles for the reorderable list
 const listStyles = `
@@ -184,7 +183,9 @@ const SectionItemHTML5 = ({
         }`}
       >
         <div className="section-info">
-          <div className="section-name">{section.sectionType.toUpperCase() + " SECTION" }</div>
+          <div className="section-name">
+            {section.sectionType.toUpperCase() + " SECTION"}
+          </div>
           <div
             className="section-type-changer"
             // onClick={() => onChangeType(index)}  // will activate when implementing section change in node
@@ -605,25 +606,53 @@ const IntermediateComponent = () => {
     });
   }, []);
 
+  // const handleApplyOrder = () => {
+  //   console.log(
+  //     "Applying final order:",
+  //     currentSections.map((s) => ({ name: s.name, type: s.sectionType }))
+  //   );
+  //   navigate("/builder-block-preview-main", {
+  //     state: {
+  //       templatesOrderedBySection: {
+  //         ...(location.state?.templatesOrderedBySection || {}),
+  //         reorderedGlobalSections: currentSections,
+  //       },
+  //     },
+  //   });
+  // };
+
   const handleApplyOrder = () => {
     console.log(
       "Applying final order:",
       currentSections.map((s) => ({ name: s.name, type: s.sectionType }))
     );
-    navigate("/builder-block-preview-main", {
-      state: {
-        templatesOrderedBySection: {
-          ...(location.state?.templatesOrderedBySection || {}),
-          reorderedGlobalSections: currentSections,
-        },
+
+    // START OF PROMPT PROCESSING
+    const originalPromptFromDash =
+      location.state?.originalPrompt ||
+      "Prompt not explicitly passed to IntermediateComponent.";
+    const pageNameForNextStep = "Generated Page"; // Fallback
+
+    const stateToNavigate = {
+      templatesOrderedBySection: {
+        ...(location.state?.templatesOrderedBySection || {}),
+        reorderedGlobalSections: currentSections,
+        name: pageNameForNextStep, 
       },
-    });
+      originalPrompt: originalPromptFromDash, // Pass the prompt at the top level of state
+      suggestedOrder: location.state?.suggestedOrder, // Pass suggestedOrder if it exists
+    };
+    console.log(
+      "[IntermediateComponent] Navigating to /builder-block-preview-main with state:",
+      JSON.parse(JSON.stringify(stateToNavigate))
+    );
+    navigate("/builder-block-preview-main", { state: stateToNavigate });
+    // END OF MODIFICATION
   };
 
   return (
     <div className="reorder-list-app-container">
       <div className="reorder-list-content">
-   
         <h2>Reorder Your Sections</h2>
         <div className="sections-list-html5">
           {currentSections.map((section, index) => (
@@ -704,4 +733,3 @@ const IntermediateComponent = () => {
 };
 
 export default IntermediateComponent;
-
