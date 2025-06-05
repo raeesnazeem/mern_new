@@ -631,13 +631,15 @@ const IntermediateComponent = () => {
     const originalPromptFromDash =
       location.state?.originalPrompt ||
       "Prompt not explicitly passed to IntermediateComponent.";
-    const pageNameForNextStep = "Generated Page"; // Fallback
+      const someVariableThatMightBeNull = `Generated Page ${Date.now()}`; 
+      const pageNameForNextStep = someVariableThatMightBeNull || "Generated Page"; // Fallback;
+    
 
     const stateToNavigate = {
       templatesOrderedBySection: {
         ...(location.state?.templatesOrderedBySection || {}),
         reorderedGlobalSections: currentSections,
-        name: pageNameForNextStep, 
+        name: pageNameForNextStep,
       },
       originalPrompt: originalPromptFromDash, // Pass the prompt at the top level of state
       suggestedOrder: location.state?.suggestedOrder, // Pass suggestedOrder if it exists

@@ -9,7 +9,6 @@ import "../../styles/TemplatePreviewPage.css";
 import "../../styles/ColorEditorOverlay.css";
 import modalStyles from "../../styles/BlockPreviewModals.module.css"; // CSS Modules for modals
 
-
 import { useLocation, useNavigate } from "react-router-dom";
 
 // ----- Helper Constants and Functions -----
@@ -176,8 +175,7 @@ const BlockPreview = () => {
   const [categorizedColorPalette, setCategorizedColorPalette] = useState({});
   const [isColorEditorOpen, setIsColorEditorOpen] = useState(false);
   const [showIframe, setShowIframe] = useState(false);
-  // currentTemplateTitle is not used for the main heading in left panel anymore based on new request
-  // const [currentTemplateTitle, setCurrentTemplateTitle] = useState("Loading...");
+  const [iframeReady, setIframeReady] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [originalPrompt, setOriginalPrompt] = useState(""); // State for the prompt
   const [isOrderFinalized, setIsOrderFinalized] = useState(false); // State for order finalization
@@ -379,9 +377,7 @@ const BlockPreview = () => {
     if (!isPageLoading) setIsPageLoading(true);
     const finalContentArray = [];
     let processedSomething = false;
-    let pageName =
-      initialRawTemplates.name ||
-      `Generated Page ${Math.floor(Date.now() / 1000)}`;
+    let pageName =`Generated Page ${Math.floor(Date.now() / 1000)}`;
     let sectionsToProcess =
       initialRawTemplates.reorderedGlobalSections?.length > 0
         ? initialRawTemplates.reorderedGlobalSections
@@ -462,12 +458,28 @@ const BlockPreview = () => {
     categorizeColorInstances,
   ]);
 
+  // const handleWordPressPageGenerated = useCallback(
+  //   (url, pageDataObjectFromWP) => {
+  //     setIframeUrl(url);
+  //     // setCurrentTemplateTitle(pageDataObjectFromWP.name || "WordPress Preview"); // No longer used for heading
+  //     setOriginalJsonProcessed(structuredClone(pageDataObjectFromWP));
+  //     setShowIframe(true);
+  //     setIsPageLoading(false);
+  //   },
+  //   []
+  // );
+
   const handleWordPressPageGenerated = useCallback(
     (url, pageDataObjectFromWP) => {
-      setIframeUrl(url);
-      // setCurrentTemplateTitle(pageDataObjectFromWP.name || "WordPress Preview"); // No longer used for heading
-      setOriginalJsonProcessed(structuredClone(pageDataObjectFromWP));
-      setShowIframe(true);
+      setIframeUrl(""); // Clear previous URL
+      setOriginalJsonProcessed(pageDataObjectFromWP); // No structuredClone used
+
+      setTimeout(() => {
+        setIframeUrl(url);
+        setShowIframe(true);
+        setIframeReady(true);
+      }, 500); // Small delay to let WordPress finalize the post
+
       setIsPageLoading(false);
     },
     []
@@ -642,10 +654,13 @@ const BlockPreview = () => {
             border: "none",
             borderRadius: "5px",
             cursor:
-              !( // Duplicated disabled logic for cursor style for clarity
-                categorizedColorPalette &&
-                Object.values(categorizedColorPalette).some(
-                  (arr) => arr.length > 0
+              !(
+                // Duplicated disabled logic for cursor style for clarity
+                (
+                  categorizedColorPalette &&
+                  Object.values(categorizedColorPalette).some(
+                    (arr) => arr.length > 0
+                  )
                 )
               ) || isPageLoading
                 ? "not-allowed"
@@ -653,10 +668,13 @@ const BlockPreview = () => {
             fontSize: "1rem",
             fontWeight: "bold",
             opacity:
-              !( // Duplicated disabled logic for opacity style for clarity
-                categorizedColorPalette &&
-                Object.values(categorizedColorPalette).some(
-                  (arr) => arr.length > 0
+              !(
+                // Duplicated disabled logic for opacity style for clarity
+                (
+                  categorizedColorPalette &&
+                  Object.values(categorizedColorPalette).some(
+                    (arr) => arr.length > 0
+                  )
                 )
               ) || isPageLoading
                 ? 0.6
@@ -670,7 +688,7 @@ const BlockPreview = () => {
             : " (No colors found)"}
         </button>
       )}
-      
+
       {/* Optional: Message if order is finalized, can be placed elsewhere or removed if button is always active */}
       {isOrderFinalized && (
         <p
@@ -733,18 +751,16 @@ const BlockPreview = () => {
   );
 
   let rightPanelDisplay;
-  if (showIframe && iframeUrl) {
+  if (showIframe && iframeUrl && iframeReady) {
     rightPanelDisplay = (
       <div
         className="iframe-container"
         style={{ flexGrow: 1, display: "flex", flexDirection: "column" }}
       >
-        {" "}
         <div
           className="iframe-wrapper"
           style={{ flexGrow: 1, border: "1px solid #ccc", overflow: "hidden" }}
         >
-          {" "}
           <iframe
             ref={iframeRef}
             src={iframeUrl}
@@ -753,8 +769,8 @@ const BlockPreview = () => {
             sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
             referrerPolicy="no-referrer"
             allow="fullscreen"
-          />{" "}
-        </div>{" "}
+          />
+        </div>
       </div>
     );
   } else if (initialRawTemplates && originalJsonProcessed && !showIframe) {

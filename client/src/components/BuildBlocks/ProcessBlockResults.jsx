@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import AiLoader from "../AiLoader"; 
+import AiLoader from "../AiLoader";
 import axios from "axios";
 
 function normalizeImageData(data) {
@@ -45,7 +45,7 @@ const transformTemplatesToWorkingFormat = (
         console.log(
           `[ProcessBlockResults] Processing reorderedGlobalSection ${sectionIdx}: Name: ${section?.name}, Type: ${section?.sectionType}`
         );
-      
+
         // console.log(`[ProcessBlockResults]   Section JSON for reorderedGlobalSection ${sectionIdx}:`, section?.json ? JSON.parse(JSON.stringify(section.json)) : "No section.json");
 
         if (section?.json?.content && Array.isArray(section.json.content)) {
@@ -181,6 +181,108 @@ const ProcessBlockResults = ({
     }
   }, [templatesOrderedBySection, suggestedOrderProp, loading, onPreview]);
 
+  // const sendToWordPress = async (
+  //   rawTemplatesBySection,
+  //   currentSuggestedOrder
+  // ) => {
+  //   setLoading(true);
+  //   setShowLoader(true);
+  //   setError(null);
+  //   console.log(
+  //     "[ProcessBlockResults] sendToWordPress. Name on rawTemplates:",
+  //     rawTemplatesBySection?.name
+  //   );
+
+  //   try {
+  //     const username = import.meta.env.VITE_WP_USERNAME;
+  //     const appPassword = import.meta.env.VITE_WP_PASS;
+  //     const token = btoa(`${username}:${appPassword}`);
+
+  //     const { content: transformedContent, pageSettings: inputPageSettings } =
+  //       transformTemplatesToWorkingFormat(
+  //         rawTemplatesBySection,
+  //         currentSuggestedOrder
+  //       );
+
+  //     const finalPageSettings = inputPageSettings || {
+  //       // Use input page_settings if found, else default
+  //       external_header_footer: true,
+  //       hide_title: true,
+  //       page_layout: "elementor_canvas",
+  //       ui_theme_style: "no",
+  //     };
+  //     console.log(
+  //       "[ProcessBlockResults] Using finalPageSettings for WP API:",
+  //       JSON.parse(JSON.stringify(finalPageSettings))
+  //     );
+
+  //     const fullJsonStructure = {
+  //       content: transformedContent,
+  //       page_settings: finalPageSettings,
+  //       version: "0.4",
+  //       type: "wp-page",
+  //     };
+  //     const requestData = {
+  //       name:
+  //         rawTemplatesBySection?.name ||
+  //         `Generated Page ${Math.floor(Math.random() * 1000000000)}`,
+  //       json: structuredClone(fullJsonStructure),
+  //     };
+
+  //     console.log(
+  //       "[ProcessBlockResults] Sending to WordPress. Name:",
+  //       requestData.name,
+  //       "Content items:",
+  //       requestData.json.content.length
+  //     );
+
+  //     const response = await axios.post(
+  //       `${import.meta.env.VITE_WP_IMPORT_API_URL}`,
+  //       requestData,
+  //       {
+  //         headers: {
+  //           Authorization: `Basic ${token}`,
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
+
+  //     if (!response.data?.public_url) {
+  //       throw new Error(
+  //         "No post URL from WP. Response: " + JSON.stringify(response.data)
+  //       );
+  //     }
+  //     console.log(
+  //       "[ProcessBlockResults] WP API success. URL:",
+  //       response.data.public_url
+  //     );
+
+  //     const minimumLoadTime = 1500;
+  //     const loadStartTime = Date.now();
+  //     const checkAndProceed = () => {
+  //       if (Date.now() - loadStartTime >= minimumLoadTime) {
+  //         onPreview(response.data.public_url, {
+  //           name: response.data.name || requestData.name,
+  //           json: fullJsonStructure, // Pass back the JSON that was ACTUALLY SENT to WordPress
+  //         });
+  //         setShowLoader(false);
+  //         setLoading(false);
+  //       } else {
+  //         setTimeout(
+  //           checkAndProceed,
+  //           minimumLoadTime - (Date.now() - loadStartTime)
+  //         );
+  //       }
+  //     };
+  //     checkAndProceed();
+  //   } catch (err) {
+  //     console.error("[ProcessBlockResults] Error in sendToWordPress:", err);
+  //     setError(err.message || "Failed to import template.");
+  //     setShowLoader(false);
+  //     setLoading(false);
+  //   }
+  // };
+
   const sendToWordPress = async (
     rawTemplatesBySection,
     currentSuggestedOrder
@@ -205,10 +307,9 @@ const ProcessBlockResults = ({
         );
 
       const finalPageSettings = inputPageSettings || {
-        // Use input page_settings if found, else default
         external_header_footer: true,
         hide_title: true,
-        page_layout: "full_width", // For BlockPreview, "elementor_canvas" might be better if it's just blocks
+        page_layout: "elementor_canvas",
         ui_theme_style: "no",
       };
       console.log(
@@ -216,16 +317,26 @@ const ProcessBlockResults = ({
         JSON.parse(JSON.stringify(finalPageSettings))
       );
 
+      // ✅ Wrap stitched content as fullPageContentUpdate section
       const fullJsonStructure = {
         content: transformedContent,
         page_settings: finalPageSettings,
         version: "0.4",
         type: "wp-page",
       };
+      const wrappedAsSingleSection = {
+        _id: `fp-${Date.now()}`,
+        name: rawTemplatesBySection?.name || "Generated Page",
+        sectionType: "fullPageContentUpdate",
+        json: fullJsonStructure,
+      };
+      const newRawTemplates = {
+        ...rawTemplatesBySection,
+        reorderedGlobalSections: [wrappedAsSingleSection],
+      };
+
       const requestData = {
-        name:
-          rawTemplatesBySection?.name ||
-          `Generated Page ${Math.floor(Math.random() * 1000000000)}`,
+        name: newRawTemplates?.name,
         json: structuredClone(fullJsonStructure),
       };
 
@@ -263,7 +374,7 @@ const ProcessBlockResults = ({
         if (Date.now() - loadStartTime >= minimumLoadTime) {
           onPreview(response.data.public_url, {
             name: response.data.name || requestData.name,
-            json: fullJsonStructure, // Pass back the JSON that was ACTUALLY SENT to WordPress
+            json: fullJsonStructure,
           });
           setShowLoader(false);
           setLoading(false);
