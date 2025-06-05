@@ -1,0 +1,31 @@
+.typewriterContainer {
+  padding: 10px;
+  background-color: #f8f9fa; /* Light background for the prompt area */
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  margin-top: 10px; /* Adjusted from 15px for tighter look with heading */
+  font-family: 'Courier New', Courier, monospace; /* Monospace font for typewriter feel */
+  color: #333;
+  min-height: 50px; /* Ensure it has some height even when text is short */
+  overflow-y: auto; /* Add scroll for very long prompts */
+  max-height: 150px; /* Limit max height */
+}
+
+.typewriterText {
+  white-space: pre-wrap; /* Preserve whitespace and wrap text */
+  word-wrap: break-word; /* Break long words */
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.cursor {
+  animation: blink 1s step-end infinite;
+  font-weight: bold;
+  margin-left: 1px; /* Small space for cursor */
+}
+
+@keyframes blink {
+  from, to { color: transparent; }
+  50% { color:teal; } /* Cursor color */
+}

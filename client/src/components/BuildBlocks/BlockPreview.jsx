@@ -4,15 +4,15 @@ import DashboardLayout from "../../components/DashboardLayout";
 import TopBar from "../../components/TopBar";
 import ColorEditorOverlay from "../../components/ColorEditorOverlay";
 import AILoader from "../../components/AiLoader";
+import Typewriter from "../Typewriter"; // Import Typewriter component
 import "../../styles/TemplatePreviewPage.css";
 import "../../styles/ColorEditorOverlay.css";
-import styles from "../../styles/BlockPreviewModals.module.css"; // CSS Modules for modals
+import modalStyles from "../../styles/BlockPreviewModals.module.css"; // CSS Modules for modals
 
 
 import { useLocation, useNavigate } from "react-router-dom";
 
 // ----- Helper Constants and Functions -----
-// (isTransparentWhite, COLOR_KEYS, REGEXES, generateContextName, setValueByPath - from previous correct version)
 function isTransparentWhite(color) {
   if (typeof color !== "string") return true;
   color = color.trim().toLowerCase();
@@ -176,65 +176,37 @@ const BlockPreview = () => {
   const [categorizedColorPalette, setCategorizedColorPalette] = useState({});
   const [isColorEditorOpen, setIsColorEditorOpen] = useState(false);
   const [showIframe, setShowIframe] = useState(false);
-  const [currentTemplateTitle, setCurrentTemplateTitle] =
-    useState("Loading...");
+  // currentTemplateTitle is not used for the main heading in left panel anymore based on new request
+  // const [currentTemplateTitle, setCurrentTemplateTitle] = useState("Loading...");
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [originalPrompt, setOriginalPrompt] = useState(""); // State for the prompt
+  const [isOrderFinalized, setIsOrderFinalized] = useState(false); // State for order finalization
 
   const locationTemplatesRef = useRef(null);
   const initialRawTemplatesFromLocationCacheRef = useRef(null);
-  const allowNextPopState = useRef(false); // Ref to manage programmatic back navigation
+  const allowNextPopState = useRef(false);
 
-  // Effect to manage browser back button behavior
   useEffect(() => {
-    // Push a new state to history on mount, specific to this page instance
-    // This ensures that the first back button press will trigger our popstate handler
+    // Browser back button disabling logic
     window.history.pushState(
       { page: "BlockPreviewLoaded" },
       "",
       window.location.href
     );
-    console.log(
-      "[BlockPreview] Initial history state pushed for popstate trapping."
-    );
-
-    const handleBrowserBack = (event) => {
-      // Check if this popstate was expected due to an in-app back navigation
+    const handleBrowserBack = () => {
       if (allowNextPopState.current) {
-        console.log(
-          "[BlockPreview] Popstate allowed (flagged as programmatic navigation)."
-        );
-        allowNextPopState.current = false; // Reset the flag
-        // Do NOT pushState here; let the browser complete the back navigation.
-        // The component might unmount if navigation is successful.
+        allowNextPopState.current = false;
         return;
       }
-
-      // If the flag is not set, this was a user-initiated browser back button press.
-      // Prevent it by pushing the current state again.
-      console.log(
-        "[BlockPreview] Popstate trapped (user browser back). Pushing state again to stay."
-      );
       window.history.pushState(
         { page: "BlockPreviewLoaded" },
         "",
         window.location.href
       );
-      // Optionally, you could show a custom message to the user here if desired,
-      // but often just preventing the back navigation is sufficient.
     };
-
     window.addEventListener("popstate", handleBrowserBack);
-    console.log("[BlockPreview] Popstate listener ADDED.");
-
-    return () => {
-      window.removeEventListener("popstate", handleBrowserBack);
-      console.log("[BlockPreview] Popstate listener REMOVED.");
-      // When the component unmounts (e.g., user navigates away via an in-app link
-      // other than our special back buttons), allowNextPopState should ideally be false.
-      // If allowNextPopState.current is true when unmounting, it means we programmatically
-      // initiated a back navigation, and it's proceeding.
-    };
-  }, []); // Empty dependency array: run on mount and cleanup on unmount only.
+    return () => window.removeEventListener("popstate", handleBrowserBack);
+  }, []);
 
   const extractColorsRecursively = useCallback(
     (node, currentPath, foundColors, idCounter) => {
@@ -353,11 +325,17 @@ const BlockPreview = () => {
   }, []);
 
   useEffect(() => {
-    // Effect 1
+    // Effect 1: React to location.state changes
     const newLocationTemplatesData = location.state?.templatesOrderedBySection;
     const newLocationTemplatesString = newLocationTemplatesData
       ? JSON.stringify(newLocationTemplatesData)
       : null;
+
+    setOriginalPrompt(
+      location.state?.originalPrompt ||
+        "No prompt was provided for this generation."
+    ); // Set prompt
+
     if (
       newLocationTemplatesString &&
       newLocationTemplatesString !== locationTemplatesRef.current
@@ -371,6 +349,7 @@ const BlockPreview = () => {
       setShowIframe(false);
       setIframeUrl("");
       setIsPageLoading(true);
+      setIsOrderFinalized(false); // Reset order finalization for new template set
     } else if (!newLocationTemplatesString && initialRawTemplates !== null) {
       locationTemplatesRef.current = null;
       initialRawTemplatesFromLocationCacheRef.current = null;
@@ -379,6 +358,7 @@ const BlockPreview = () => {
       setShowIframe(false);
       setIframeUrl("");
       setIsPageLoading(false);
+      setIsOrderFinalized(false);
     } else if (
       isPageLoading &&
       !newLocationTemplatesString &&
@@ -389,7 +369,7 @@ const BlockPreview = () => {
   }, [location.state]);
 
   useEffect(() => {
-    // Effect 2
+    // Effect 2: Process initialRawTemplates into originalJsonProcessed
     if (!initialRawTemplates) {
       if (originalJsonProcessed !== null) setOriginalJsonProcessed(null);
       if (isPageLoading && !location.state?.templatesOrderedBySection)
@@ -450,7 +430,7 @@ const BlockPreview = () => {
   }, [initialRawTemplates]);
 
   useEffect(() => {
-    // Effect 3
+    // Effect 3: Extract colors
     if (originalJsonProcessed?.json) {
       const idCounter = { current: 0 };
       const foundColors = [];
@@ -485,7 +465,7 @@ const BlockPreview = () => {
   const handleWordPressPageGenerated = useCallback(
     (url, pageDataObjectFromWP) => {
       setIframeUrl(url);
-      setCurrentTemplateTitle(pageDataObjectFromWP.name || "WordPress Preview");
+      // setCurrentTemplateTitle(pageDataObjectFromWP.name || "WordPress Preview"); // No longer used for heading
       setOriginalJsonProcessed(structuredClone(pageDataObjectFromWP));
       setShowIframe(true);
       setIsPageLoading(false);
@@ -505,8 +485,6 @@ const BlockPreview = () => {
         setIsColorEditorOpen(false);
         return;
       }
-      // console.groupCollapsed("[BlockPreview] applyChangesAndRegenerate");
-      // console.log("Applying changesArray:", changesArray);
 
       const modifiedPageJson = structuredClone(originalJsonProcessed.json);
       let actualModificationsCount = 0;
@@ -537,15 +515,15 @@ const BlockPreview = () => {
               setValueByPath(targetObjectForSetValue, relativePath, currentHex)
             )
               actualModificationsCount++;
-            else {
-              console.error(
-                `setValueByPath FAILED for inst.path="${inst.path}"`
-              );
-            }
           });
       });
-      // console.log(`Total successful calls to setValueByPath: ${actualModificationsCount}`);
-      // console.log("VERIFY THIS: `modifiedPageJson` after all changes:", JSON.parse(JSON.stringify(modifiedPageJson)));
+      console.log(
+        `Total successful calls to setValueByPath: ${actualModificationsCount}`
+      );
+      console.log(
+        "VERIFY THIS: `modifiedPageJson` after all changes:",
+        JSON.parse(JSON.stringify(modifiedPageJson))
+      );
 
       const newPageName = `${originalJsonProcessed.name || "Page"} (Colors V${
         Date.now() % 10000
@@ -577,7 +555,7 @@ const BlockPreview = () => {
       setAllColorInstances(newAllColors);
       setCategorizedColorPalette(categorizeColorInstances(newAllColors));
       setIsColorEditorOpen(false);
-      // console.groupEnd();
+      // setIsOrderFinalized(true); // Moved to handleConfirmFinalizeAndEdit
     },
     [
       originalJsonProcessed,
@@ -605,19 +583,20 @@ const BlockPreview = () => {
   const handleConfirmFinalizeAndEdit = () => {
     setIsConfirmModalOpen(false);
     setIsColorEditorOpen(true);
+    setIsOrderFinalized(true); // Set order as finalized HERE
   };
 
   const handleProgrammaticBackNavigation = () => {
-    // New handler for in-app back
     allowNextPopState.current = true;
     navigate(-1);
   };
 
   const handleCancelFinalize = () => {
     setIsConfirmModalOpen(false);
-    handleProgrammaticBackNavigation(); // Use the new handler
+    handleProgrammaticBackNavigation();
   };
 
+  // MODIFIED Left Panel Content
   const leftPanelContent = (
     <div
       className="template-preview-left-panel"
@@ -627,14 +606,19 @@ const BlockPreview = () => {
         borderRight: "1px solid #eee",
       }}
     >
-      <h3 style={{ marginTop: 0, marginBottom: "20px" }}>
-        {showIframe
-          ? `Preview: ${currentTemplateTitle}`
-          : isPageLoading
-          ? "Processing..."
-          : "Setup"}
-      </h3>
-      {originalJsonProcessed && showIframe && (
+      <h3 style={{ marginTop: 0, marginBottom: "10px" }}>Original Prompt:</h3>
+      {originalPrompt ? (
+        <Typewriter text={originalPrompt} speed={25} /> // Adjusted speed
+      ) : (
+        <p style={{ fontStyle: "italic", color: "#777" }}>
+          {isPageLoading
+            ? "Loading prompt..."
+            : "No prompt available for this page."}
+        </p>
+      )}
+
+      {/* Edit Colors Button appears if preview is shown AND order is NOT YET finalized */}
+      {originalJsonProcessed && showIframe && !isOrderFinalized && (
         <button
           className="editColorsButton"
           onClick={handleAttemptEditColors}
@@ -650,45 +634,78 @@ const BlockPreview = () => {
             display: "block",
             width: "100%",
             padding: "10px",
+            marginTop: "20px",
             marginBottom: "15px",
-            backgroundColor: "teal", // Teal color
+            backgroundColor: "teal",
+            opacity:1,
             color: "white",
             border: "none",
             borderRadius: "5px",
-            cursor: "pointer",
+            cursor:
+              !(
+                categorizedColorPalette &&
+                Object.values(categorizedColorPalette).some(
+                  (arr) => arr.length > 0
+                )
+              ) || isPageLoading
+                ? "not-allowed"
+                : "pointer",
             fontSize: "1rem",
+            fontWeight: "bold",
+            opacity:
+              !(
+                categorizedColorPalette &&
+                Object.values(categorizedColorPalette).some(
+                  (arr) => arr.length > 0
+                )
+              ) || isPageLoading
+                ? 0.6
+                : 1,
+          }}
+        >
+          Edit Colors
+          {categorizedColorPalette &&
+          Object.values(categorizedColorPalette).some((arr) => arr.length > 0)
+            ? ` (Colors Available)`
+            : " (No colors found)"}
+        </button>
+      )}
+      {isOrderFinalized && ( // Show this message if order is finalized
+        <p
+          style={{
+            marginTop: "20px",
+            marginBottom: "15px",
+            color: "teal",
             fontWeight: "bold",
           }}
         >
-          {" "}
-          Edit Colors{" "}
-          {categorizedColorPalette &&
-          Object.values(categorizedColorPalette).some((arr) => arr.length > 0)
-            ? `(Colors Available)`
-            : "(No editable colors found)"}
-        </button>
+          Order finalized. Color editing active.
+        </p>
       )}
+
       <hr style={{ margin: "20px 0" }} />
       <button
         className="backToReorderButton"
-        onClick={handleProgrammaticBackNavigation} // Use the new handler
+        onClick={handleProgrammaticBackNavigation}
+        disabled={isOrderFinalized}
         style={{
           display: "block",
           width: "100%",
           padding: "10px",
           marginBottom: "15px",
-          backgroundColor: "#6c757d",
+          backgroundColor: isOrderFinalized ? "#A9A9A9" : "#6c757d",
           color: "white",
           border: "none",
           borderRadius: "5px",
-          cursor: "pointer",
+          cursor: isOrderFinalized ? "not-allowed" : "pointer",
+          opacity: isOrderFinalized ? 0.5 : 1,
         }}
       >
         Back to Reorder Sections
       </button>
       <button
         className="backToDashboardButton"
-        onClick={() => navigate("/")} // Standard navigation, popstate listener will handle if user tries to "back" into this page
+        onClick={() => navigate("/")}
         style={{
           display: "block",
           width: "100%",
@@ -705,8 +722,7 @@ const BlockPreview = () => {
       {showIframe && iframeUrl && (
         <p style={{ fontSize: "0.9em", marginTop: "15px" }}>
           <a href={iframeUrl} target="_blank" rel="noopener noreferrer">
-            {" "}
-            Open preview in new tab{" "}
+            Open preview in new tab
           </a>
         </p>
       )}
@@ -729,7 +745,7 @@ const BlockPreview = () => {
           <iframe
             ref={iframeRef}
             src={iframeUrl}
-            title={currentTemplateTitle}
+            title="Block Preview"
             style={{ width: "100%", height: "100%", border: "none" }}
             sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
             referrerPolicy="no-referrer"
@@ -763,7 +779,7 @@ const BlockPreview = () => {
         }}
       >
         {" "}
-        <h4>⚠️ Error Processing Templates</h4>{" "}
+        <h4>Error Processing Templates</h4>{" "}
         <p>Could not prepare page content.</p>
       </div>
     );
@@ -791,26 +807,24 @@ const BlockPreview = () => {
   const renderConfirmModal = () => {
     if (!isConfirmModalOpen) return null;
     return (
-      <div className={styles.modalBackdrop}>
-        {" "}
-        {/* Uses CSS Module */}
-        <div className={styles.modalContent}>
+      <div className={modalStyles.modalBackdrop}>
+        <div className={modalStyles.modalContent}>
           <h4>Finalize Section Order?</h4>
           <p>
             Color customization is available only after the section order is
-            finalized. You won't be able to reorder sections in this preview
-            once you proceed.
+            finalized. You will not be able to reorder sections for this preview
+            after proceeding.
           </p>
-          <div className={styles.modalActions}>
+          <div className={modalStyles.modalActions}>
             <button
               onClick={handleCancelFinalize}
-              className={`${styles.modalButton} ${styles.modalButtonSecondary}`}
+              className={`${modalStyles.modalButton} ${modalStyles.modalButtonSecondary}`}
             >
               Back to Reorder
             </button>
             <button
               onClick={handleConfirmFinalizeAndEdit}
-              className={`${styles.modalButton} ${styles.modalButtonPrimary}`}
+              className={`${modalStyles.modalButton} ${modalStyles.modalButtonPrimary}`}
             >
               Finalize & Edit Colors
             </button>

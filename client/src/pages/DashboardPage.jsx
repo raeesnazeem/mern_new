@@ -66,36 +66,6 @@ const DashboardPage = () => {
     setIsLoading(true);
     setCurrentPrompt(prompt);
 
-    // try {
-    //   // This returns a data object with keys allTemplates, templatesOrderedBySection, suggestedOrder and matchedConditions object
-    //   const response = await axios.post(
-    //     `${
-    //       import.meta.env.VITE_TO_SERVER_API_URL
-    //     }/template/make-template-prompt`,
-    //     { prompt }
-    //   );
-
-    //   console.log('The actual prompt:', prompt);
-    //   // from the response data - Extract templatesOrderedBySection alone
-    //   const templatesInOrder = response.data.data.templatesOrderedBySection;
-    //   const orderForTemplates = response.data.data.suggestedOrder;
-
-    //   console.log('These are the templates in order:', templatesInOrder);
-
-    //   //preview route renders TemplatePreview Component
-    //   navigate("/preview-main", {
-    //       state: {
-    //       templatesOrderedBySection: templatesInOrder,
-    //       suggestedOrder: orderForTemplates 
-    //     },
-    //   });
-    // } catch (error) {
-    //   console.error("Error:", error.message);
-    //   alert("Failed to generate templates.");
-    // } finally {
-    //   setIsLoading(false);
-    // }
-
     try {
       // This returns a data object with keys allTemplates, templatesOrderedBySection, suggestedOrder and matchedConditions object
       const response = await axios.post(
@@ -113,9 +83,11 @@ const DashboardPage = () => {
 
       // console.log('These are the templates in order:', templatesInOrder);
 
-      // /preview route renders TemplatePreview Component
+      // /preview route renders TemplatePreview Component - also passing on the templates and originalPrompt
       navigate("/intermediate-component", {
-        state: { templatesOrderedBySection: templatesInOrder },
+        state: { templatesOrderedBySection: templatesInOrder,
+                 originalPrompt: prompt
+         },
       });
     } catch (error) {
       console.error("Error:", error.message);
