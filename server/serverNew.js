@@ -43,8 +43,8 @@ if (NODE_ENV === "production") {
   // Development CORS settings
   corsOptions = {
     origin: [
-      process.env.FRONTEND_DEVELOPMENT_URL || "http://localhost:5173", //  local Vite frontend
-      "http://127.0.0.1:5173", // Alt way to access localhost
+      process.env.FRONTEND_DEVELOPMENT_URL || "https://localhost:5173", //  local Vite frontend
+      "https://127.0.0.1:5173", // Alt way to access localhost
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -88,8 +88,8 @@ connectDB()
   .then(() => {
     server = app.listen(PORT, () => {
       // Assign the server instance
-      console.log(`Server is running on http://localhost:${PORT}`);
-      // console.log(`API Documentation available at http://localhost:${PORT}/api-docs`); // Uncomment if you have API docs
+      console.log(`Server is running on https://localhost:${PORT}`);
+      // console.log(`API Documentation available at https://localhost:${PORT}/api-docs`); // Uncomment if you have API docs
     });
   })
   .catch((err) => {

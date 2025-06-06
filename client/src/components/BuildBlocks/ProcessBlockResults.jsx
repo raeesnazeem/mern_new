@@ -374,7 +374,11 @@ const ProcessBlockResults = ({
         if (Date.now() - loadStartTime >= minimumLoadTime) {
           onPreview(response.data.public_url, {
             name: response.data.name || requestData.name,
-            json: fullJsonStructure,
+            json: {
+              ...fullJsonStructure,
+              public_url: response.data.public_url,
+              edit_url: response.data.edit_url,
+            },
           });
           setShowLoader(false);
           setLoading(false);
