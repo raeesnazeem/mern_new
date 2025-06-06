@@ -1061,7 +1061,8 @@ const BlockPreview = () => {
   const [originalPrompt, setOriginalPrompt] = useState("");
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isOrderFinalized, setIsOrderFinalized] = useState(false);
-  const [editUrl, setEditUrl] = useState(""); 
+  const [editUrl, setEditUrl] = useState("");
+  const [nonce, setNonce] = useState("");
 
   const locationTemplatesRef = useRef(null);
   const initialRawTemplatesFromLocationCacheRef = useRef(null);
@@ -1347,17 +1348,89 @@ const BlockPreview = () => {
     categorizeColorInstances,
   ]);
 
+  // Fetch nonce when component mounts
+  useEffect(() => {
+    const fetchNonce = async () => {
+      try {
+        const response = await fetch(
+          "https://customlayout.gogroth.com/wp-json/custom-builder/v1/get-nonce"
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch nonce");
+        }
+
+        const data = await response.json();
+
+        if (data && data.nonce) {
+          console.log("Fetched nonce:", data.nonce);
+          setNonce(data.nonce);
+        } else {
+          console.warn("Nonce not found or user not logged in.");
+        }
+      } catch (error) {
+        console.error("Error fetching nonce:", error.message);
+      }
+    };
+
+    fetchNonce();
+  }, []);
+
+  // const handleWordPressPageGenerated = useCallback(
+  //   (url, pageDataObjectFromWP) => {
+  //     const { public_url, edit_url } = pageDataObjectFromWP.json || {};
+
+  //     const proxy_edit_url = editUrl
+  //       .replace("https://customlayout.gogroth.com", "http://localhost:3000")
+  //       .replace(/(\?.*)?$/, (match) =>
+  //         match
+  //           ? match + "&elementor-preview=true&reauth=1"
+  //           : "?elementor-preview=true&reauth=1"
+  //       );
+
+  //     setIframeUrl(public_url || url);
+  //     setEditUrl(proxy_edit_url || "");
+  //     setOriginalJsonProcessed(structuredClone(pageDataObjectFromWP));
+  //     setShowIframe(true);
+  //     setIsPageLoading(false);
+  //   },
+  //   []
+  // );
+
   const handleWordPressPageGenerated = useCallback(
-    (url, pageDataObjectFromWP) => {
+    async (url, pageDataObjectFromWP) => {
       const { public_url, edit_url } = pageDataObjectFromWP.json || {};
 
-      setIframeUrl(public_url || url);
-      setEditUrl(edit_url || "");
+      if (!edit_url) {
+        alert("Error: The server did not provide an edit URL.");
+        setIsPageLoading(false);
+        return;
+      }
+
+      // The nonce should already be fetched by the time this runs.
+      // Your existing useEffect for fetching the nonce is good.
+
+      console.log("Received edit_url:", edit_url);
+      console.log("Using nonce:", nonce);
+
+      // Construct the proxied URL for the editor
+      // Note: The nonce is now part of the URL.
+      const proxy_edit_url = edit_url.replace(
+        "https://customlayout.gogroth.com",
+        "http://localhost:3000"
+      );
+      // No need to add nonce here if PHP already handles it via the '?_wpnonce' param in the link from elementor.
+      // But if need to add it manually:
+      // + `&_wpnonce=${nonce}`
+
+      setIframeUrl(public_url || url); // For the "view" link
+      setEditUrl(proxy_edit_url); // For the "edit" button
+
       setOriginalJsonProcessed(structuredClone(pageDataObjectFromWP));
       setShowIframe(true);
       setIsPageLoading(false);
     },
-    []
+    [nonce] // Add nonce as a dependency
   );
 
   const applyChangesAndRegenerate = useCallback(
@@ -1560,7 +1633,6 @@ const BlockPreview = () => {
         </button>
       )}
 
-      
       {editUrl && (
         <p style={{ fontSize: "0.9em", marginTop: "10px" }}>
           <button
@@ -1575,8 +1647,11 @@ const BlockPreview = () => {
               fontWeight: "bold",
             }}
             onClick={() => {
+              // **CRITICAL: Add a cache-busting parameter**
+              const urlToLoad = editUrl + "&cache_bust=" + new Date().getTime();
+              console.log("Loading Elementor editor in iframe:", urlToLoad);
+              setIframeUrl(urlToLoad);
               setShowIframe(true);
-              setIframeUrl(editUrl + "&nocache=" + Date.now());
             }}
           >
             Edit Full Page in Elementor

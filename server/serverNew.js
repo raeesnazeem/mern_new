@@ -8,6 +8,9 @@ const connectDB = require("./utils/db");
 const router = require("./router/authRouter");
 const tempRouter = require("./router/templateRouter");
 const frameBuilderRouter = require("./router/frameBuilderRouter");
+const iFrameRouter = require("./router/iFrameRouter"); // for proxy
+const wpAdminProxy = require("./controllers/iFrameController");
+
 
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || "development"; // Default to 'development'
@@ -62,12 +65,27 @@ app.use(express.urlencoded({ extended: true, limit: "30mb" })); // Parse URL-enc
 app.use("/api/v1/auth", router);
 app.use("/api/v1/template", tempRouter);
 app.use("/api/v1/frame-builder", frameBuilderRouter); 
+// app.use("/api/v1/iframe-preview", iFrameRouter);
+
+
+
+// Register routes with proper proxying
+app.use("/wp-admin", wpAdminProxy);
+app.use("/wp-login.php", wpAdminProxy);
+app.use("/wp-content", wpAdminProxy);
+app.use("/wp-includes", wpAdminProxy);
+app.use("/wp-json", wpAdminProxy);
 
 // Health Check Endpoint
 app.get("/api/health", (req, res) => {
   res
     .status(200)
     .json({ status: "OK", timestamp: new Date(), environment: NODE_ENV });
+});
+
+//check proxy
+app.get('/proxy-check', (req, res) => {
+    res.json({ status: 'Proxy Running', time: new Date() });
 });
 
 // Error Handling Middleware (basic)
@@ -88,8 +106,8 @@ connectDB()
   .then(() => {
     server = app.listen(PORT, () => {
       // Assign the server instance
-      console.log(`Server is running on https://localhost:${PORT}`);
-      // console.log(`API Documentation available at https://localhost:${PORT}/api-docs`); // Uncomment if you have API docs
+      console.log(`Server is running on http://localhost:${PORT}`);
+      // console.log(`API Documentation available at http://localhost:${PORT}/api-docs`); // Uncomment if you have API docs
     });
   })
   .catch((err) => {
