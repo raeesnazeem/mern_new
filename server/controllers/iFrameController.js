@@ -5,21 +5,33 @@ const wpAdminProxy = createProxyMiddleware({
   changeOrigin: true,
   secure: false,
   ws: true,
-  cookieDomainRewrite: "localhost", // This handles the domain rewrite for you
+
   onProxyReq(proxyReq, req, res) {
-    console.log(`Proxied request to: ${req.method} ${req.url}`);
+    // Fixes compression issues
+    proxyReq.removeHeader("accept-encoding");
   },
+
   onProxyRes(proxyRes, req, res) {
+    // Fixes iframe blocking
+    delete proxyRes.headers["x-frame-options"];
+
+    // --- NEW CSP FIX ---
+    // Get the existing CSP header, or start a new one
+    let csp = proxyRes.headers["content-security-policy"] || "";
+    // Make sure font-src 'self' is included to allow local fonts
+    if (csp && !csp.includes("font-src")) {
+      csp += "; font-src 'self'";
+      proxyRes.headers["content-security-policy"] = csp;
+    }
+
+    // Fixes cross-domain cookie authentication
     if (proxyRes.headers["set-cookie"]) {
       const cookies = proxyRes.headers["set-cookie"].map((cookie) => {
-        // Ensure cookies work in the iframe
         return (
           cookie
-            .replace(/; secure/gi, "") // Remove existing secure flag first
-            .replace(/; SameSite=Lax/gi, "") // Remove existing SameSite=Lax
-            .replace(/; SameSite=Strict/gi, "") + // Remove existing SameSite=Strict
-          // Add the required attributes for cross-site iframes. frontend must be HTTPS for this to work in production.
-          "; SameSite=None; Secure"
+            .replace(/; secure/gi, "")
+            .replace(/; SameSite=Lax/gi, "")
+            .replace(/; SameSite=Strict/gi, "") + "; SameSite=None; Secure"
         );
       });
       proxyRes.headers["set-cookie"] = cookies;

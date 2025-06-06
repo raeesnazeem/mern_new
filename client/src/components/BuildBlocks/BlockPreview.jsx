@@ -1063,6 +1063,7 @@ const BlockPreview = () => {
   const [isOrderFinalized, setIsOrderFinalized] = useState(false);
   const [editUrl, setEditUrl] = useState("");
   const [nonce, setNonce] = useState("");
+  const [isLoading, setIsLoading] = useState(false); //loading and login visibility
 
   const locationTemplatesRef = useRef(null);
   const initialRawTemplatesFromLocationCacheRef = useRef(null);
@@ -1204,6 +1205,45 @@ const BlockPreview = () => {
     });
     return categories;
   }, []);
+
+  const checkAuthAndLoadEditor = async () => { //login and loading check
+    setIsLoading(true);
+
+    // The proxied URL for our new auth status endpoint
+    const authStatusUrl =
+      "https://localhost:3000/wp-json/custom-builder/v1/auth-status";
+
+    // The final destination: the proxied Elementor editor URL
+    const proxiedEditorUrl = editUrl + "&cache_bust=" + new Date().getTime();
+
+    try {
+      // We MUST include credentials for the browser to send the auth cookie
+      const response = await fetch(authStatusUrl, { credentials: "include" });
+
+      if (response.ok) {
+        // SCENARIO A: User is already logged in.
+        console.log("User is authenticated. Loading Elementor editor...");
+        // Load the editor directly into the iframe.
+        setIframeUrl(proxiedEditorUrl);
+      } else {
+        // SCENARIO B: User is not logged in (received a 401).
+        console.log("User not authenticated. Showing login form...");
+        // Construct the login URL with a redirect back to the editor
+        const loginUrl = `https://localhost:3000/wp-login.php?redirect_to=${encodeURIComponent(
+          proxiedEditorUrl
+        )}`;
+        // Load the login page into the iframe.
+        setIframeUrl(loginUrl);
+      }
+    } catch (error) {
+      console.error("Error checking authentication status:", error);
+      alert(
+        "Error verifying login status. Please check your connection and try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     const newLocationTemplatesData = location.state?.templatesOrderedBySection;
@@ -1353,7 +1393,10 @@ const BlockPreview = () => {
     const fetchNonce = async () => {
       try {
         const response = await fetch(
-          "https://customlayout.gogroth.com/wp-json/custom-builder/v1/get-nonce"
+          "https://localhost:3000/wp-json/custom-builder/v1/get-nonce",
+          {
+            credentials: "include",
+          }
         );
 
         if (!response.ok) {
@@ -1381,7 +1424,7 @@ const BlockPreview = () => {
   //     const { public_url, edit_url } = pageDataObjectFromWP.json || {};
 
   //     const proxy_edit_url = editUrl
-  //       .replace("https://customlayout.gogroth.com", "http://localhost:3000")
+  //       .replace("https://customlayout.gogroth.com", "https://localhost:3000")
   //       .replace(/(\?.*)?$/, (match) =>
   //         match
   //           ? match + "&elementor-preview=true&reauth=1"
@@ -1417,7 +1460,7 @@ const BlockPreview = () => {
       // Note: The nonce is now part of the URL.
       const proxy_edit_url = edit_url.replace(
         "https://customlayout.gogroth.com",
-        "http://localhost:3000"
+        "https://localhost:3000"
       );
       // No need to add nonce here if PHP already handles it via the '?_wpnonce' param in the link from elementor.
       // But if need to add it manually:
@@ -1645,14 +1688,10 @@ const BlockPreview = () => {
               borderRadius: "4px",
               cursor: "pointer",
               fontWeight: "bold",
+              opacity: isLoading ? 0.6 : 1,
             }}
-            onClick={() => {
-              // **CRITICAL: Add a cache-busting parameter**
-              const urlToLoad = editUrl + "&cache_bust=" + new Date().getTime();
-              console.log("Loading Elementor editor in iframe:", urlToLoad);
-              setIframeUrl(urlToLoad);
-              setShowIframe(true);
-            }}
+            onClick={checkAuthAndLoadEditor}
+            disabled={isLoading} 
           >
             Edit Full Page in Elementor
           </button>
