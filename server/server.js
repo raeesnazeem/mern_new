@@ -1,5 +1,7 @@
-require("dotenv").config(); 
+require("dotenv").config();
 const express = require("express");
+const https = require("https"); // Import HTTPS
+const fs = require("fs"); // Import File System
 const app = express();
 
 const cors = require("cors");
@@ -8,88 +10,97 @@ const connectDB = require("./utils/db");
 const router = require("./router/authRouter");
 const tempRouter = require("./router/templateRouter");
 const frameBuilderRouter = require("./router/frameBuilderRouter");
+const wpAdminProxy = require("./controllers/iFrameController");
 
 const PORT = process.env.PORT || 3000;
-const NODE_ENV = process.env.NODE_ENV || "development"; // Default to 'development'
+const NODE_ENV = process.env.NODE_ENV || "development";
 
 // CORS Configuration
 let corsOptions;
-
-console.log(`Running in ${NODE_ENV} mode.`);
-
 if (NODE_ENV === "production") {
-  // Production CORS settings
   const allowedOrigins = [
-    process.env.FRONTEND_PRODUCTION_URL || "https://g99buildbot.vercel.app", // Vercel frontend URL
-  ].filter(Boolean); // .filter(Boolean) removes any undefined/empty strings if env vars aren't set
-
+    process.env.FRONTEND_PRODUCTION_URL || "https://g99buildbot.vercel.app",
+  ].filter(Boolean);
   corsOptions = {
     origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps, curl, Postman in some cases)
-      // or if the origin is in our allowed list.
       if (!origin || allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
       } else {
-        console.warn(`CORS: Blocked origin - ${origin}`);
         callback(new Error("Not allowed by CORS"));
       }
     },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true, // Set to true if frontend sends cookies or Authorization headers that need to be processed
+    credentials: true,
   };
-  console.log("Production CORS Origins:", allowedOrigins);
 } else {
-  // Development CORS settings
   corsOptions = {
     origin: [
-      process.env.FRONTEND_DEVELOPMENT_URL || "https://localhost:5173", //  local Vite frontend
-      "https://127.0.0.1:5173", // Alt way to access localhost
+      process.env.FRONTEND_DEVELOPMENT_URL || "https://localhost:5173",
+      "https://127.0.0.1:5173",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   };
-  console.log("Development CORS Origins:", corsOptions.origin);
 }
 
 // Middlewares
 app.use(cors(corsOptions));
-app.use(express.json({ limit: "30mb" })); // Parse JSON bodies
-app.use(express.urlencoded({ extended: true, limit: "30mb" })); // Parse URL-encoded bodies
 
-// Routes
-app.use("/api/v1/auth", router);
-app.use("/api/v1/template", tempRouter);
-app.use("/api/v1/frame-builder", frameBuilderRouter); 
+// 2. Global Diagnostic Logger (BEFORE ALL ROUTES)
+app.use((req, res, next) => {
+  console.log(
+    `[Request Logger] Time: ${new Date().toISOString()} - Path: ${
+      req.originalUrl
+    }`
+  );
+  next();
+});
 
-// Health Check Endpoint
+// 3. Define Body-Parser Middleware
+const bodyParserMiddleware = [
+  express.json({ limit: "30mb" }),
+  express.urlencoded({ extended: true, limit: "30mb" }),
+];
+
+// 4. Internal API Routes with Body-Parser
+app.use("/api/v1/auth", bodyParserMiddleware, router);
+app.use("/api/v1/template", bodyParserMiddleware, tempRouter);
+app.use("/api/v1/frame-builder", bodyParserMiddleware, frameBuilderRouter);
+
+// 5. Proxy Routes (No Body-Parser)
+// app.use("/wp-admin", wpAdminProxy);
+// app.use("/wp-login.php", wpAdminProxy);
+// app.use("/wp-content", wpAdminProxy);
+// app.use("/wp-includes", wpAdminProxy);
+// app.use("/wp-json", wpAdminProxy);
+// app.use("/resources", wpAdminProxy);
+
+// 6. Health Check Endpoint
 app.get("/api/health", (req, res) => {
   res
     .status(200)
     .json({ status: "OK", timestamp: new Date(), environment: NODE_ENV });
 });
 
-// Error Handling Middleware (basic)
+// 7. Error Handling Middleware (Last)
 app.use((err, req, res, next) => {
   console.error("Error caught by middleware:", err.stack);
-  // If the error is a CORS error, it might have already been handled by the cors middleware's callback
-  // but if it bubbles up here:
-  if (err.message === "Not allowed by CORS") {
-    return res.status(403).json({ error: "Not allowed by CORS" });
-  }
   res.status(500).json({ error: "Internal Server Error" });
 });
 
-// Database Connection and Server Start
-let server; // Declare server variable to be accessible in the unhandledRejection handler
+// 8. HTTPS Server Start Logic
+let server;
+const sslOptions = {
+  key: fs.readFileSync("./localhost+2-key.pem"),
+  cert: fs.readFileSync("./localhost+2.pem"),
+};
 
 connectDB()
   .then(() => {
-    server = app.listen(PORT, () => {
-      // Assign the server instance
-      console.log(`Server is running on https://localhost:${PORT}`);
-      // console.log(`API Documentation available at https://localhost:${PORT}/api-docs`); // Uncomment if you have API docs
+    server = https.createServer(sslOptions, app).listen(PORT, () => {
+      console.log(`✅ Server is running securely on https://localhost:${PORT}`);
     });
   })
   .catch((err) => {
@@ -97,31 +108,12 @@ connectDB()
     process.exit(1);
   });
 
-// Handle unhandled promise rejections
-process.on("unhandledRejection", (err, promise) => {
-  console.error("Unhandled Rejection at:", promise, "reason:", err);
-  // Close server gracefully and exit process
-  if (server) {
-    server.close(() => {
-      console.log("Server closed due to unhandled rejection.");
-      process.exit(1);
-    });
-  } else {
-    // If server didn't start, just exit
-    process.exit(1);
-  }
+// Process Handlers
+process.on("unhandledRejection", (err) => {
+  if (server) server.close(() => process.exit(1));
+  else process.exit(1);
 });
-
-// Handle uncaught exceptions
 process.on("uncaughtException", (err) => {
-  console.error("Uncaught Exception:", err);
-  // Close server gracefully and exit process
-  if (server) {
-    server.close(() => {
-      console.log("Server closed due to uncaught exception.");
-      process.exit(1);
-    });
-  } else {
-    process.exit(1);
-  }
+  if (server) server.close(() => process.exit(1));
+  else process.exit(1);
 });
