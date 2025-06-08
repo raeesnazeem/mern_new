@@ -1,131 +1,300 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+  useLayoutEffect,
+} from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-// React Flow imports are removed
 
-const AVAILABLE_SECTION_TYPES = [
-  //for implement change in sectionType
-  // "Verse",
-  // "Chorus",
-  // "Bridge",
-  // "Intro",
-  // "Outro",
-  // "Solo",
-];
+// --- ICONS for the Toolbar ---
+const ZoomInIcon = () => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="11" cy="11" r="8"></circle>
+    <line x1="11" y1="8" x2="11" y2="14"></line>
+    <line x1="8" y1="11" x2="14" y2="11"></line>
+  </svg>
+);
+const ZoomOutIcon = () => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="11" cy="11" r="8"></circle>
+    <line x1="8" y1="11" x2="14" y2="11"></line>
+  </svg>
+);
+const LockIcon = () => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+  </svg>
+);
+const UnlockIcon = () => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+    <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+  </svg>
+);
+const ResetIcon = () => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M3 2v6h6" />
+    <path d="M21 22v-6h-6" />
+    <path d="M3 10.25a9 9 0 0 1 15.34-5.22l3.66 1.93a9 9 0 0 1-5.21 15.34l-1.94-3.66" />
+  </svg>
+);
 
-// Styles for the reorderable list
+const AVAILABLE_SECTION_TYPES = [];
+
 const listStyles = `
-  .reorder-list-app-container { /* Renamed for clarity */
+  /* --- STYLES --- */
+  .reorder-list-app-container {
     width: 100%;
-    min-height: 100vh; /* Ensure it takes full viewport height */
+    height: 100vh;
     display: flex;
-    flex-direction: column;
-    align-items: center; /* Center the list container */
-    padding: 20px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
     box-sizing: border-box;
     background-color: #f0f0f0;
-    /* Simple dot grid background */
     background-image: radial-gradient(circle, #d7d7d7 1px, transparent 1px);
-    background-size: 20px 20px; /* Slightly larger dots */
-  }
-  .reorder-list-content { /* Wrapper for list and button */
+    background-size: 25px 25px;
+    overflow: hidden;
+    cursor: grab;
+}
+
+.reorder-list-app-container.is-panning{
+  cursor:grabbing;
+}
+
+.reorder-list-app-container.pan-locked{
+  cursor:default;
+}
+
+.reorder-list-content {
     width: 100%;
-    max-width: 550px; /* Max width for the content area */
-    background-color: #ffffff; /* White background for the list area */
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-  }
-  .reorder-list-app h2 {
+    max-width: 550px;
+    min-width: 450px;
+    background-color: #ffffff;
+    padding: 50px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+    border: 1px solid #e0e0e0;
+}
+
+.reorder-list-content h2 {
     text-align: center;
     color: #333;
-    margin-top: 0; /* Remove default margin */
+    margin-top: 0;
     margin-bottom: 20px;
-  }
-  .sections-list-html5 {
+}
+
+.sections-list-html5 {
     list-style: none;
     padding: 0;
     margin: 0;
-  }
-  .section-item-html5-wrapper { 
-    /* border-top: 2px solid transparent; For drag over indication */
-  }
-  .section-item-html5-wrapper.drag-over {
-    /* Visual cue for dropping *onto* an item, making it look like it's inserting before */
-    /* border-top: 3px solid teal; */
-    /* padding-top: 3px; */
-    /* margin-top: -3px; */
-    /* background-color: #e9f5ff; */ /* Light highlight on the item being hovered over */
-  }
-  .section-item-html5-wrapper.drag-over-placeholder::before {
+}
+
+.section-item-html5-wrapper.drag-over-placeholder::before {
     content: '';
     display: block;
-    height: 10px; /* Placeholder height */
-    background-color: teal; /* Blue placeholder */
-    margin: -2px 0 2px 0; /* Adjust to fit nicely */
+    height: 10px;
+    background-color: teal;
+    margin: -2px 0 2px 0;
     border-radius: 4px;
-  }
+}
 
-
-  .section-item-html5-content {
+.section-item-html5-content {
     padding: 10px 0px 10px 12px;
     margin: 4px 0;
     background-color: #f8f9fa;
     border: 1px solid #ddd;
     border-radius: 6px;
-    transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
     user-select: none;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  }
-  .section-item-html5-content.dragging-item {
-    background-color: #e3f2fd !important; /* Use important to ensure override */
+}
+
+.section-item-html5-content.dragging-item {
+    background-color: #e3f2fd !important;
     border: 1px dashed teal !important;
     opacity: 0.5;
-  }
-  .section-info { flex-grow: 1; }
-  .section-name { font-weight: bold; font-size: 14px; color: #333; pointer-events: none; }
-  .section-type-changer {
-    font-size: 9px; color: teal !important; text-transform: uppercase; margin-top: 2px;
-    cursor: pointer; font-weight:700; letter-spacing:0.035rem; display: inline-block; padding: 2px 4px;
-    border-radius: 3px; background-color: #E0F2F1;
-  }
-  .section-controls-html5 { display: flex; align-items: center; gap: 8px; padding-right: 8px;}
-  .control-buttons-group-html5 { display: flex; flex-direction: column; gap: 2px; }
-  .move-button-html5 {
-    background: none; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; padding: 2px;
-    display: flex; align-items: center; justifyContent: center;
-    line-height: 1; width: 24px; height: 24px;
-  }
-  .move-button-html5:disabled { opacity: 0.4; cursor: not-allowed; }
-  .drag-handle-html5 {
-    width: 24px; height: 40px; display: flex; align-items: center;
-    justify-content: center; cursor: grab; border-radius: 4px; padding-left: 4px;
-  }
-  .drag-handle-html5:active { cursor: grabbing; }
-  body.dragging-active-html5 { /* Applied to body during drag */
-    /* cursor: grabbing !important; */ /* Example: global grabbing cursor */
-  }
-  .drop-zone-end-html5 {
-    height: 40px; /* Increased height for better drop target */
-    border: 2px dashed #ccc;
-    border-radius: 6px;
-    margin: 8px 0; /* More margin */
+}
+
+.section-info {
+    flex-grow: 1;
+}
+
+.section-name {
+    font-weight: bold;
+    font-size: 14px;
+    color: #333;
+    pointer-events: none;
+}
+
+.section-type-changer {
+    font-size: 9px;
+    color: teal !important;
+    text-transform: uppercase;
+    margin-top: 2px;
+    cursor: pointer;
+    font-weight: 700;
+    letter-spacing: 0.035rem;
+    display: inline-block;
+    padding: 2px 4px;
+    border-radius: 3px;
+    background-color: #E0F2F1;
+}
+
+.section-controls-html5 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-right: 8px;
+}
+
+.control-buttons-group-html5 {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.move-button-html5 {
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 2px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #aaa;
-    font-size: 13px;
-    transition: all 0.2s ease;
-  }
-  .drop-zone-end-html5.drag-over {
-    border-color: teal;
-    background-color: #e3f2fd;
-  }
-`;
+    line-height: 1;
+    width: 24px;
+    height: 24px;
+}
 
-// Inject styles once
+.move-button-html5:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.drag-handle-html5 {
+    width: 24px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+}
+
+.pannable-content-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 80px;
+    align-items: center;
+    padding: 20px;
+    transition: transform 0.05s ease-out;
+    position: relative;
+    transform-origin: center center;
+}
+
+.subpage-row {
+    display: flex;
+    gap: 40px;
+    width: 100%;
+    justify-content: center;
+}
+
+.canvas-toolbar {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    z-index: 1000;
+}
+
+.toolbar-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    color: #333;
+}
+
+.toolbar-button:hover {
+    background-color: #f0f0f0;
+}
+
+.toolbar-separator {
+    width: 1px;
+    height: 20px;
+    background-color: #e0e0e0;
+    margin: 0 5px;
+}
+
+.zoom-display {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 0 8px;
+    color: #555;
+}`;
+
 if (!document.getElementById("reorder-list-styles")) {
   const styleSheet = document.createElement("style");
   styleSheet.id = "reorder-list-styles";
@@ -134,536 +303,204 @@ if (!document.getElementById("reorder-list-styles")) {
   document.head.appendChild(styleSheet);
 }
 
-// SectionItemHTML5 Component (for HTML5 Drag and Drop)
-const SectionItemHTML5 = ({
-  section,
-  index,
-  isFirst,
-  isLast,
-  isDraggingThisItem,
-  dragOverIndex = null, // Prop name is dragOverIndex
-  onDragStartItem,
-  onDragOverItem,
-  onDropItem,
-  onDragEndItem,
-  onDragLeaveItem,
-  onMoveUp,
-  onMoveDown,
-  onChangeType,
-}) => {
-  const handleDragStartOnHandle = (e) => {
-    // console.log(`SectionItemHTML5: DragStart on handle for index ${index}`);
-    onDragStartItem(e, index);
-    document.body.classList.add("dragging-active-html5");
-  };
-
-  const handleDragEndOnHandle = (e) => {
-    // console.log(`SectionItemHTML5: DragEnd on handle for index ${index}`);
-    onDragEndItem(e);
-    document.body.classList.remove("dragging-active-html5");
-  };
-
-  // Determine if this item is the direct drop target (for visual cue)
-  const isDirectDragOverTarget = dragOverIndex === index && !isDraggingThisItem;
-
-  return (
-    <div
-      id={`section-item-wrapper-${section._id}`}
-      className={`section-item-html5-wrapper ${
-        isDirectDragOverTarget ? "drag-over-placeholder" : ""
-      }`}
-      onDragOver={(e) => onDragOverItem(e, index)}
-      onDrop={(e) => onDropItem(e, index)}
-      onDragLeave={onDragLeaveItem}
-    >
+const SectionItemHTML5 = React.memo(
+  ({
+    section,
+    index,
+    isFirst,
+    isLast,
+    onDragStartItem,
+    onDragOverItem,
+    onDropItem,
+    onDragEndItem,
+    onDragLeaveItem,
+    onMoveUp,
+    onMoveDown,
+    onChangeType,
+    isDraggingThisItem,
+    dragOverIndex,
+  }) => {
+    const isDirectDragOverTarget =
+      dragOverIndex === index && !isDraggingThisItem;
+    return (
       <div
-        id={`section-item-content-${section._id}`}
-        className={`section-item-html5-content ${
-          isDraggingThisItem ? "dragging-item" : ""
+        className={`section-item-html5-wrapper ${
+          isDirectDragOverTarget ? "drag-over-placeholder" : ""
         }`}
+        onDragOver={(e) => onDragOverItem(e, index)}
+        onDrop={(e) => onDropItem(e, index)}
+        onDragLeave={onDragLeaveItem}
       >
-        <div className="section-info">
-          <div className="section-name">
-            {section.sectionType.toUpperCase() + " SECTION"}
+        <div
+          className={`section-item-html5-content ${
+            isDraggingThisItem ? "dragging-item" : ""
+          }`}
+        >
+          <div className="section-info">
+            <div className="section-name">
+              {section.name || section.sectionType.toUpperCase() + " SECTION"}
+            </div>
+            <div
+              className="section-type-changer"
+              onClick={() => onChangeType(index)}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              {section.sectionType}
+            </div>
           </div>
-          <div
-            className="section-type-changer"
-            // onClick={() => onChangeType(index)}  // will activate when implementing section change in node
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            {section.sectionType}
-          </div>
-        </div>
-
-        <div className="section-controls-html5">
-          <div className="control-buttons-group-html5">
-            <button
-              title="Move Up"
-              className="move-button-html5"
-              onClick={() => onMoveUp(index)}
-              disabled={isFirst}
+          <div className="section-controls-html5">
+            <div className="control-buttons-group-html5">
+              <button
+                title="Move Up"
+                className="move-button-html5"
+                onClick={() => onMoveUp(index)}
+                disabled={isFirst}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="18 15 12 9 6 15"></polyline>
+                </svg>
+              </button>
+              <button
+                title="Move Down"
+                className="move-button-html5"
+                onClick={() => onMoveDown(index)}
+                disabled={isLast}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+            </div>
+            <div
+              className="drag-handle-html5"
+              draggable
+              onDragStart={(e) => onDragStartItem(e, index)}
+              onDragEnd={onDragEndItem}
               onMouseDown={(e) => e.stopPropagation()}
             >
               <svg
-                width="12"
-                height="12"
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                fill="currentColor"
               >
-                <polyline points="18 15 12 9 6 15"></polyline>
+                <circle cx="9" cy="4" r="1.5" />
+                <circle cx="15" cy="4" r="1.5" />
+                <circle cx="9" cy="12" r="1.5" />
+                <circle cx="15" cy="12" r="1.5" />
+                <circle cx="9" cy="20" r="1.5" />
+                <circle cx="15" cy="20" r="1.5" />
               </svg>
-            </button>
-            <button
-              title="Move Down"
-              className="move-button-html5"
-              onClick={() => onMoveDown(index)}
-              disabled={isLast}
-              onMouseDown={(e) => e.stopPropagation()}
-            >
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </button>
-          </div>
-          <div
-            className="drag-handle-html5"
-            draggable
-            onDragStart={handleDragStartOnHandle}
-            onDragEnd={handleDragEndOnHandle}
-            onMouseDown={(e) => {
-              // console.log("DragHandleHTML5: MouseDown on handle");
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="9" cy="4" r="1.5" />
-              <circle cx="15" cy="4" r="1.5" />
-              <circle cx="9" cy="12" r="1.5" />
-              <circle cx="15" cy="12" r="1.5" />
-              <circle cx="9" cy="20" r="1.5" />
-              <circle cx="15" cy="20" r="1.5" />
-            </svg>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-// This component directly manages the reorderable list using HTML5 D&D
-const IntermediateComponent = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  const [draggingItemIndex, setDraggingItemIndex] = useState(null);
-  const [dragOverItemIndex, setDragOverItemIndex] = useState(null);
-
-  const initialSectionsFromLocation = useMemo(() => {
-    const state = location.state || {};
-    const controllerData = state.templatesOrderedBySection || {};
-    let orderToUse = state.suggestedOrder || [];
-
-    console.log("IntermediateComponent: Received from location state:");
-    console.log("templatesOrderedBySection (controllerData):", controllerData);
-    console.log("suggestedOrder from state:", orderToUse);
-
-    // If reorderedGlobalSections exists (e.g., coming back from preview page), use that directly.
-    if (
-      controllerData.reorderedGlobalSections &&
-      Array.isArray(controllerData.reorderedGlobalSections) &&
-      controllerData.reorderedGlobalSections.length > 0
-    ) {
-      console.log("Using reorderedGlobalSections from location state.");
-      return controllerData.reorderedGlobalSections.map((s) => ({
-        ...s,
-        _id: s._id || `gen-${Math.random().toString(36).substr(2, 9)}`,
-        sectionType: s.sectionType || AVAILABLE_SECTION_TYPES[0],
-      }));
-    }
-
-    // If suggestedOrder is empty, but controllerData has keys, create a fallback order from controllerData keys
-    if (
-      orderToUse.length === 0 &&
-      typeof controllerData === "object" &&
-      Object.keys(controllerData).length > 0
-    ) {
-      console.warn(
-        "`suggestedOrder` is empty. Using keys from `templatesOrderedBySection` as fallback order."
-      );
-      // Attempt a somewhat logical default order if common keys are present
-      const preferredOrder = [
-        "header",
-        "herospace",
-        "about",
-        "services",
-        "cta",
-        "testimonials",
-        "contact",
-        "footer",
-      ];
-      const availableKeys = Object.keys(controllerData);
-
-      const sortedKeys = [];
-      preferredOrder.forEach((prefKey) => {
-        if (
-          availableKeys.includes(prefKey.toLowerCase()) ||
-          availableKeys.includes(prefKey)
-        ) {
-          // Find the actual key name (case-insensitive for common types)
-          const actualKey =
-            availableKeys.find(
-              (k) => k.toLowerCase() === prefKey.toLowerCase()
-            ) || availableKeys.find((k) => k === prefKey);
-          if (actualKey && !sortedKeys.includes(actualKey)) {
-            sortedKeys.push(actualKey);
-          }
-        }
-      });
-      availableKeys.forEach((key) => {
-        if (
-          !sortedKeys.includes(key) &&
-          key !== "reorderedGlobalSections" &&
-          key !== "reorderedSections"
-        ) {
-          // Exclude helper keys
-          sortedKeys.push(key);
-        }
-      });
-      orderToUse = sortedKeys;
-      console.log(
-        "Fallback order created from controllerData keys:",
-        orderToUse
-      );
-    }
-
-    // Build the initial list based on the orderToUse (either suggestedOrder or fallback)
-    const initialOrderedList = [];
-    if (orderToUse.length > 0 && typeof controllerData === "object") {
-      console.log("Building initial list using order:", orderToUse);
-      orderToUse.forEach((sectionTypeKey) => {
-        // Try to match sectionTypeKey case-insensitively from controllerData keys
-        const actualKeyInController =
-          Object.keys(controllerData).find(
-            (k) => k.toLowerCase() === sectionTypeKey.toLowerCase()
-          ) || sectionTypeKey;
-        const sectionsForType = controllerData[actualKeyInController];
-
-        if (Array.isArray(sectionsForType) && sectionsForType.length > 0) {
-          const chosenSection = sectionsForType[0]; // Pick the first template for this type
-          initialOrderedList.push({
-            ...chosenSection,
-            _id:
-              chosenSection._id ||
-              `gen-${Math.random().toString(36).substr(2, 9)}`,
-            sectionType: chosenSection.sectionType || sectionTypeKey, // Ensure sectionType is consistent
-          });
-        } else {
-          console.warn(
-            `No templates found in controllerData for type: ${sectionTypeKey} (tried key: ${actualKeyInController})`
-          );
-        }
-      });
-      if (initialOrderedList.length > 0) {
-        console.log(
-          "Successfully built initialOrderedList:",
-          initialOrderedList.map((s) => s.name)
-        );
-        return initialOrderedList;
-      }
-    }
-
-    console.warn(
-      "Could not build initial list from suggestedOrder or fallbacks. Returning empty array."
     );
-    return [];
-  }, [location.state]);
+  }
+);
 
-  const [currentSections, setCurrentSections] = useState(
-    initialSectionsFromLocation
-  );
-
-  useEffect(() => {
-    console.log(
-      "Effect for initialSectionsFromLocation running. New initial:",
-      initialSectionsFromLocation.map((s) => s.name)
+const SectionListContainer = React.forwardRef(
+  ({ title, sections, onSectionsChange, onApplyOrder }, ref) => {
+    const [draggingItemIndex, setDraggingItemIndex] = useState(null);
+    const [dragOverItemIndex, setDragOverItemIndex] = useState(null);
+    const handleDragStartItem = useCallback(
+      (e, index) => setDraggingItemIndex(index),
+      []
     );
-    if (
-      JSON.stringify(initialSectionsFromLocation) !==
-      JSON.stringify(currentSections)
-    ) {
-      console.log(
-        "Updating currentSections from new location state because initialSectionsFromLocation changed."
-      );
-      setCurrentSections(initialSectionsFromLocation);
-    }
-  }, [initialSectionsFromLocation]);
-
-  const handleDragStartItem = useCallback((e, index) => {
-    setDraggingItemIndex(index);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", index.toString());
-  }, []);
-
-  const handleDragOverItem = useCallback(
-    (e, index) => {
-      e.preventDefault();
-      if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
-
-      if (index !== draggingItemIndex) {
-        if (index !== dragOverItemIndex) {
-          setDragOverItemIndex(index);
-        }
-      } else if (index === draggingItemIndex && dragOverItemIndex !== null) {
-        setDragOverItemIndex(null);
-      }
-    },
-    [draggingItemIndex, dragOverItemIndex]
-  );
-
-  const handleDragLeaveItem = useCallback((e) => {
-    if (!e.currentTarget.contains(e.relatedTarget)) {
-      setDragOverItemIndex(null);
-    }
-  }, []);
-
-  const handleDragEndItem = useCallback(() => {
-    setDraggingItemIndex(null);
-    setDragOverItemIndex(null);
-  }, []);
-
-  const handleDropItem = useCallback(
-    (e, dropTargetOriginalIndex) => {
-      e.stopPropagation();
-      e.preventDefault();
-      const draggedOriginalIndex = draggingItemIndex;
-      const callId = Math.random().toString(36).substr(2, 5);
-
-      console.groupCollapsed(
-        `Drop Event (Call ID: ${callId}) - Item: ${
-          currentSections[draggedOriginalIndex]?.name || "N/A"
-        }`
-      );
-      console.log(
-        `[${callId}] Current sections before drop:`,
-        currentSections.map((s) => s.name)
-      );
-      console.log(
-        `[${callId}] Dragged Original Index (from state): ${draggedOriginalIndex}`
-      );
-      console.log(
-        `[${callId}] Drop Target Original Index (from event target): ${dropTargetOriginalIndex}`
-      );
-
-      if (draggedOriginalIndex === null) {
-        console.warn(
-          `[${callId}] No item was being dragged (draggingItemIndex is null).`
-        );
-        setDragOverItemIndex(null);
-        console.groupEnd();
-        return;
-      }
-
-      const isDroppingOnEndZone = e.currentTarget.classList.contains(
-        "drop-zone-end-html5"
-      );
-      console.log(`[${callId}] Is dropping on end zone?`, isDroppingOnEndZone);
-
-      if (
-        !isDroppingOnEndZone &&
-        draggedOriginalIndex === dropTargetOriginalIndex
-      ) {
-        console.log(`[${callId}] Dropped on itself (not end zone). No change.`);
-        setDraggingItemIndex(null);
-        setDragOverItemIndex(null);
-        console.groupEnd();
-        return;
-      }
-
-      const tempSections = [...currentSections];
-      console.log(
-        `[${callId}] 1. tempSections (copy of current):`,
-        tempSections.map((s) => s.name)
-      );
-
-      if (
-        draggedOriginalIndex < 0 ||
-        draggedOriginalIndex >= tempSections.length
-      ) {
-        console.error(
-          `[${callId}] Invalid draggedOriginalIndex: ${draggedOriginalIndex}. Aborting drop.`
-        );
-        setDraggingItemIndex(null);
-        setDragOverItemIndex(null);
-        console.groupEnd();
-        return;
-      }
-      const draggedItem = tempSections.splice(draggedOriginalIndex, 1)[0];
-      console.log(`[${callId}] 2. draggedItem (removed):`, draggedItem.name);
-      console.log(
-        `[${callId}] 3. tempSections (after splice, length ${tempSections.length}):`,
-        tempSections.map((s) => s.name)
-      );
-
-      let finalInsertionIndex;
-
-      if (isDroppingOnEndZone) {
-        finalInsertionIndex = tempSections.length;
-        console.log(
-          `[${callId}] 4a. Dropped on end zone. finalInsertionIndex (tempSections.length):`,
-          finalInsertionIndex
-        );
-      } else {
-        if (draggedOriginalIndex < dropTargetOriginalIndex) {
-          finalInsertionIndex = dropTargetOriginalIndex - 1;
-        } else {
-          finalInsertionIndex = dropTargetOriginalIndex;
-        }
-        console.log(
-          `[${callId}] 4b. Dropped on an item. Calculated finalInsertionIndex:`,
-          finalInsertionIndex
-        );
-      }
-
-      finalInsertionIndex = Math.max(
-        0,
-        Math.min(finalInsertionIndex, tempSections.length)
-      );
-      console.log(
-        `[${callId}] 5. finalInsertionIndex (bounds corrected):`,
-        finalInsertionIndex
-      );
-
-      tempSections.splice(finalInsertionIndex, 0, draggedItem);
-      console.log(
-        `[${callId}] 6. tempSections (after insertion):`,
-        tempSections.map((s) => s.name)
-      );
-
-      setCurrentSections(tempSections);
-      console.log(
-        `[${callId}] 7. Called setCurrentSections. State update will be async.`
-      );
-
+    const handleDragEndItem = useCallback(() => {
       setDraggingItemIndex(null);
       setDragOverItemIndex(null);
-      console.groupEnd();
-    },
-    [currentSections, draggingItemIndex]
-  );
-
-  const handleMove = useCallback(
-    (index, direction) => {
-      const newSections = [...currentSections];
-      if (
-        (direction === -1 && index === 0) ||
-        (direction === 1 && index === newSections.length - 1)
-      ) {
-        return;
-      }
-      const itemToMove = newSections.splice(index, 1)[0];
-      newSections.splice(index + direction, 0, itemToMove);
-      setCurrentSections(newSections);
-    },
-    [currentSections]
-  );
-
-  const handleMoveUp = useCallback(
-    (index) => handleMove(index, -1),
-    [handleMove]
-  );
-  const handleMoveDown = useCallback(
-    (index) => handleMove(index, 1),
-    [handleMove]
-  );
-
-  const handleChangeType = useCallback((index) => {
-    setCurrentSections((prevSections) => {
-      const newSections = [...prevSections];
-      const section = newSections[index];
-      if (!section) return prevSections;
-      const currentTypeIndex = AVAILABLE_SECTION_TYPES.indexOf(
-        section.sectionType
-      );
-      const nextTypeIndex =
-        (currentTypeIndex + 1) % AVAILABLE_SECTION_TYPES.length;
-      newSections[index] = {
-        ...section,
-        sectionType: AVAILABLE_SECTION_TYPES[nextTypeIndex],
-      };
-      return newSections;
-    });
-  }, []);
-
-  // const handleApplyOrder = () => {
-  //   console.log(
-  //     "Applying final order:",
-  //     currentSections.map((s) => ({ name: s.name, type: s.sectionType }))
-  //   );
-  //   navigate("/builder-block-preview-main", {
-  //     state: {
-  //       templatesOrderedBySection: {
-  //         ...(location.state?.templatesOrderedBySection || {}),
-  //         reorderedGlobalSections: currentSections,
-  //       },
-  //     },
-  //   });
-  // };
-
-  const handleApplyOrder = () => {
-    console.log(
-      "Applying final order:",
-      currentSections.map((s) => ({ name: s.name, type: s.sectionType }))
+    }, []);
+    const handleDragLeaveItem = useCallback(
+      () => setDragOverItemIndex(null),
+      []
     );
-
-    // START OF PROMPT PROCESSING
-    const originalPromptFromDash =
-      location.state?.originalPrompt ||
-      "Prompt not explicitly passed to IntermediateComponent.";
-      const someVariableThatMightBeNull = `Generated Page ${Date.now()}`; 
-      const pageNameForNextStep = someVariableThatMightBeNull || "Generated Page"; // Fallback;
-    
-
-    const stateToNavigate = {
-      templatesOrderedBySection: {
-        ...(location.state?.templatesOrderedBySection || {}),
-        reorderedGlobalSections: currentSections,
-        name: pageNameForNextStep,
+    const handleDragOverItem = useCallback(
+      (e, index) => {
+        e.preventDefault();
+        if (index !== draggingItemIndex) {
+          setDragOverItemIndex(index);
+        }
       },
-      originalPrompt: originalPromptFromDash, // Pass the prompt at the top level of state
-      suggestedOrder: location.state?.suggestedOrder, // Pass suggestedOrder if it exists
-    };
-    console.log(
-      "[IntermediateComponent] Navigating to /builder-block-preview-main with state:",
-      JSON.parse(JSON.stringify(stateToNavigate))
+      [draggingItemIndex]
     );
-    navigate("/builder-block-preview-main", { state: stateToNavigate });
-    // END OF MODIFICATION
-  };
+    const handleDropItem = useCallback(
+      (e, dropIndex) => {
+        e.preventDefault();
+        const draggedIndex = draggingItemIndex;
+        if (draggedIndex === null || draggedIndex === dropIndex) {
+          setDragOverItemIndex(null);
+          return;
+        }
+        const newSections = [...sections];
+        const [draggedItem] = newSections.splice(draggedIndex, 1);
+        const adjustedDropIndex =
+          draggedIndex < dropIndex ? dropIndex - 1 : dropIndex;
+        newSections.splice(adjustedDropIndex, 0, draggedItem);
+        onSectionsChange(newSections);
+        setDragOverItemIndex(null);
+        setDraggingItemIndex(null);
+      },
+      [draggingItemIndex, sections, onSectionsChange]
+    );
+    const handleMove = useCallback(
+      (index, direction) => {
+        const newSections = [...sections];
+        if (
+          (direction === -1 && index === 0) ||
+          (direction === 1 && index === newSections.length - 1)
+        )
+          return;
+        const [itemToMove] = newSections.splice(index, 1);
+        newSections.splice(index + direction, 0, itemToMove);
+        onSectionsChange(newSections);
+      },
+      [sections, onSectionsChange]
+    );
+    const handleMoveUp = useCallback(
+      (index) => handleMove(index, -1),
+      [handleMove]
+    );
+    const handleMoveDown = useCallback(
+      (index) => handleMove(index, 1),
+      [handleMove]
+    );
+    const handleChangeType = useCallback(
+      (index) => console.log(`Change type for item ${index} in "${title}"`),
+      [title]
+    );
 
-  return (
-    <div className="reorder-list-app-container">
-      <div className="reorder-list-content">
-        <h2>Reorder Your Sections</h2>
+    return (
+      <div className="reorder-list-content" ref={ref}>
+        <h2>{title}</h2>
         <div className="sections-list-html5">
-          {currentSections.map((section, index) => (
+          {sections.map((section, index) => (
             <SectionItemHTML5
               key={section._id}
               section={section}
               index={index}
               isFirst={index === 0}
-              isLast={index === currentSections.length - 1}
+              isLast={sections.length - 1}
               isDraggingThisItem={draggingItemIndex === index}
               dragOverIndex={dragOverItemIndex}
               onDragStartItem={handleDragStartItem}
@@ -676,33 +513,6 @@ const IntermediateComponent = () => {
               onChangeType={handleChangeType}
             />
           ))}
-          {currentSections.length > 0 && draggingItemIndex !== null && (
-            <div
-              className={`drop-zone-end-html5 ${
-                dragOverItemIndex === currentSections.length ? "drag-over" : ""
-              }`}
-              onDragOver={(e) => handleDragOverItem(e, currentSections.length)}
-              onDrop={(e) => handleDropItem(e, currentSections.length)}
-              onDragLeave={handleDragLeaveItem}
-            >
-              {dragOverItemIndex === currentSections.length
-                ? "Drop at end"
-                : "Drag here to add to end"}
-            </div>
-          )}
-          {currentSections.length === 0 && draggingItemIndex !== null && (
-            <div
-              className={`drop-zone-end-html5 ${
-                dragOverItemIndex === 0 ? "drag-over" : ""
-              }`}
-              style={{ minHeight: "60px" }}
-              onDragOver={(e) => handleDragOverItem(e, 0)}
-              onDrop={(e) => handleDropItem(e, 0)}
-              onDragLeave={handleDragLeaveItem}
-            >
-              {dragOverItemIndex === 0 ? "Drop here" : "Drag section to start"}
-            </div>
-          )}
         </div>
         <div
           style={{
@@ -712,22 +522,309 @@ const IntermediateComponent = () => {
           }}
         >
           <button
-            onClick={handleApplyOrder}
-            disabled={currentSections.length === 0}
+            onClick={onApplyOrder}
+            disabled={sections.length === 0}
             style={{
               padding: "12px 24px",
-              backgroundColor:
-                currentSections.length === 0 ? "#cccccc" : "teal",
+              backgroundColor: sections.length === 0 ? "#cccccc" : "teal",
               color: "white",
               border: "none",
               borderRadius: "8px",
-              cursor: currentSections.length === 0 ? "not-allowed" : "pointer",
+              cursor: sections.length === 0 ? "not-allowed" : "pointer",
               fontSize: "1rem",
               boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
             }}
           >
-            Apply Order & Preview
+            Apply & Preview
           </button>
+        </div>
+      </div>
+    );
+  }
+);
+
+const IntermediateComponent = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const [scale, setScale] = useState(0.5);
+  const [isPanLocked, setIsPanLocked] = useState(false);
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [transform, setTransform] = useState({ x: 0, y: 0 });
+  const [svgPaths, setSvgPaths] = useState([]);
+
+  const homeContainerRef = useRef(null);
+  const aboutContainerRef = useRef(null);
+  const servicesContainerRef = useRef(null);
+  const contactContainerRef = useRef(null);
+
+  const allAvailableSections = useMemo(() => {
+    const state = location.state || {};
+    const controllerData = state.templatesOrderedBySection || {};
+    let initialList =
+      controllerData.reorderedGlobalSections?.length > 0
+        ? controllerData.reorderedGlobalSections
+        : [];
+    if (initialList.length === 0) {
+      let orderToUse = state.suggestedOrder || [];
+      if (orderToUse.length === 0 && Object.keys(controllerData).length > 0) {
+        const p = [
+          "header",
+          "herospace",
+          "about",
+          "services",
+          "cta",
+          "testimonials",
+          "contact",
+          "footer",
+        ];
+        const a = Object.keys(controllerData);
+        const s = [];
+        p.forEach((k) => {
+          const x = a.find((y) => y.toLowerCase() === k.toLowerCase());
+          if (x && !s.includes(x)) s.push(x);
+        });
+        a.forEach((k) => {
+          if (
+            !s.includes(k) &&
+            k !== "reorderedGlobalSections" &&
+            k !== "reorderedSections"
+          )
+            s.push(k);
+        });
+        orderToUse = s;
+      }
+      orderToUse.forEach((k) => {
+        const s = controllerData[k];
+        if (s?.length > 0) {
+          initialList.push({ ...s[0], sectionType: s[0].sectionType || k });
+        }
+      });
+    }
+
+    // --- REFINEMENT: Removed all dummy tag generation ---
+    // The component now trusts that the `tags` property exists on your incoming data.
+    return initialList.map((s, i) => ({
+      ...s,
+      _id: s._id || `gen-${i}-${Math.random()}`,
+    }));
+    // ----------------------------------------------------
+  }, [location.state]);
+
+  // Filtering logic now uses optional chaining `?.` for safety and relies on the real tags from your data.
+  const [homeSections, setHomeSections] = useState(() =>
+    allAvailableSections.filter(
+      (s) => s.tags?.includes("home") || s.tags?.includes("general")
+    )
+  );
+  const [aboutSections, setAboutSections] = useState(() =>
+    allAvailableSections.filter(
+      (s) => s.tags?.includes("about") || s.tags?.includes("general")
+    )
+  );
+  const [servicesSections, setServicesSections] = useState(() =>
+    allAvailableSections.filter(
+      (s) => s.tags?.includes("services") || s.tags?.includes("general")
+    )
+  );
+  const [contactSections, setContactSections] = useState(() =>
+    allAvailableSections.filter(
+      (s) => s.tags?.includes("contact") || s.tags?.includes("general")
+    )
+  );
+
+  useLayoutEffect(() => {
+    const refs = [
+      homeContainerRef,
+      aboutContainerRef,
+      servicesContainerRef,
+      contactContainerRef,
+    ];
+    if (refs.every((ref) => ref.current)) {
+      const homeNode = homeContainerRef.current;
+      const subNodes = [
+        aboutContainerRef.current,
+        servicesContainerRef.current,
+        contactContainerRef.current,
+      ];
+      const homeExit = {
+        x: homeNode.offsetLeft + homeNode.offsetWidth / 2,
+        y: homeNode.offsetTop + homeNode.offsetHeight,
+      };
+      const newPaths = subNodes.map((node) => {
+        const entry = {
+          x: node.offsetLeft + node.offsetWidth / 2,
+          y: node.offsetTop,
+        };
+        const midY = homeExit.y + (entry.y - homeExit.y) / 2;
+        return `M ${homeExit.x},${homeExit.y} V ${midY} H ${entry.x} V ${entry.y}`;
+      });
+      setSvgPaths(newPaths);
+    }
+  }, [
+    homeSections,
+    aboutSections,
+    servicesSections,
+    contactSections,
+    transform,
+    scale,
+  ]);
+
+  const handlePanMouseDown = (e) => {
+    if (!isPanLocked && e.button === 0) {
+      setPanStart({
+        x: e.clientX / scale - transform.x,
+        y: e.clientY / scale - transform.y,
+      });
+      setIsPanning(true);
+    }
+  };
+  const handlePanMouseMove = (e) => {
+    if (isPanning && !isPanLocked) {
+      e.preventDefault();
+      setTransform({
+        x: e.clientX / scale - panStart.x,
+        y: e.clientY / scale - panStart.y,
+      });
+    }
+  };
+  const handlePanMouseUpOrLeave = () => setIsPanning(false);
+  const handleWheel = (e) => {
+    e.preventDefault();
+    const zoomSensitivity = 0.001;
+    setScale((s) => Math.min(Math.max(s - e.deltaY * zoomSensitivity, 0.2), 2));
+  };
+  const zoom = (dir) =>
+    setScale((s) =>
+      Math.min(Math.max(dir === "in" ? s + 0.1 : s - 0.1, 0.2), 2)
+    );
+  const resetView = () => {
+    setScale(1);
+    setTransform({ x: 0, y: 0 });
+  };
+
+  const handleNavigateWithSections = (sectionsToApply, title) => {
+    const stateToNavigate = {
+      templatesOrderedBySection: {
+        ...location.state?.templatesOrderedBySection,
+        reorderedGlobalSections: sectionsToApply,
+        name: `${title} Page - ${Date.now()}`,
+      },
+      originalPrompt: location.state?.originalPrompt || "No prompt.",
+    };
+    navigate("/builder-block-preview-main", { state: stateToNavigate });
+  };
+
+  return (
+    <div
+      className="reorder-list-app-container"
+      onMouseDown={handlePanMouseDown}
+      onMouseMove={handlePanMouseMove}
+      onMouseUp={handlePanMouseUpOrLeave}
+      onMouseLeave={handlePanMouseUpOrLeave}
+      onWheel={handleWheel}
+    >
+      <div className="canvas-toolbar">
+        <button
+          className="toolbar-button"
+          title="Zoom In"
+          onClick={() => zoom("in")}
+        >
+          <ZoomInIcon />
+        </button>
+        <span className="zoom-display">{Math.round(scale * 100)}%</span>
+        <button
+          className="toolbar-button"
+          title="Zoom Out"
+          onClick={() => zoom("out")}
+        >
+          <ZoomOutIcon />
+        </button>
+        <div className="toolbar-separator"></div>
+        <button
+          className="toolbar-button"
+          title="Reset View"
+          onClick={resetView}
+        >
+          <ResetIcon />
+        </button>
+        <div className="toolbar-separator"></div>
+        <button
+          className="toolbar-button"
+          title={isPanLocked ? "Unlock Pan" : "Lock Pan"}
+          onClick={() => setIsPanLocked((prev) => !prev)}
+          style={{ color: isPanLocked ? "crimson" : "inherit" }}
+        >
+          {isPanLocked ? <LockIcon /> : <UnlockIcon />}
+        </button>
+      </div>
+
+      <div
+        className="pannable-content-wrapper"
+        style={{
+          transform: `scale(${scale}) translate(${transform.x}px, ${transform.y}px)`,
+        }}
+      >
+        <svg
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            pointerEvents: "none",
+            zIndex: 0,
+            overflow: "visible",
+          }}
+        >
+          {svgPaths.map((path, i) => (
+            <path
+              key={i}
+              d={path}
+              stroke="#b0bec5"
+              strokeWidth="2"
+              fill="none"
+              strokeDasharray="6,6"
+            />
+          ))}
+        </svg>
+
+        <SectionListContainer
+          ref={homeContainerRef}
+          title="Home Page"
+          sections={homeSections}
+          onSectionsChange={setHomeSections}
+          onApplyOrder={() => handleNavigateWithSections(homeSections, "Home")}
+        />
+        <div className="subpage-row">
+          <SectionListContainer
+            ref={aboutContainerRef}
+            title="About Page"
+            sections={aboutSections}
+            onSectionsChange={setAboutSections}
+            onApplyOrder={() =>
+              handleNavigateWithSections(aboutSections, "About")
+            }
+          />
+          <SectionListContainer
+            ref={servicesContainerRef}
+            title="Services Page"
+            sections={servicesSections}
+            onSectionsChange={setServicesSections}
+            onApplyOrder={() =>
+              handleNavigateWithSections(servicesSections, "Services")
+            }
+          />
+          <SectionListContainer
+            ref={contactContainerRef}
+            title="Contact Page"
+            sections={contactSections}
+            onSectionsChange={setContactSections}
+            onApplyOrder={() =>
+              handleNavigateWithSections(contactSections, "Contact")
+            }
+          />
         </div>
       </div>
     </div>
