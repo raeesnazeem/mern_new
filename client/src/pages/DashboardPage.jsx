@@ -166,7 +166,7 @@ const DashboardPage = () => {
                     <div>
                       <div
                         className="iframe-container"
-                        style={{ height: "100vh", border: "1px solid #ccc" }}
+                        style={{ height: "calc(100vh - 95px)", border: "1px solid #ccc" }}
                       >
                         <iframe
                           src={previewUrl}

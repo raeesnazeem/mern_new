@@ -71,3 +71,8 @@
 .modalButton:active {
     transform: translateY(1px);
 }
+
+.previewLink a{
+  font-weight: bold !important;
+  font-size: 11px !important;
+}

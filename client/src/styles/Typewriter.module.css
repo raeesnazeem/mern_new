@@ -25,7 +25,10 @@
   margin-left: 1px; /* Small space for cursor */
 }
 
+
+
 @keyframes blink {
   from, to { color: transparent; }
   50% { color:teal; } /* Cursor color */
 }
+

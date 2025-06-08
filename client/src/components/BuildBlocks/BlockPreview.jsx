@@ -332,16 +332,16 @@ const BlockPreview = () => {
     return categories;
   }, []);
 
-  
   const checkAuthAndLoadEditor = async () => {
     if (!editUrl) {
       alert("Edit URL is not available yet.");
       return;
     }
-    
+
     setIsLoading(true);
     // const authStatusUrl = "https://customlayout.gogroth.com/wp-json/custom-builder/v1/auth-status";
-    const authStatusUrl = "https://customlayout.gogroth.com/wp-json/custom-builder/v1/auth-status";
+    const authStatusUrl =
+      "https://customlayout.gogroth.com/wp-json/custom-builder/v1/auth-status";
 
     try {
       // We use axios.get for the auth check
@@ -351,7 +351,6 @@ const BlockPreview = () => {
       console.log("User is authenticated. Loading Elementor editor...");
       // Add a cache-buster to ensure the iframe reloads
       setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
-
     } catch (error) {
       // We check if the error object has a response with status 401.
       // This is the expected "Not Logged In" case.
@@ -359,7 +358,9 @@ const BlockPreview = () => {
         console.log("User not authenticated. Showing login form...");
         // Construct the login URL that redirects back to the editor
         // const loginUrl = `https://customlayout.gogroth.com/wp-login.php?redirect_to=${encodeURIComponent(editUrl)}`;
-        const loginUrl = `https://customlayout.gogroth.com/wp-login.php?redirect_to=${encodeURIComponent(editUrl)}`;
+        const loginUrl = `https://customlayout.gogroth.com/wp-login.php?redirect_to=${encodeURIComponent(
+          editUrl
+        )}`;
         setIframeUrl(loginUrl);
       } else {
         // This handles other errors (network errors, 5xx server errors, etc.)
@@ -743,157 +744,174 @@ const BlockPreview = () => {
       className="template-preview-left-panel"
       style={{
         padding: "20px",
-        background: "#f9f9f9",
-        borderRight: "1px solid #eee",
+        borderRadius: "16px",
+        backgroundColor: "white",
+        minHeight:"100%",
+        display: "flex",
+        flexDirection: "row",
+        alignContent: "start",
+        flexWrap: "wrap"
       }}
     >
-      <h3 style={{ marginTop: 0, marginBottom: "10px" }}>You said:</h3>
-      {originalPrompt ? (
-        <Typewriter text={originalPrompt} speed={25} />
-      ) : (
-        <p style={{ fontStyle: "italic", color: "#777" }}>
-          {isPageLoading
-            ? "Loading prompt..."
-            : "No prompt available for this page."}
-        </p>
-      )}
+      <div className="promptDisplayPanel">
+        <h3 style={{ marginTop: 0, marginBottom: "10px" }}>You said:</h3>
+        {originalPrompt ? (
+          <Typewriter text={originalPrompt} speed={20} />
+        ) : (
+          <p style={{ fontStyle: "italic", color: "#777" }}>
+            {isPageLoading
+              ? "Loading prompt..."
+              : "No prompt available for this page."}
+          </p>
+        )}
+      </div>
 
-      {/* Edit Colors Button */}
-      {originalJsonProcessed && showIframe && (
+      <div className="buttonGroup">
+        {/* Edit Colors Button */}
+        {originalJsonProcessed && showIframe && (
+          <button
+            className="editColorsButton"
+            onClick={handleAttemptEditColors}
+            disabled={
+              !(
+                categorizedColorPalette &&
+                Object.values(categorizedColorPalette).some(
+                  (arr) => arr.length > 0
+                )
+              ) || isPageLoading
+            }
+            style={{
+              display: "block",
+              width: "100%",
+              padding: "10px",
+              marginTop: "20px",
+              marginBottom: "15px",
+              backgroundColor: "teal",
+              color: "white",
+              border: "none",
+              borderRadius: "5px",
+              cursor:
+                !(
+                  categorizedColorPalette &&
+                  Object.values(categorizedColorPalette).some(
+                    (arr) => arr.length > 0
+                  )
+                ) || isPageLoading
+                  ? "not-allowed"
+                  : "pointer",
+              fontSize: "1rem",
+              fontWeight: "bold",
+              opacity:
+                !(
+                  categorizedColorPalette &&
+                  Object.values(categorizedColorPalette).some(
+                    (arr) => arr.length > 0
+                  )
+                ) || isPageLoading
+                  ? 0.6
+                  : 1,
+            }}
+          >
+            Edit Colors
+            {categorizedColorPalette &&
+            Object.values(categorizedColorPalette).some((arr) => arr.length > 0)
+              ? ` (Colors Available)`
+              : " (No colors found)"}
+          </button>
+        )}
+
+        {editUrl && (
+          <p style={{ fontSize: "0.9em", marginTop: "10px" }}>
+            <button
+              style={{
+                width: "100%",
+                padding: "8px",
+                backgroundColor: "#fff7e5",
+                color: "#333",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontWeight: "normal",
+                opacity: isLoading ? 0.6 : 1,
+                boxShadow:
+                  "0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)",
+              }}
+              onClick={checkAuthAndLoadEditor}
+              disabled={isLoading}
+            >
+              Edit Full Page in Editor
+            </button>
+          </p>
+        )}
+
+        {/* Optional Finalized Message */}
+        {isOrderFinalized && (
+          <p
+            style={{
+              marginTop: "0px",
+              marginBottom: "15px",
+              color: "#555",
+              fontSize: "0.85rem",
+              textAlign: "center",
+            }}
+          >
+            Section order is finalized. You can continue to edit colors.
+          </p>
+        )}
+
+        
+
         <button
-          className="editColorsButton"
-          onClick={handleAttemptEditColors}
-          disabled={
-            !(
-              categorizedColorPalette &&
-              Object.values(categorizedColorPalette).some(
-                (arr) => arr.length > 0
-              )
-            ) || isPageLoading
-          }
+          className="backToReorderButton"
+          onClick={handleProgrammaticBackNavigation}
+          disabled={isOrderFinalized}
           style={{
             display: "block",
             width: "100%",
             padding: "10px",
-            marginTop: "20px",
             marginBottom: "15px",
-            backgroundColor: "teal",
+            backgroundColor: isOrderFinalized ? "#A9A9A9" : "#6c757d",
             color: "white",
             border: "none",
             borderRadius: "5px",
-            cursor:
-              !(
-                categorizedColorPalette &&
-                Object.values(categorizedColorPalette).some(
-                  (arr) => arr.length > 0
-                )
-              ) || isPageLoading
-                ? "not-allowed"
-                : "pointer",
-            fontSize: "1rem",
-            fontWeight: "bold",
-            opacity:
-              !(
-                categorizedColorPalette &&
-                Object.values(categorizedColorPalette).some(
-                  (arr) => arr.length > 0
-                )
-              ) || isPageLoading
-                ? 0.6
-                : 1,
+            cursor: isOrderFinalized ? "not-allowed" : "pointer",
+            opacity: isOrderFinalized ? 0.5 : 1,
+            marginTop:"40px"
           }}
         >
-          Edit Colors
-          {categorizedColorPalette &&
-          Object.values(categorizedColorPalette).some((arr) => arr.length > 0)
-            ? ` (Colors Available)`
-            : " (No colors found)"}
+          Back One Step
         </button>
-      )}
 
-      {editUrl && (
-        <p style={{ fontSize: "0.9em", marginTop: "10px" }}>
-          <button
-            style={{
-              width: "100%",
-              padding: "8px",
-              backgroundColor: "#4A90E2",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontWeight: "bold",
-              opacity: isLoading ? 0.6 : 1,
-            }}
-            onClick={checkAuthAndLoadEditor}
-            disabled={isLoading}
-          >
-            Edit Full Page in Elementor
-          </button>
-        </p>
-      )}
-
-      {/* Optional Finalized Message */}
-      {isOrderFinalized && (
-        <p
+        <button
+          className="backToDashboardButton"
+          onClick={() => navigate("/")}
           style={{
-            marginTop: "0px",
-            marginBottom: "15px",
-            color: "#555",
-            fontSize: "0.85rem",
-            textAlign: "center",
+            display: "block",
+            width: "100%",
+            padding: "10px",
+            backgroundColor: "#37352f",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
           }}
         >
-          Section order is finalized. You can continue to edit colors.
-        </p>
-      )}
+          Back to Dashboard
+        </button>
 
-      <hr style={{ margin: "20px 0" }} />
-
-      <button
-        className="backToReorderButton"
-        onClick={handleProgrammaticBackNavigation}
-        disabled={isOrderFinalized}
-        style={{
-          display: "block",
-          width: "100%",
-          padding: "10px",
-          marginBottom: "15px",
-          backgroundColor: isOrderFinalized ? "#A9A9A9" : "#6c757d",
-          color: "white",
-          border: "none",
-          borderRadius: "5px",
-          cursor: isOrderFinalized ? "not-allowed" : "pointer",
-          opacity: isOrderFinalized ? 0.5 : 1,
-        }}
-      >
-        Back One Step
-      </button>
-
-      <button
-        className="backToDashboardButton"
-        onClick={() => navigate("/")}
-        style={{
-          display: "block",
-          width: "100%",
-          padding: "10px",
-          backgroundColor: "#5a6268",
-          color: "white",
-          border: "none",
-          borderRadius: "5px",
-          cursor: "pointer",
-        }}
-      >
-        Back to Dashboard
-      </button>
-
-      {showIframe && iframeUrl && (
-        <p style={{ fontSize: "0.9em", marginTop: "15px" }}>
-          <a href={iframeUrl} target="_blank" rel="noopener noreferrer">
-            Open preview in new tab
-          </a>
-        </p>
-      )}
+        {showIframe && iframeUrl && (
+          <p className={modalStyles.previewLink}>
+            <a
+              href={iframeUrl}
+              style={{ fontSize: "0.5em", marginTop: "15px" }}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open preview in new tab
+            </a>
+          </p>
+        )}
+      </div>
     </div>
   );
 
@@ -912,7 +930,12 @@ const BlockPreview = () => {
             ref={iframeRef}
             src={iframeUrl}
             title="Block Preview"
-            style={{ width: "100%", height: "100%", border: "none" }}
+            style={{
+              width: "100%",
+              height: "calc(100vh - 98px)",
+              border: "none",
+              borderRadius: "16px",
+            }}
             sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
             referrerPolicy="no-referrer"
             allow="fullscreen; camera; microphone; clipboard-read; clipboard-write;"
