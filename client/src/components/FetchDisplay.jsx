@@ -142,7 +142,7 @@ const FetchTemplateDisplay = ({ onPreview }) => {
     try {
       const username = `${import.meta.env.VITE_VITE_WP_USERNAME}`;
       const appPassword = `${import.meta.env.VITE_WP_PASS}`;
-      const token = btoa(`${username}:${appPassword}`);
+      // const token = btoa(`${username}:${appPassword}`);
 
       const requestData = {
         name: `${template.name} ${Math.floor(
@@ -158,7 +158,7 @@ const FetchTemplateDisplay = ({ onPreview }) => {
         requestData,
         {
           headers: {
-            Authorization: `Basic ${token}`,
+            // Authorization: `Basic ${token}`,
             "Content-Type": "application/json",
           },
         }

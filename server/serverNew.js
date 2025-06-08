@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const https = require("https"); // Import HTTPS
-const fs = require("fs");      // Import File System
+const fs = require("fs"); // Import File System
 const app = express();
 
 const cors = require("cors");
@@ -15,10 +15,12 @@ const wpAdminProxy = require("./controllers/iFrameController");
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 
-// CORS Configuration (No changes needed here)
+// CORS Configuration
 let corsOptions;
 if (NODE_ENV === "production") {
-  const allowedOrigins = [process.env.FRONTEND_PRODUCTION_URL || "https://g99buildbot.vercel.app"].filter(Boolean);
+  const allowedOrigins = [
+    process.env.FRONTEND_PRODUCTION_URL || "https://g99buildbot.vercel.app",
+  ].filter(Boolean);
   corsOptions = {
     origin: function (origin, callback) {
       if (!origin || allowedOrigins.indexOf(origin) !== -1) {
@@ -33,7 +35,10 @@ if (NODE_ENV === "production") {
   };
 } else {
   corsOptions = {
-    origin: [process.env.FRONTEND_DEVELOPMENT_URL || "https://localhost:5173", "https://127.0.0.1:5173"],
+    origin: [
+      process.env.FRONTEND_DEVELOPMENT_URL || "https://localhost:5173",
+      "https://127.0.0.1:5173",
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
@@ -42,25 +47,29 @@ if (NODE_ENV === "production") {
 
 // Middlewares
 app.use(cors(corsOptions));
-app.use(express.json({ limit: "30mb" }));
-app.use(express.urlencoded({ extended: true, limit: "30mb" }));
 
-// Routes
-app.use("/api/v1/auth", router);
-app.use("/api/v1/template", tempRouter);
-app.use("/api/v1/frame-builder", frameBuilderRouter); 
-
-
-// =======================================================
-// DIAGNOSTIC LOGGER: Add this block
-// =======================================================
+// 2. Global Diagnostic Logger (BEFORE ALL ROUTES)
 app.use((req, res, next) => {
-  console.log(`[Request Logger] Time: ${new Date().toISOString()} - Path: ${req.originalUrl}`);
-  next(); // Pass the request to the next middleware
+  console.log(
+    `[Request Logger] Time: ${new Date().toISOString()} - Path: ${
+      req.originalUrl
+    }`
+  );
+  next();
 });
-// =======================================================
 
-// Register routes with proper proxying
+// 3. Define Body-Parser Middleware
+const bodyParserMiddleware = [
+  express.json({ limit: "30mb" }),
+  express.urlencoded({ extended: true, limit: "30mb" }),
+];
+
+// 4. Internal API Routes with Body-Parser
+app.use("/api/v1/auth", bodyParserMiddleware, router);
+app.use("/api/v1/template", bodyParserMiddleware, tempRouter);
+app.use("/api/v1/frame-builder", bodyParserMiddleware, frameBuilderRouter);
+
+// 5. Proxy Routes (No Body-Parser)
 app.use("/wp-admin", wpAdminProxy);
 app.use("/wp-login.php", wpAdminProxy);
 app.use("/wp-content", wpAdminProxy);
@@ -68,27 +77,21 @@ app.use("/wp-includes", wpAdminProxy);
 app.use("/wp-json", wpAdminProxy);
 app.use("/resources", wpAdminProxy);
 
-// Health Check Endpoint
+// 6. Health Check Endpoint
 app.get("/api/health", (req, res) => {
-  res.status(200).json({ status: "OK", timestamp: new Date(), environment: NODE_ENV });
+  res
+    .status(200)
+    .json({ status: "OK", timestamp: new Date(), environment: NODE_ENV });
 });
 
-// Error Handling Middleware
+// 7. Error Handling Middleware (Last)
 app.use((err, req, res, next) => {
   console.error("Error caught by middleware:", err.stack);
-  if (err.message === "Not allowed by CORS") {
-    return res.status(403).json({ error: "Not allowed by CORS" });
-  }
   res.status(500).json({ error: "Internal Server Error" });
 });
 
-
-// =================================================================
-// FINAL HTTPS SERVER START LOGIC
-// =================================================================
+// 8. HTTPS Server Start Logic
 let server;
-
-// Define SSL options - This assumes the .pem files are in the same folder
 const sslOptions = {
   key: fs.readFileSync("./localhost+2-key.pem"),
   cert: fs.readFileSync("./localhost+2.pem"),
@@ -96,7 +99,6 @@ const sslOptions = {
 
 connectDB()
   .then(() => {
-    // Create the HTTPS server
     server = https.createServer(sslOptions, app).listen(PORT, () => {
       console.log(`✅ Server is running securely on https://localhost:${PORT}`);
     });
@@ -106,21 +108,12 @@ connectDB()
     process.exit(1);
   });
 
-// Process handlers (no changes needed)
-process.on("unhandledRejection", (err, promise) => {
-  console.error("Unhandled Rejection:", err);
-  if (server) {
-    server.close(() => process.exit(1));
-  } else {
-    process.exit(1);
-  }
+// Process Handlers
+process.on("unhandledRejection", (err) => {
+  if (server) server.close(() => process.exit(1));
+  else process.exit(1);
 });
-
 process.on("uncaughtException", (err) => {
-  console.error("Uncaught Exception:", err);
-  if (server) {
-    server.close(() => process.exit(1));
-  } else {
-    process.exit(1);
-  }
+  if (server) server.close(() => process.exit(1));
+  else process.exit(1);
 });

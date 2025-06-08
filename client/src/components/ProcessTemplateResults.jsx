@@ -358,7 +358,7 @@ const ProcessTemplateResults = ({
     try {
       const username = `${import.meta.env.VITE_WP_USERNAME}`;
       const appPassword = `${import.meta.env.VITE_WP_PASS}`;
-      const token = btoa(`${username}:${appPassword}`);
+      // const token = btoa(`${username}:${appPassword}`);
 
       const transformedContent = transformTemplatesToWorkingFormat(
         rawTemplatesBySection,
@@ -387,7 +387,7 @@ const ProcessTemplateResults = ({
         requestData,
         {
           headers: {
-            Authorization: `Basic ${token}`,
+            // Authorization: `Basic ${token}`,
             "Content-Type": "application/json",
           },
         }
