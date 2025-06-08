@@ -340,7 +340,8 @@ const BlockPreview = () => {
     }
     
     setIsLoading(true);
-    const authStatusUrl = "https://localhost:3000/wp-json/custom-builder/v1/auth-status";
+    // const authStatusUrl = "https://customlayout.gogroth.com/wp-json/custom-builder/v1/auth-status";
+    const authStatusUrl = "https://customlayout.gogroth.com/wp-json/custom-builder/v1/auth-status";
 
     try {
       // We use axios.get for the auth check
@@ -357,7 +358,8 @@ const BlockPreview = () => {
       if (error.response && error.response.status === 401) {
         console.log("User not authenticated. Showing login form...");
         // Construct the login URL that redirects back to the editor
-        const loginUrl = `https://localhost:3000/wp-login.php?redirect_to=${encodeURIComponent(editUrl)}`;
+        // const loginUrl = `https://customlayout.gogroth.com/wp-login.php?redirect_to=${encodeURIComponent(editUrl)}`;
+        const loginUrl = `https://customlayout.gogroth.com/wp-login.php?redirect_to=${encodeURIComponent(editUrl)}`;
         setIframeUrl(loginUrl);
       } else {
         // This handles other errors (network errors, 5xx server errors, etc.)
@@ -517,7 +519,8 @@ const BlockPreview = () => {
     const fetchNonce = async () => {
       try {
         const response = await axios.get(
-          "https://localhost:3000/wp-json/custom-builder/v1/get-nonce",
+          // "https://customlayout.gogroth.com/wp-json/custom-builder/v1/get-nonce",
+          "https://customlayout.gogroth.com/wp-json/custom-builder/v1/get-nonce",
           {
             // This is the axios equivalent of fetch's 'credentials: "include"'
             withCredentials: true,
@@ -590,16 +593,16 @@ const BlockPreview = () => {
 
       // Construct the proxied URL for the editor
       // Note: The nonce is now part of the URL.
-      const proxy_edit_url = edit_url.replace(
-        "https://customlayout.gogroth.com",
-        "https://localhost:3000"
-      );
+      // const proxy_edit_url = edit_url.replace(
+      //   "https://customlayout.gogroth.com",
+      //   "https://localhost:3000"
+      // );
       // No need to add nonce here if PHP already handles it via the '?_wpnonce' param in the link from elementor.
       // But if need to add it manually:
       // + `&_wpnonce=${nonce}`
 
       setIframeUrl(public_url || url); // For the "view" link
-      setEditUrl(proxy_edit_url); // For the "edit" button
+      setEditUrl(edit_url); // For the "edit" button
 
       setOriginalJsonProcessed(structuredClone(pageDataObjectFromWP));
       setShowIframe(true);

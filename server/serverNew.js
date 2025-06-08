@@ -70,12 +70,12 @@ app.use("/api/v1/template", bodyParserMiddleware, tempRouter);
 app.use("/api/v1/frame-builder", bodyParserMiddleware, frameBuilderRouter);
 
 // 5. Proxy Routes (No Body-Parser)
-app.use("/wp-admin", wpAdminProxy);
-app.use("/wp-login.php", wpAdminProxy);
-app.use("/wp-content", wpAdminProxy);
-app.use("/wp-includes", wpAdminProxy);
-app.use("/wp-json", wpAdminProxy);
-app.use("/resources", wpAdminProxy);
+// app.use("/wp-admin", wpAdminProxy);
+// app.use("/wp-login.php", wpAdminProxy);
+// app.use("/wp-content", wpAdminProxy);
+// app.use("/wp-includes", wpAdminProxy);
+// app.use("/wp-json", wpAdminProxy);
+// app.use("/resources", wpAdminProxy);
 
 // 6. Health Check Endpoint
 app.get("/api/health", (req, res) => {
