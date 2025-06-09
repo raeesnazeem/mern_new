@@ -73,7 +73,7 @@ const templateController = {
         matchingTemplates = await Template.find(colorOnlyQuery)
           .sort({ popularity: -1, updatedAt: -1 })
           .limit(50);
-        console.log(`✅ Found ${matchingTemplates.length} templates in STEP 2`);
+        console.log(`Found ${matchingTemplates.length} templates in STEP 2`);
       }
 
       // STEP 3: If still no results, fall back to just sectionTypes
@@ -98,7 +98,7 @@ const templateController = {
       }
 
       /* ----------------------------------------------------*
-       * NEW: Additional Filtering Based on Prompt Intent
+       * Additional Filtering Based on Prompt Intent
        * ----------------------------------------------------*/
       let filteredByTag = [...matchingTemplates]; // Start with current matches
 
@@ -107,12 +107,14 @@ const templateController = {
       let tagPrefix = null;
 
       // Detect intent based on keywords
-      if (/home|landing|main|homepage/i.test(promptLower)) {
+      if (/home|landing|main|homepage|home page/i.test(promptLower)) {
         tagPrefix = "home";
-      } else if (/service|product/i.test(promptLower)) {
+      } else if (/service|product|service page|services page|features|features page/i.test(promptLower)) {
         tagPrefix = "services-";
       } else if (/contact|reach out/i.test(promptLower)) {
         tagPrefix = "contact-";
+      } else if (/about|team|about us/i.test(promptLower)) {
+        tagPrefix = "about-";
       } else {
         // Default to 'home' if no specific intent found
         tagPrefix = "home";
@@ -126,8 +128,8 @@ const templateController = {
           Array.isArray(template.tags)
             ? template.tags.some(
                 (tag) =>
-                  tag === "general" || // Always include general templates
-                  tag.startsWith(tagPrefix.toLowerCase()) // Include matching tag prefix
+                  tag === "general" || // Always including general templates
+                  tag.startsWith(tagPrefix.toLowerCase()) // Including matching tag prefix
               )
             : false
         );

@@ -8,7 +8,7 @@ import React, {
 } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
-// --- ICONS for the Toolbar ---
+// --- ICONS (with new Chevron icons for cycling) ---
 const ZoomInIcon = () => (
   <svg
     width="20"
@@ -86,214 +86,85 @@ const ResetIcon = () => (
     <path d="M3 10.25a9 9 0 0 1 15.34-5.22l3.66 1.93a9 9 0 0 1-5.21 15.34l-1.94-3.66" />
   </svg>
 );
+const TrashIcon = () => (
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="3 6 5 6 21 6"></polyline>
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+  </svg>
+);
+const ChevronLeftIcon = () => (
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="3"
+  >
+    <polyline points="15 18 9 12 15 6"></polyline>
+  </svg>
+);
+const ChevronRightIcon = () => (
+  <svg
+    width="12"
+    height="12"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="3"
+  >
+    <polyline points="9 18 15 12 9 6"></polyline>
+  </svg>
+);
 
 const AVAILABLE_SECTION_TYPES = [];
 
 const listStyles = `
   /* --- STYLES --- */
-  .reorder-list-app-container {
-    width: 100%;
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    box-sizing: border-box;
-    background-color: #f0f0f0;
-    background-image: radial-gradient(circle, #d7d7d7 1px, transparent 1px);
-    background-size: 25px 25px;
-    overflow: hidden;
-    cursor: grab;
-}
-
-.reorder-list-app-container.is-panning{
-  cursor:grabbing;
-}
-
-.reorder-list-app-container.pan-locked{
-  cursor:default;
-}
-
-.reorder-list-content {
-    width: 100%;
-    max-width: 550px;
-    min-width: 450px;
-    background-color: #ffffff;
-    padding: 50px;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    flex-shrink: 0;
-    position: relative;
-    z-index: 1;
-    border: 1px solid #e0e0e0;
-}
-
-.reorder-list-content h2 {
-    text-align: center;
-    color: #333;
-    margin-top: 0;
-    margin-bottom: 20px;
-}
-
-.sections-list-html5 {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.section-item-html5-wrapper.drag-over-placeholder::before {
-    content: '';
-    display: block;
-    height: 10px;
-    background-color: teal;
-    margin: -2px 0 2px 0;
-    border-radius: 4px;
-}
-
-.section-item-html5-content {
-    padding: 10px 0px 10px 12px;
-    margin: 4px 0;
-    background-color: #f8f9fa;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    user-select: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.section-item-html5-content.dragging-item {
-    background-color: #e3f2fd !important;
-    border: 1px dashed teal !important;
-    opacity: 0.5;
-}
-
-.section-info {
-    flex-grow: 1;
-}
-
-.section-name {
-    font-weight: bold;
-    font-size: 14px;
-    color: #333;
-    pointer-events: none;
-}
-
-.section-type-changer {
-    font-size: 9px;
-    color: teal !important;
-    text-transform: uppercase;
-    margin-top: 2px;
-    cursor: pointer;
-    font-weight: 700;
-    letter-spacing: 0.035rem;
-    display: inline-block;
-    padding: 2px 4px;
-    border-radius: 3px;
-    background-color: #E0F2F1;
-}
-
-.section-controls-html5 {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding-right: 8px;
-}
-
-.control-buttons-group-html5 {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.move-button-html5 {
-    background: none;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    cursor: pointer;
-    padding: 2px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    width: 24px;
-    height: 24px;
-}
-
-.move-button-html5:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-
-.drag-handle-html5 {
-    width: 24px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: grab;
-}
-
-.pannable-content-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 80px;
-    align-items: center;
-    padding: 20px;
-    transition: transform 0.05s ease-out;
-    position: relative;
-    transform-origin: center center;
-}
-
-.subpage-row {
-    display: flex;
-    gap: 40px;
-    width: 100%;
-    justify-content: center;
-}
-
-.canvas-toolbar {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    display: flex;
-    align-items: center;
-    padding: 5px;
-    z-index: 1000;
-}
-
-.toolbar-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    color: #333;
-}
-
-.toolbar-button:hover {
-    background-color: #f0f0f0;
-}
-
-.toolbar-separator {
-    width: 1px;
-    height: 20px;
-    background-color: #e0e0e0;
-    margin: 0 5px;
-}
-
-.zoom-display {
-    font-size: 12px;
-    font-weight: 500;
-    padding: 0 8px;
-    color: #555;
-}`;
+  .reorder-list-app-container { width: 100%; height: 100vh; display: flex; align-items: center; justify-content: center; padding: 0; box-sizing: border-box; background-color: #f0f0f0; background-image: radial-gradient(circle, #d7d7d7 1px, transparent 1px); background-size: 25px 25px; overflow: hidden; cursor: grab; }
+  .reorder-list-app-container.is-panning { cursor: grabbing; }
+  .reorder-list-app-container.pan-locked { cursor: default; }
+  .reorder-list-content { width: 100%; max-width: 550px; min-width: 450px; background-color: #ffffff; padding: 50px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); flex-shrink: 0; position: relative; z-index: 1; border: 1px solid #e0e0e0; transition: opacity 0.3s ease, filter 0.3s ease; }
+  .reorder-list-content h2 { text-align: center; color: #333; margin-top: 0; margin-bottom: 20px; }
+  .sections-list-html5 { list-style: none; padding: 0; margin: 0; }
+  .section-item-html5-wrapper.drag-over-placeholder::before { content: ''; display: block; height: 10px; background-color: teal; margin: -2px 0 2px 0; border-radius: 4px; }
+  .section-item-html5-content { padding: 10px 0px 10px 12px; margin: 4px 0; background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 6px; user-select: none; display: flex; justify-content: space-between; align-items: center; }
+  .section-item-html5-content.dragging-item { background-color: #e3f2fd !important; border: 1px dashed teal !important; opacity: 0.5; }
+  .section-info { flex-grow: 1; }
+  .section-name { font-weight: bold; font-size: 14px; color: #333; pointer-events: none; }
+  .section-type-changer { font-size: 9px; color: teal !important; text-transform: uppercase; margin-top: 2px; cursor: pointer; font-weight: 700; letter-spacing: 0.035rem; display: inline-block; padding: 2px 4px; border-radius: 3px; background-color: #E0F2F1; }
+  .section-controls-html5 { display: flex; align-items: center; gap: 8px; padding-right: 8px;}
+  .control-buttons-group-html5 { display: flex; flex-direction: column; gap: 2px; }
+  .move-button-html5 { background: none; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; padding: 2px; display: flex; align-items: center; justify-content: center; line-height: 1; width: 24px; height: 24px; }
+  .move-button-html5:disabled { opacity: 0.4; cursor: not-allowed; }
+  .delete-button:hover { background-color: #ffebee; border-color: #e57373; color: #c62828; }
+  .drag-handle-html5 { width: 24px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: grab; }
+  .pannable-content-wrapper { display: flex; flex-direction: column; gap: 80px; align-items: center; padding: 20px; transition: transform 0.05s ease-out; position: relative; transform-origin: center center; }
+  .subpage-row { display: flex; gap: 40px; width: 100%; justify-content: center; }
+  .canvas-toolbar { position: fixed; top: 20px; right: 20px; background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); display: flex; align-items: center; padding: 5px; z-index: 1000; }
+  .toolbar-button { background: none; border: none; cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: 4px; color: #333; }
+  .toolbar-button:hover { background-color: #f0f0f0; }
+  .toolbar-separator { width: 1px; height: 20px; background-color: #e0e0e0; margin: 0 5px; }
+  .zoom-display { font-size: 12px; font-weight: 500; padding: 0 8px; color: #555; }
+  .reorder-list-content.is-inactive { opacity: 0.6; filter: grayscale(100%); }
+  .inactive-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(248, 249, 250, 0.6); backdrop-filter: blur(2px); border-radius: 16px; display: flex; align-items: center; justify-content: center; z-index: 2; }
+  .activate-button { background-color: #fff; color: #333; border: 1px solid #ccc; padding: 10px 20px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: all 0.2s ease; }
+  .activate-button:hover { background-color: #f0f0f0; border-color: #aaa; }
+  /* Styles for the new section cycler */
+  .section-cycler { display: flex; align-items: center; gap: 4px; }
+  .cycle-button { background: #e9ecef; border: 1px solid #dee2e6; color: #495057; width: 20px; height: 20px; border-radius: 50%; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .cycle-button:disabled { opacity: 0.3; cursor: not-allowed; }
+  .cycle-count { font-size: 11px; color: #6c757d; font-weight: 500; min-width: 35px; text-align: center; }
+`;
 
 if (!document.getElementById("reorder-list-styles")) {
   const styleSheet = document.createElement("style");
@@ -305,7 +176,7 @@ if (!document.getElementById("reorder-list-styles")) {
 
 const SectionItemHTML5 = React.memo(
   ({
-    section,
+    sectionSlot, // Changed from `section` to `sectionSlot`
     index,
     isFirst,
     isLast,
@@ -317,9 +188,15 @@ const SectionItemHTML5 = React.memo(
     onMoveUp,
     onMoveDown,
     onChangeType,
+    onDeleteItem,
+    onCycle, // New prop for cycling
     isDraggingThisItem,
     dragOverIndex,
   }) => {
+    // The currently active section is derived from the slot
+    const section = sectionSlot.options[sectionSlot.currentIndex];
+    const canCycle = sectionSlot.options.length > 1;
+
     const isDirectDragOverTarget =
       dragOverIndex === index && !isDraggingThisItem;
     return (
@@ -349,6 +226,38 @@ const SectionItemHTML5 = React.memo(
             </div>
           </div>
           <div className="section-controls-html5">
+            {/* --- NEW: Section Cycler UI --- */}
+            {canCycle && (
+              <div className="section-cycler">
+                <button
+                  className="cycle-button"
+                  onClick={() => onCycle(index, -1)}
+                  disabled={sectionSlot.currentIndex === 0}
+                >
+                  <ChevronLeftIcon />
+                </button>
+                <span className="cycle-count">
+                  {sectionSlot.currentIndex + 1} of {sectionSlot.options.length}
+                </span>
+                <button
+                  className="cycle-button"
+                  onClick={() => onCycle(index, 1)}
+                  disabled={
+                    sectionSlot.currentIndex === sectionSlot.options.length - 1
+                  }
+                >
+                  <ChevronRightIcon />
+                </button>
+              </div>
+            )}
+            <button
+              title="Delete Section"
+              className="move-button-html5 delete-button"
+              onClick={() => onDeleteItem(index)}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <TrashIcon />
+            </button>
             <div className="control-buttons-group-html5">
               <button
                 title="Move Up"
@@ -420,7 +329,10 @@ const SectionItemHTML5 = React.memo(
 );
 
 const SectionListContainer = React.forwardRef(
-  ({ title, sections, onSectionsChange, onApplyOrder }, ref) => {
+  (
+    { title, sections, onSectionsChange, onApplyOrder, isActive, onActivate },
+    ref
+  ) => {
     const [draggingItemIndex, setDraggingItemIndex] = useState(null);
     const [dragOverItemIndex, setDragOverItemIndex] = useState(null);
     const handleDragStartItem = useCallback(
@@ -489,15 +401,49 @@ const SectionListContainer = React.forwardRef(
       (index) => console.log(`Change type for item ${index} in "${title}"`),
       [title]
     );
+    const handleDeleteItem = useCallback(
+      (indexToDelete) =>
+        onSectionsChange(
+          sections.filter((_, index) => index !== indexToDelete)
+        ),
+      [sections, onSectionsChange]
+    );
+
+    // --- NEW: Handler for cycling through section options ---
+    const handleCycleSection = useCallback(
+      (slotIndex, direction) => {
+        const newSections = [...sections];
+        const slot = newSections[slotIndex];
+        const newIndex = slot.currentIndex + direction;
+        if (newIndex >= 0 && newIndex < slot.options.length) {
+          slot.currentIndex = newIndex;
+          onSectionsChange(newSections);
+        }
+      },
+      [sections, onSectionsChange]
+    );
 
     return (
-      <div className="reorder-list-content" ref={ref}>
+      <div
+        className={`reorder-list-content ${!isActive ? "is-inactive" : ""}`}
+        ref={ref}
+      >
+        {!isActive && (
+          <div className="inactive-overlay">
+            <button className="activate-button" onClick={onActivate}>
+              Activate
+            </button>
+          </div>
+        )}
         <h2>{title}</h2>
-        <div className="sections-list-html5">
-          {sections.map((section, index) => (
+        <div
+          className="sections-list-html5"
+          style={{ pointerEvents: !isActive ? "none" : "auto" }}
+        >
+          {sections.map((sectionSlot, index) => (
             <SectionItemHTML5
-              key={section._id}
-              section={section}
+              key={sectionSlot.options[sectionSlot.currentIndex]._id}
+              sectionSlot={sectionSlot}
               index={index}
               isFirst={index === 0}
               isLast={sections.length - 1}
@@ -511,6 +457,8 @@ const SectionListContainer = React.forwardRef(
               onMoveUp={handleMoveUp}
               onMoveDown={handleMoveDown}
               onChangeType={handleChangeType}
+              onDeleteItem={handleDeleteItem}
+              onCycle={handleCycleSection} // Pass the new cycle handler
             />
           ))}
         </div>
@@ -530,9 +478,11 @@ const SectionListContainer = React.forwardRef(
               color: "white",
               border: "none",
               borderRadius: "8px",
-              cursor: sections.length === 0 ? "not-allowed" : "pointer",
+              cursor:
+                sections.length === 0 || !isActive ? "not-allowed" : "pointer",
               fontSize: "1rem",
               boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              opacity: !isActive ? 0.5 : 1,
             }}
           >
             Apply & Preview
@@ -542,6 +492,62 @@ const SectionListContainer = React.forwardRef(
     );
   }
 );
+
+// --- REFINEMENT: New helper functions for advanced filtering and state creation ---
+const parseColorFromPrompt = (prompt) => {
+  if (!prompt) return null;
+  const colors = [
+    "blue",
+    "red",
+    "green",
+    "black",
+    "white",
+    "purple",
+    "orange",
+    "yellow",
+    "teal",
+    "pink",
+  ];
+  const promptLowerCase = prompt.toLowerCase();
+  for (const color of colors) {
+    if (promptLowerCase.includes(color)) return color;
+  }
+  return null;
+};
+
+const buildPageSections = (allSections, pageTags, priorityColor) => {
+  const candidates = allSections.filter((s) =>
+    pageTags.some((tag) => s.tags?.includes(tag))
+  );
+  const groupedByType = candidates.reduce((acc, section) => {
+    const type = section.sectionType || "unknown";
+    if (!acc[type]) acc[type] = [];
+    acc[type].push(section);
+    return acc;
+  }, {});
+
+  const finalSectionSlots = [];
+  for (const type in groupedByType) {
+    const options = groupedByType[type];
+    let bestMatchIndex = 0; // Default to the first option
+
+    if (priorityColor) {
+      const coloredIndex = options.findIndex((s) =>
+        s.tags?.includes(priorityColor)
+      );
+      if (coloredIndex !== -1) {
+        bestMatchIndex = coloredIndex;
+      }
+    }
+
+    finalSectionSlots.push({
+      sectionType: type,
+      options: options,
+      currentIndex: bestMatchIndex,
+    });
+  }
+  return finalSectionSlots;
+};
 
 const IntermediateComponent = () => {
   const location = useLocation();
@@ -553,6 +559,12 @@ const IntermediateComponent = () => {
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [transform, setTransform] = useState({ x: 0, y: 0 });
   const [svgPaths, setSvgPaths] = useState([]);
+  const [activePages, setActivePages] = useState({
+    home: false,
+    about: false,
+    services: false,
+    contact: false,
+  });
 
   const homeContainerRef = useRef(null);
   const aboutContainerRef = useRef(null);
@@ -561,76 +573,55 @@ const IntermediateComponent = () => {
 
   const allAvailableSections = useMemo(() => {
     const state = location.state || {};
-    const controllerData = state.templatesOrderedBySection || {};
-    let initialList =
-      controllerData.reorderedGlobalSections?.length > 0
-        ? controllerData.reorderedGlobalSections
-        : [];
-    if (initialList.length === 0) {
-      let orderToUse = state.suggestedOrder || [];
-      if (orderToUse.length === 0 && Object.keys(controllerData).length > 0) {
-        const p = [
-          "header",
-          "herospace",
-          "about",
-          "services",
-          "cta",
-          "testimonials",
-          "contact",
-          "footer",
-        ];
-        const a = Object.keys(controllerData);
-        const s = [];
-        p.forEach((k) => {
-          const x = a.find((y) => y.toLowerCase() === k.toLowerCase());
-          if (x && !s.includes(x)) s.push(x);
-        });
-        a.forEach((k) => {
-          if (
-            !s.includes(k) &&
-            k !== "reorderedGlobalSections" &&
-            k !== "reorderedSections"
-          )
-            s.push(k);
-        });
-        orderToUse = s;
-      }
-      orderToUse.forEach((k) => {
-        const s = controllerData[k];
-        if (s?.length > 0) {
-          initialList.push({ ...s[0], sectionType: s[0].sectionType || k });
-        }
-      });
-    }
-
-    // --- REFINEMENT: Removed all dummy tag generation ---
-    // The component now trusts that the `tags` property exists on your incoming data.
-    return initialList.map((s, i) => ({
+    const allMatchingTemplates = state.allMatchingTemplatesFromController || [];
+    return allMatchingTemplates.map((s, i) => ({
       ...s,
       _id: s._id || `gen-${i}-${Math.random()}`,
     }));
-    // ----------------------------------------------------
   }, [location.state]);
 
-  // Filtering logic now uses optional chaining `?.` for safety and relies on the real tags from your data.
+  const priorityColor = useMemo(
+    () => parseColorFromPrompt(location.state?.originalPrompt),
+    [location.state?.originalPrompt]
+  );
+
+  useEffect(() => {
+    const checkIsActive = (tag) =>
+      allAvailableSections.some((section) => section.tags?.includes(tag));
+    setActivePages({
+      home: checkIsActive("home-page"),
+      about: checkIsActive("about-page"),
+      services: checkIsActive("services-page"),
+      contact: checkIsActive("contact-page"),
+    });
+  }, [allAvailableSections]);
+
   const [homeSections, setHomeSections] = useState(() =>
-    allAvailableSections.filter(
-      (s) => s.tags?.includes("home") || s.tags?.includes("general")
+    buildPageSections(
+      allAvailableSections,
+      ["home-page", "general"],
+      priorityColor
     )
   );
   const [aboutSections, setAboutSections] = useState(() =>
-    allAvailableSections.filter(
-      (s) => s.tags?.includes("about") || s.tags?.includes("general")
+    buildPageSections(
+      allAvailableSections,
+      ["about-page", "general"],
+      priorityColor
     )
   );
   const [servicesSections, setServicesSections] = useState(() =>
-    allAvailableSections.filter(
-      (s) => s.tags?.includes("services") || s.tags?.includes("general")
+    buildPageSections(
+      allAvailableSections,
+      ["services-page", "general"],
+      priorityColor
     )
   );
   const [contactSections, setContactSections] = useState(() =>
-    allAvailableSections.filter(
-      (s) => s.tags?.includes("contact") || s.tags?.includes("general")
+    buildPageSections(
+      allAvailableSections,
+      ["contact-page", "general"],
+      priorityColor
     )
   );
 
@@ -703,8 +694,14 @@ const IntermediateComponent = () => {
     setScale(1);
     setTransform({ x: 0, y: 0 });
   };
+  const handleActivatePage = (pageName) =>
+    setActivePages((prev) => ({ ...prev, [pageName]: true }));
 
-  const handleNavigateWithSections = (sectionsToApply, title) => {
+  const handleNavigateWithSections = (sectionSlots, title) => {
+    // Before navigating, we need to flatten the selected sections from the slots
+    const sectionsToApply = sectionSlots.map(
+      (slot) => slot.options[slot.currentIndex]
+    );
     const stateToNavigate = {
       templatesOrderedBySection: {
         ...location.state?.templatesOrderedBySection,
@@ -712,13 +709,16 @@ const IntermediateComponent = () => {
         name: `${title} Page - ${Date.now()}`,
       },
       originalPrompt: location.state?.originalPrompt || "No prompt.",
+      allMatchingTemplatesFromController: allAvailableSections,
     };
     navigate("/builder-block-preview-main", { state: stateToNavigate });
   };
 
   return (
     <div
-      className="reorder-list-app-container"
+      className={`reorder-list-app-container ${isPanning ? "is-panning" : ""} ${
+        isPanLocked ? "pan-locked" : ""
+      }`}
       onMouseDown={handlePanMouseDown}
       onMouseMove={handlePanMouseMove}
       onMouseUp={handlePanMouseUpOrLeave}
@@ -759,7 +759,6 @@ const IntermediateComponent = () => {
           {isPanLocked ? <LockIcon /> : <UnlockIcon />}
         </button>
       </div>
-
       <div
         className="pannable-content-wrapper"
         style={{
@@ -789,13 +788,14 @@ const IntermediateComponent = () => {
             />
           ))}
         </svg>
-
         <SectionListContainer
           ref={homeContainerRef}
           title="Home Page"
           sections={homeSections}
           onSectionsChange={setHomeSections}
           onApplyOrder={() => handleNavigateWithSections(homeSections, "Home")}
+          isActive={activePages.home}
+          onActivate={() => handleActivatePage("home")}
         />
         <div className="subpage-row">
           <SectionListContainer
@@ -806,6 +806,8 @@ const IntermediateComponent = () => {
             onApplyOrder={() =>
               handleNavigateWithSections(aboutSections, "About")
             }
+            isActive={activePages.about}
+            onActivate={() => handleActivatePage("about")}
           />
           <SectionListContainer
             ref={servicesContainerRef}
@@ -815,6 +817,8 @@ const IntermediateComponent = () => {
             onApplyOrder={() =>
               handleNavigateWithSections(servicesSections, "Services")
             }
+            isActive={activePages.services}
+            onActivate={() => handleActivatePage("services")}
           />
           <SectionListContainer
             ref={contactContainerRef}
@@ -824,6 +828,8 @@ const IntermediateComponent = () => {
             onApplyOrder={() =>
               handleNavigateWithSections(contactSections, "Contact")
             }
+            isActive={activePages.contact}
+            onActivate={() => handleActivatePage("contact")}
           />
         </div>
       </div>

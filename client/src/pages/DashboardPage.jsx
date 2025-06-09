@@ -79,6 +79,9 @@ const DashboardPage = () => {
       // from the response data - Extract templatesOrderedBySection alone
       const templatesInOrder = response.data.data.templatesOrderedBySection;
 
+      //from the response data - Extract all templates that match all the filtering criteria in the controller
+      const allMatchingTemplatesFromController = response.data.data.allTemplates;
+
       console.log("data is sent including section names: ", templatesInOrder)
 
       // console.log('These are the templates in order:', templatesInOrder);
@@ -86,6 +89,7 @@ const DashboardPage = () => {
       // /preview route renders TemplatePreview Component - also passing on the templates and originalPrompt
       navigate("/intermediate-component", {
         state: { templatesOrderedBySection: templatesInOrder,
+                 allMatchingTemplatesFromController:allMatchingTemplatesFromController,
                  originalPrompt: prompt
          },
       });
@@ -248,12 +252,12 @@ const leftPanelContent = (
         <li>
           <button
             className={styles.sidebarItem}
-            onClick={() => navigate("/build-blocks-main")}
+            onClick={() => navigate("/frame-builder")}
           >
             <span className={styles.icon}>
               <FiCopy />
             </span>
-            {!isCollapsed && <span>Build Blocks</span>}
+            {!isCollapsed && <span>Frame Builder</span>}
           </button>
         </li>
 
