@@ -17,7 +17,7 @@ const NODE_ENV = process.env.NODE_ENV || "development";
 
 // CORS Configuration
 let corsOptions;
-if (NODE_ENV === "production") {
+
   const allowedOrigins = [
     process.env.FRONTEND_PRODUCTION_URL || "https://g99buildbot.vercel.app",
   ].filter(Boolean);
@@ -33,17 +33,7 @@ if (NODE_ENV === "production") {
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   };
-} else {
-  corsOptions = {
-    origin: [
-      process.env.FRONTEND_DEVELOPMENT_URL || "https://localhost:5173",
-      "https://127.0.0.1:5173",
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-  };
-}
+} 
 
 // Middlewares
 app.use(cors(corsOptions));
@@ -69,13 +59,6 @@ app.use("/api/v1/auth", bodyParserMiddleware, router);
 app.use("/api/v1/template", bodyParserMiddleware, tempRouter);
 app.use("/api/v1/frame-builder", bodyParserMiddleware, frameBuilderRouter);
 
-// 5. Proxy Routes (No Body-Parser)
-// app.use("/wp-admin", wpAdminProxy);
-// app.use("/wp-login.php", wpAdminProxy);
-// app.use("/wp-content", wpAdminProxy);
-// app.use("/wp-includes", wpAdminProxy);
-// app.use("/wp-json", wpAdminProxy);
-// app.use("/resources", wpAdminProxy);
 
 // 6. Health Check Endpoint
 app.get("/api/health", (req, res) => {
@@ -92,15 +75,11 @@ app.use((err, req, res, next) => {
 
 // 8. HTTPS Server Start Logic
 let server;
-const sslOptions = {
-  key: fs.readFileSync("./localhost+2-key.pem"),
-  cert: fs.readFileSync("./localhost+2.pem"),
-};
 
 connectDB()
   .then(() => {
-    server = https.createServer(sslOptions, app).listen(PORT, () => {
-      console.log(`✅ Server is running securely on https://localhost:${PORT}`);
+    server = https.createServer(app).listen(PORT, () => {
+      console.log(`✅ Server is running securely on http://localhost:${PORT}`);
     });
   })
   .catch((err) => {
