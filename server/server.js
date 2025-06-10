@@ -1,7 +1,5 @@
 require("dotenv").config();
 const express = require("express");
-const https = require("https"); // Import HTTPS
-const fs = require("fs"); // Import File System
 const app = express();
 
 const cors = require("cors");
