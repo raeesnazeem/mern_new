@@ -46,16 +46,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// 3. Define Body-Parser Middleware
-const bodyParserMiddleware = [
+
   express.json({ limit: "30mb" }),
   express.urlencoded({ extended: true, limit: "30mb" }),
-];
+
 
 // 4. Internal API Routes with Body-Parser
-app.use("/api/v1/auth", bodyParserMiddleware, router);
-app.use("/api/v1/template", bodyParserMiddleware, tempRouter);
-app.use("/api/v1/frame-builder", bodyParserMiddleware, frameBuilderRouter);
+app.use("/api/v1/auth", router);
+app.use("/api/v1/template", tempRouter);
+app.use("/api/v1/frame-builder", frameBuilderRouter);
 
 
 // 6. Health Check Endpoint
