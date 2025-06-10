@@ -287,7 +287,7 @@ const CreateTemplate = ({ onSuccess }) => {
             type="submit"
             disabled={isSubmitting}
             className={`px-4 py-2 rounded text-white ${
-              isSubmitting ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
+              isSubmitting ? "bg-teal-400" : "bg-teal-600 hover:bg-teal-700"
             }`}
           >
             {isSubmitting ? "Creating..." : "Create Template"}

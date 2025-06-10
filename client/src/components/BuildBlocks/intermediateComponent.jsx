@@ -7,8 +7,9 @@ import React, {
   useLayoutEffect,
 } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import LogoComponent from "../LogoComponent";
 
-// --- ICONS (with new Chevron icons for cycling) ---
+// --- (ICONS are unchanged) ---
 const ZoomInIcon = () => (
   <svg
     width="20"
@@ -70,6 +71,7 @@ const UnlockIcon = () => (
     <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
   </svg>
 );
+
 const ResetIcon = () => (
   <svg
     width="20"
@@ -81,11 +83,11 @@ const ResetIcon = () => (
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <path d="M3 2v6h6" />
-    <path d="M21 22v-6h-6" />
-    <path d="M3 10.25a9 9 0 0 1 15.34-5.22l3.66 1.93a9 9 0 0 1-5.21 15.34l-1.94-3.66" />
+    <circle cx="12" cy="12" r="10"></circle>
+    <path d="M12 6.75L7.25 12l5.25 5.25M7.25 12H16.75"></path>
   </svg>
 );
+
 const TrashIcon = () => (
   <svg
     width="12"
@@ -128,42 +130,366 @@ const ChevronRightIcon = () => (
 
 const AVAILABLE_SECTION_TYPES = [];
 
+// --- UPDATED STYLES ---
 const listStyles = `
   /* --- STYLES --- */
-  .reorder-list-app-container { width: 100%; height: 100vh; display: flex; align-items: center; justify-content: center; padding: 0; box-sizing: border-box; background-color: #f0f0f0; background-image: radial-gradient(circle, #d7d7d7 1px, transparent 1px); background-size: 25px 25px; overflow: hidden; cursor: grab; }
-  .reorder-list-app-container.is-panning { cursor: grabbing; }
-  .reorder-list-app-container.pan-locked { cursor: default; }
-  .reorder-list-content { width: 100%; max-width: 550px; min-width: 450px; background-color: #ffffff; padding: 50px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); flex-shrink: 0; position: relative; z-index: 1; border: 1px solid #e0e0e0; transition: opacity 0.3s ease, filter 0.3s ease; }
-  .reorder-list-content h2 { text-align: center; color: #333; margin-top: 0; margin-bottom: 20px; }
-  .sections-list-html5 { list-style: none; padding: 0; margin: 0; }
-  .section-item-html5-wrapper.drag-over-placeholder::before { content: ''; display: block; height: 10px; background-color: teal; margin: -2px 0 2px 0; border-radius: 4px; }
-  .section-item-html5-content { padding: 10px 0px 10px 12px; margin: 4px 0; background-color: #f8f9fa; border: 1px solid #ddd; border-radius: 6px; user-select: none; display: flex; justify-content: space-between; align-items: center; }
-  .section-item-html5-content.dragging-item { background-color: #e3f2fd !important; border: 1px dashed teal !important; opacity: 0.5; }
-  .section-info { flex-grow: 1; }
-  .section-name { font-weight: bold; font-size: 14px; color: #333; pointer-events: none; }
-  .section-type-changer { font-size: 9px; color: teal !important; text-transform: uppercase; margin-top: 2px; cursor: pointer; font-weight: 700; letter-spacing: 0.035rem; display: inline-block; padding: 2px 4px; border-radius: 3px; background-color: #E0F2F1; }
-  .section-controls-html5 { display: flex; align-items: center; gap: 8px; padding-right: 8px;}
-  .control-buttons-group-html5 { display: flex; flex-direction: column; gap: 2px; }
-  .move-button-html5 { background: none; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; padding: 2px; display: flex; align-items: center; justify-content: center; line-height: 1; width: 24px; height: 24px; }
-  .move-button-html5:disabled { opacity: 0.4; cursor: not-allowed; }
-  .delete-button:hover { background-color: #ffebee; border-color: #e57373; color: #c62828; }
-  .drag-handle-html5 { width: 24px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: grab; }
-  .pannable-content-wrapper { display: flex; flex-direction: column; gap: 80px; align-items: center; padding: 20px; transition: transform 0.05s ease-out; position: relative; transform-origin: center center; }
-  .subpage-row { display: flex; gap: 40px; width: 100%; justify-content: center; }
-  .canvas-toolbar { position: fixed; top: 20px; right: 20px; background-color: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); display: flex; align-items: center; padding: 5px; z-index: 1000; }
-  .toolbar-button { background: none; border: none; cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; border-radius: 4px; color: #333; }
-  .toolbar-button:hover { background-color: #f0f0f0; }
-  .toolbar-separator { width: 1px; height: 20px; background-color: #e0e0e0; margin: 0 5px; }
-  .zoom-display { font-size: 12px; font-weight: 500; padding: 0 8px; color: #555; }
-  .reorder-list-content.is-inactive { opacity: 0.6; filter: grayscale(100%); }
-  .inactive-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(248, 249, 250, 0.6); backdrop-filter: blur(2px); border-radius: 16px; display: flex; align-items: center; justify-content: center; z-index: 2; }
-  .activate-button { background-color: #fff; color: #333; border: 1px solid #ccc; padding: 10px 20px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: all 0.2s ease; }
-  .activate-button:hover { background-color: #f0f0f0; border-color: #aaa; }
-  /* Styles for the new section cycler */
-  .section-cycler { display: flex; align-items: center; gap: 4px; }
-  .cycle-button { background: #e9ecef; border: 1px solid #dee2e6; color: #495057; width: 20px; height: 20px; border-radius: 50%; display:flex; align-items:center; justify-content:center; cursor:pointer; }
-  .cycle-button:disabled { opacity: 0.3; cursor: not-allowed; }
-  .cycle-count { font-size: 11px; color: #6c757d; font-weight: 500; min-width: 35px; text-align: center; }
+  .reorder-list-app-container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-sizing: border-box;
+  background-color: #f0f0f0;
+  background-image: radial-gradient(circle, #d7d7d7 1px, transparent 1px);
+  background-size: 25px 25px;
+  overflow: hidden;
+  cursor: grab;
+}
+
+/* Styles for the top-left info panel */
+.canvas-info-panel {
+  position: fixed;
+  top: 25%;
+  left: 5%;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  padding: 15px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 280px;
+  opacity:0.6;
+}
+
+.canvas-info-panel:hover{
+  opacity:1;
+}
+
+
+.prompt-display-box {
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 13px;
+  color: #333;
+  line-height: 1.4;
+  max-height: 150px;
+  overflow-y: auto;
+  font-family: 'Courier New', Courier, monospace;
+  min-width:250px;
+}
+
+.refine-prompt-button {
+  background-color: teal;
+  border: 1px solid #dee2e6;
+  color: #fff;
+  font-size:14px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size:12px;
+  text-align: center;
+  transition: background-color 0.2s ease;
+}
+
+.refine-prompt-button:hover{
+  background: teal !important;
+  color: #fff;  
+}
+
+.refine-prompt-button:hover {
+  background-color: #dde2e7;
+}
+
+
+.reorder-list-app-container.is-panning {
+  cursor: grabbing;
+}
+
+.reorder-list-app-container.pan-locked {
+  cursor: default;
+}
+
+.reorder-list-content {
+  width: 100%;
+  max-width: 550px;
+  min-width: 450px;
+  background-color: #ffffff;
+  padding: 50px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  border: 1px solid #e0e0e0;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+.reorder-list-content h2 {
+  text-align: center;
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.sections-list-html5 {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.section-item-html5-wrapper.drag-over-placeholder::before {
+  content: '';
+  display: block;
+  height: 10px;
+  background-color: teal;
+  margin: -2px 0 2px 0;
+  border-radius: 4px;
+}
+
+.section-item-html5-content {
+  padding: 10px 0px 10px 12px;
+  margin: 4px 0;
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  user-select: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-item-html5-content.dragging-item {
+  background-color: #e3f2fd !important;
+  border: 1px dashed teal !important;
+  opacity: 0.5;
+}
+
+.section-info {
+  flex-grow: 1;
+}
+
+.section-name {
+  font-weight: bold;
+  font-size: 14px;
+  color: #333;
+  pointer-events: none;
+}
+
+.section-type-changer {
+  font-size: 9px;
+  color: teal !important;
+  text-transform: uppercase;
+  margin-top: 2px;
+  cursor: pointer;
+  font-weight: 700;
+  letter-spacing: 0.035rem;
+  display: inline-block;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background-color: #E0F2F1;
+}
+
+.section-description{
+  margin-top:10px;
+  padding: 0 100px 10px 0;
+  font-size: 11px;
+  font-weight:normal;
+  text-transform: math-auto !important;
+}
+
+.section-controls-html5 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 8px;
+}
+
+.control-buttons-group-html5 {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.move-button-html5 {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  width: 24px;
+  height: 24px;
+}
+
+.move-button-html5:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.delete-button:hover {
+  background-color: #ffebee;
+  border-color: #e57373;
+  color: #c62828;
+}
+
+.drag-handle-html5 {
+  width: 24px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+}
+
+.pannable-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+  align-items: center;
+  padding: 20px;
+  transition: transform 0.05s ease-out;
+  position: relative;
+  transform-origin: center center;
+}
+
+.subpage-row {
+  display: flex;
+  gap: 40px;
+  width: 100%;
+  justify-content: center;
+}
+
+.canvas-toolbar {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  z-index: 1000;
+}
+
+.toolbar-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: #333;
+}
+
+.toolbar-button:hover {
+  background-color: #f0f0f0;
+}
+
+.toolbar-separator {
+  width: 1px;
+  height: 20px;
+  background-color: #e0e0e0;
+  margin: 0 5px;
+}
+
+.zoom-display {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 0 8px;
+  color: #555;
+}
+
+.reset-icon {
+  transition: transform 0.3s ease;
+}
+
+.reset-icon:hover {
+  transform: rotate(90deg);
+}
+
+.reorder-list-content.is-inactive {
+  opacity: 0.6;
+  filter: grayscale(100%);
+}
+
+.inactive-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(248, 249, 250, 0.6);
+  backdrop-filter: blur(2px);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.activate-button {
+  background-color: #fff;
+  color: #333;
+  border: 1px solid #ccc;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.activate-button:hover {
+  background-color: #f0f0f0;
+  border-color: #aaa;
+}
+
+/* Styles for the new section cycler */
+.section-cycler {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cycle-button {
+  background: #e9ecef;
+  border: 1px solid #dee2e6;
+  color: #495057;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.cycle-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.cycle-count {
+  font-size: 11px;
+  color: #6c757d;
+  font-weight: 500;
+  min-width: 35px;
+  text-align: center;
+}
 `;
 
 if (!document.getElementById("reorder-list-styles")) {
@@ -174,6 +500,7 @@ if (!document.getElementById("reorder-list-styles")) {
   document.head.appendChild(styleSheet);
 }
 
+// --- (SectionItemHTML5 and SectionListContainer are unchanged) ---
 const SectionItemHTML5 = React.memo(
   ({
     sectionSlot, // Changed from `section` to `sectionSlot`
@@ -215,7 +542,7 @@ const SectionItemHTML5 = React.memo(
         >
           <div className="section-info">
             <div className="section-name">
-              {section.name || section.sectionType.toUpperCase() + " SECTION"}
+              {section.sectionType.toUpperCase() + " SECTION"}
             </div>
             <div
               className="section-type-changer"
@@ -224,7 +551,9 @@ const SectionItemHTML5 = React.memo(
             >
               {section.sectionType}
             </div>
+            <div className="section-description">{section.description}</div>
           </div>
+
           <div className="section-controls-html5">
             {/* --- NEW: Section Cycler UI --- */}
             {canCycle && (
@@ -493,7 +822,7 @@ const SectionListContainer = React.forwardRef(
   }
 );
 
-// --- REFINEMENT: New helper functions for advanced filtering and state creation ---
+// --- (buildPageSections and other helpers are unchanged) ---
 const parseColorFromPrompt = (prompt) => {
   if (!prompt) return null;
   const colors = [
@@ -515,10 +844,18 @@ const parseColorFromPrompt = (prompt) => {
   return null;
 };
 
-const buildPageSections = (allSections, pageTags, priorityColor) => {
+const buildPageSections = (
+  allSections,
+  pageTags,
+  priorityColor,
+  pageName // NEW: pageName to determine sorting
+) => {
+  // Filter candidates based on page-specific tags
   const candidates = allSections.filter((s) =>
     pageTags.some((tag) => s.tags?.includes(tag))
   );
+
+  // Group candidates by their sectionType
   const groupedByType = candidates.reduce((acc, section) => {
     const type = section.sectionType || "unknown";
     if (!acc[type]) acc[type] = [];
@@ -526,7 +863,8 @@ const buildPageSections = (allSections, pageTags, priorityColor) => {
     return acc;
   }, {});
 
-  const finalSectionSlots = [];
+  // Create the final section slots
+  let finalSectionSlots = [];
   for (const type in groupedByType) {
     const options = groupedByType[type];
     let bestMatchIndex = 0; // Default to the first option
@@ -546,9 +884,92 @@ const buildPageSections = (allSections, pageTags, priorityColor) => {
       currentIndex: bestMatchIndex,
     });
   }
+
+  // --- NEW: Default Sorting Logic ---
+  const sortOrderConfig = {
+    home: {
+      by: "sectionType",
+      order: [
+        "header",
+        "herospace",
+        "about",
+        "features",
+        "gallery",
+        "before and afters",
+        "meet the team",
+        "mission and vision",
+        "testimonials",
+        "cta",
+        "map",
+        "footer",
+      ],
+      equivalents: { "herospace slider": "herospace", services: "features" },
+    },
+    about: {
+      by: "tagOrType",
+      order: ["header", "breadcrumbs", "about-intro", "team", "footer"],
+      equivalents: { "about-introduction": "about-intro" },
+    },
+    services: {
+      by: "tagOrType",
+      order: [
+        "header",
+        "breadcrumbs",
+        "service-intro",
+        "features",
+        "faq",
+        "cta",
+        "footer",
+      ],
+      equivalents: { "service-introduction": "service-intro" },
+    },
+    // ADD THIS NEW CONFIGURATION FOR THE CONTACT PAGE
+    contact: {
+      by: "sectionType",
+      order: ["header", "contact", "map", "cta", "footer"],
+      equivalents: {},
+    },
+  };
+  const pageConfig = sortOrderConfig[pageName];
+
+  if (pageConfig) {
+    const getSortIndex = (slot) => {
+      if (pageConfig.by === "sectionType") {
+        let type = slot.sectionType;
+        if (pageConfig.equivalents[type]) {
+          type = pageConfig.equivalents[type];
+        }
+        const index = pageConfig.order.indexOf(type);
+        return index === -1 ? Infinity : index;
+      }
+
+      if (pageConfig.by === "tagOrType") {
+        // Prioritize sectionType match
+        let typeIndex = pageConfig.order.indexOf(slot.sectionType);
+        if (typeIndex !== -1) return typeIndex;
+
+        // Then check tags
+        const currentSection = slot.options[slot.currentIndex];
+        const tags = currentSection.tags || [];
+        for (let tag of tags) {
+          if (pageConfig.equivalents[tag]) {
+            tag = pageConfig.equivalents[tag];
+          }
+          const tagIndex = pageConfig.order.indexOf(tag);
+          if (tagIndex !== -1) return tagIndex;
+        }
+        return Infinity; // Not found in order array
+      }
+      return Infinity;
+    };
+
+    finalSectionSlots.sort((a, b) => getSortIndex(a) - getSortIndex(b));
+  }
+
   return finalSectionSlots;
 };
 
+// --- UPDATED COMPONENT ---
 const IntermediateComponent = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -600,28 +1021,33 @@ const IntermediateComponent = () => {
     buildPageSections(
       allAvailableSections,
       ["home-page", "general"],
-      priorityColor
+      priorityColor,
+      "home" // Specify page for sorting
     )
   );
   const [aboutSections, setAboutSections] = useState(() =>
     buildPageSections(
       allAvailableSections,
       ["about-page", "general"],
-      priorityColor
+      priorityColor,
+      "about" // Specify page for sorting
     )
   );
   const [servicesSections, setServicesSections] = useState(() =>
     buildPageSections(
       allAvailableSections,
       ["services-page", "general"],
-      priorityColor
+      priorityColor,
+      "services" // Specify page for sorting
     )
   );
+
   const [contactSections, setContactSections] = useState(() =>
     buildPageSections(
       allAvailableSections,
       ["contact-page", "general"],
-      priorityColor
+      priorityColor,
+      "contact" // Pass the page name to enable sorting
     )
   );
 
@@ -691,7 +1117,7 @@ const IntermediateComponent = () => {
       Math.min(Math.max(dir === "in" ? s + 0.1 : s - 0.1, 0.2), 2)
     );
   const resetView = () => {
-    setScale(1);
+    setScale(0.5);
     setTransform({ x: 0, y: 0 });
   };
   const handleActivatePage = (pageName) =>
@@ -714,6 +1140,12 @@ const IntermediateComponent = () => {
     navigate("/builder-block-preview-main", { state: stateToNavigate });
   };
 
+  // Handler for the refine prompt button
+  const handleRefinePrompt = useCallback(() => {
+    // Navigate one step back in the history stack
+    navigate(-1);
+  }, [navigate]);
+
   return (
     <div
       className={`reorder-list-app-container ${isPanning ? "is-panning" : ""} ${
@@ -725,6 +1157,17 @@ const IntermediateComponent = () => {
       onMouseLeave={handlePanMouseUpOrLeave}
       onWheel={handleWheel}
     >
+      {/*Top-left info panel */}
+      <LogoComponent />
+      <div className="canvas-info-panel">
+        <div className="prompt-display-box">
+          {location.state?.originalPrompt || "No prompt provided."}
+        </div>
+        <button className="refine-prompt-button" onClick={handleRefinePrompt}>
+          Refine Prompt
+        </button>
+      </div>
+
       <div className="canvas-toolbar">
         <button
           className="toolbar-button"

@@ -876,7 +876,8 @@ const BlockPreview = () => {
             borderRadius: "5px",
             cursor: isOrderFinalized ? "not-allowed" : "pointer",
             opacity: isOrderFinalized ? 0.5 : 1,
-            marginTop:"40px"
+            marginTop:"40px",
+            minWidth:"200px"
           }}
         >
           Back One Step

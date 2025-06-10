@@ -6,22 +6,23 @@ const templateController = {
    * Process user prompt and find matching templates
    * ----------------------------------------------------*/
 
-  // makeTemplatesByPrompt: async (req, res) => {
+  // makeTemplatesByPrompt
   makeTemplatesByPrompt: async (req, res) => {
     try {
       console.log("Request received - makeTemplatesByPrompt");
       const { prompt } = req.body;
-      console.log("Prompt received:", prompt);
       if (!prompt) {
-        console.warn(" No prompt provided in the request body");
-        return res.status(400).json({
-          success: false,
-          message: "Prompt is required",
-        });
+        return res
+          .status(400)
+          .json({ success: false, message: "Prompt is required" });
       }
+      console.log("Prompt received:", prompt);
 
-      // Extract relevant data from prompt
+      // 1. Analyze Prompt
       const { styles, colors, sectionTypes, keywords } = analyzePrompt(prompt);
+      const finalStyle = styles?.[0] || null;
+      const promptColor = colors?.[0] || null;
+      const finalSectionTypes = sectionTypes || [];
       console.log("Analyzed prompt result:", {
         styles,
         colors,
@@ -29,123 +30,177 @@ const templateController = {
         keywords,
       });
 
-      const finalStyle = styles?.[0] || null;
-      const finalSectionTypes = sectionTypes || [];
-      const promptColor = colors?.[0] || "";
+      let pageContextTag = null;
 
-      let matchingTemplates = [];
-
-      // STEP 1: Try to find templates that match BOTH color AND style criteria
-      if (finalSectionTypes.length > 0 && finalStyle && promptColor) {
-        console.log("STEP 1: Searching by color, style, and section types");
-        const colorAndStyleQuery = {
-          isActive: true,
-          sectionType: {
-            $in: finalSectionTypes.map((type) => type.toLowerCase()),
-          },
-          style: finalStyle.toLowerCase(),
-          tags: promptColor.toLowerCase(),
-        };
-        console.log("QUERY (STEP 1):", colorAndStyleQuery);
-        matchingTemplates = await Template.find(colorAndStyleQuery)
-          .sort({ popularity: -1, updatedAt: -1 })
-          .limit(50);
-        console.log(`Found ${matchingTemplates.length} templates in STEP 1`);
-      }
-
-      // STEP 2: If no results, try with JUST the color and sectionTypes (ignoring style)
-      if (
-        matchingTemplates.length === 0 &&
-        promptColor &&
-        finalSectionTypes.length > 0
-      ) {
-        console.log(
-          "STEP 2: Falling back to search by color and section types only"
-        );
-        const colorOnlyQuery = {
-          isActive: true,
-          sectionType: {
-            $in: finalSectionTypes.map((type) => type.toLowerCase()),
-          },
-          tags: promptColor.toLowerCase(),
-        };
-        console.log("QUERY (STEP 2):", colorOnlyQuery);
-        matchingTemplates = await Template.find(colorOnlyQuery)
-          .sort({ popularity: -1, updatedAt: -1 })
-          .limit(50);
-        console.log(`Found ${matchingTemplates.length} templates in STEP 2`);
-      }
-
-      // STEP 3: If still no results, fall back to just sectionTypes
-      if (matchingTemplates.length === 0 && finalSectionTypes.length > 0) {
-        console.log("STEP 3: Falling back to section types only");
-        const sectionOnlyQuery = {
-          isActive: true,
-          sectionType: {
-            $in: finalSectionTypes.map((type) => type.toLowerCase()),
-          },
-        };
-        console.log("QUERY (STEP 3):", sectionOnlyQuery);
-        matchingTemplates = await Template.find(sectionOnlyQuery)
-          .sort({ popularity: -1, updatedAt: -1 })
-          .limit(50);
-        console.log(`Found ${matchingTemplates.length} templates in STEP 3`);
-      }
-
-      // Final check
-      if (matchingTemplates.length === 0) {
-        console.log("No templates found after all steps.");
-      }
-
-      /* ----------------------------------------------------*
-       * Additional Filtering Based on Prompt Intent
-       * ----------------------------------------------------*/
-      let filteredByTag = [...matchingTemplates]; // Start with current matches
-
+      // 2. Detect Page Context
       const promptLower = prompt.toLowerCase();
-
-      let tagPrefix = null;
-
-      // Detect intent based on keywords
-      if (/home|landing|main|homepage|home page/i.test(promptLower)) {
-        tagPrefix = "home";
-      } else if (/service|product|service page|services page|features|features page/i.test(promptLower)) {
-        tagPrefix = "services-";
-      } else if (/contact|reach out/i.test(promptLower)) {
-        tagPrefix = "contact-";
-      } else if (/about|team|about us/i.test(promptLower)) {
-        tagPrefix = "about-";
-      } else {
-        // Default to 'home' if no specific intent found
-        tagPrefix = "home";
+      if (/\b(home|homepage|main|mainpage)\b/i.test(promptLower)) {
+        pageContextTag = "home-page";
+      } else if (/\b(service|services|servicepage)\b/i.test(promptLower)) {
+        pageContextTag = "services-page";
+      } else if (/\b(contact)\b/i.test(promptLower)) {
+        pageContextTag = "contact-page";
+      } else if (/\b(about)\b/i.test(promptLower)) {
+        pageContextTag = "about-page";
       }
 
-      console.log(`Detected tagPrefix: "${tagPrefix}"`);
+      // This helper function runs a prioritized search using the correct $and operator
+      const runPrioritizedQuery = async (baseCondition) => {
+        const queriesToTry = [];
+        const baseAndArray = [baseCondition];
 
-      if (tagPrefix) {
-        console.log(`Filtering templates by tag prefix: "${tagPrefix}"`);
-        filteredByTag = filteredByTag.filter((template) =>
-          Array.isArray(template.tags)
-            ? template.tags.some(
-                (tag) =>
-                  tag === "general" || // Always including general templates
-                  tag.startsWith(tagPrefix.toLowerCase()) // Including matching tag prefix
-              )
-            : false
+        if (finalStyle && promptColor) {
+          queriesToTry.push({
+            $and: [
+              ...baseAndArray,
+              { style: finalStyle.toLowerCase() },
+              { tags: promptColor.toLowerCase() },
+            ],
+          });
+        }
+        if (promptColor) {
+          queriesToTry.push({
+            $and: [...baseAndArray, { tags: promptColor.toLowerCase() }],
+          });
+        }
+        if (finalStyle) {
+          queriesToTry.push({
+            $and: [...baseAndArray, { style: finalStyle.toLowerCase() }],
+          });
+        }
+        queriesToTry.push({ $and: baseAndArray });
+
+        for (const query of queriesToTry) {
+          const templates = await Template.find(query)
+            .sort({ popularity: -1, updatedAt: -1 })
+            .limit(50);
+          if (templates.length > 0) {
+            console.log("   >>> Using Query:", JSON.stringify(query, null, 2));
+            return templates;
+          }
+        }
+        return [];
+      };
+
+      const logTemplates = (templates) => {
+        console.log(
+          JSON.stringify(
+            templates.map((t) => ({
+              name: t.name,
+              sectionType: t.sectionType,
+              tags: t.tags,
+            })),
+            null,
+            2
+          )
+        );
+      };
+
+      const allFoundTemplates = [];
+      const foundIds = new Set();
+      const addTemplates = (templates) => {
+        templates.forEach((t) => {
+          if (!foundIds.has(t._id.toString())) {
+            allFoundTemplates.push(t);
+            foundIds.add(t._id.toString());
+          }
+        });
+      };
+
+      // 3. Execute Searches based on Page Context
+      if (pageContextTag) {
+        console.log(
+          `\n[STEP A] Searching for Page-Specific templates with tag: "${pageContextTag}"`
+        );
+        let pageSpecificCondition = { isActive: true, tags: pageContextTag };
+        if (finalSectionTypes.length > 0) {
+          pageSpecificCondition.sectionType = {
+            $in: finalSectionTypes.map((s) => s.toLowerCase()),
+          };
+          console.log(
+            `   ...and sectionTypes: [${finalSectionTypes.join(", ")}]`
+          );
+        }
+        const pageTemplates = await runPrioritizedQuery(pageSpecificCondition);
+        console.log(
+          `✅ Found ${pageTemplates.length} page-specific templates.`
+        );
+        if (pageTemplates.length > 0) logTemplates(pageTemplates);
+        addTemplates(pageTemplates);
+      } else {
+        console.log(
+          `\n[STEP A] No page context found. Searching all templates based on color/style.`
+        );
+        let noPageCondition = { isActive: true };
+        if (finalSectionTypes.length > 0) {
+          noPageCondition.sectionType = {
+            $in: finalSectionTypes.map((s) => s.toLowerCase()),
+          };
+          console.log(
+            `   ...filtered by sectionTypes: [${finalSectionTypes.join(", ")}]`
+          );
+        }
+        const noPageTemplates = await runPrioritizedQuery(noPageCondition);
+        console.log(`✅ Found ${noPageTemplates.length} templates.`);
+        if (noPageTemplates.length > 0) logTemplates(noPageTemplates);
+        addTemplates(noPageTemplates);
+      }
+
+      console.log(
+        `\n[STEP B] Searching for General-Purpose templates with tag: "general"`
+      );
+      const generalTemplates = await runPrioritizedQuery({
+        isActive: true,
+        tags: "general",
+      });
+      console.log(`✅ Found ${generalTemplates.length} general templates.`);
+      if (generalTemplates.length > 0) logTemplates(generalTemplates);
+      addTemplates(generalTemplates);
+
+      // --- START: NEWLY ADDED FINAL FILTERING STEP ---
+      console.log(`\n[STEP C] Applying final dark/light style filter.`);
+      let finalTemplates = [...allFoundTemplates];
+
+      if (finalStyle === "light") {
+        finalTemplates = allFoundTemplates.filter(
+          (template) => !(template.tags || []).includes("dark")
         );
         console.log(
-          `Filtered down to ${filteredByTag.length} templates based on tag prefix`
+          `   Style is 'light', removed templates with 'dark' tag. Count is now ${finalTemplates.length}.`
+        );
+      } else if (finalStyle === "dark") {
+        finalTemplates = allFoundTemplates.filter(
+          (template) => !(template.tags || []).includes("light")
+        );
+        console.log(
+          `   Style is 'dark', removed templates with 'light' tag. Count is now ${finalTemplates.length}.`
+        );
+      } else if (finalStyle === "") {
+        finalTemplates = allFoundTemplates.filter(
+          (template) => !(template.tags || []).includes("dark")
+        );
+        console.log(
+          `   Style is 'empty', defaulting to 'light' tag. Count is now ${finalTemplates.length}.`
+        );
+      } else {
+        finalTemplates = allFoundTemplates.filter(
+          (template) => !(template.tags || []).includes("dark") )
+          console.log(
+          `   Style is 'empty', defaulting to 'light' tag. Count is now ${finalTemplates.length}.`
         );
       }
+      // --- END: NEWLY ADDED FINAL FILTERING STEP ---
 
-      // Group templates by section and suggest an order
-      const templatesBySection = groupTemplatesBySection(filteredByTag);
-      console.log("Templates grouped by section:", templatesBySection);
+      // 4. Final processing and response
+      console.log(
+        `\nTotal unique templates to be returned: ${finalTemplates.length}`
+      );
+      const templatesBySection = groupTemplatesBySection(finalTemplates);
 
       res.status(200).json({
         success: true,
         data: {
-          allTemplates: filteredByTag,
+          allTemplates: finalTemplates,
           templatesOrderedBySection: templatesBySection,
           suggestedOrder: suggestTemplateOrder(Object.keys(templatesBySection)),
           matchedConditions: {
@@ -153,13 +208,12 @@ const templateController = {
             color: promptColor,
             sectionTypes: finalSectionTypes,
             keywords,
-            tagPrefix,
+            pageContextTag,
           },
         },
       });
     } catch (error) {
       console.error("Error finding templates:", error.message);
-      console.error("Full error object:", error); // Optional: log full error for debugging
       res.status(500).json({
         success: false,
         message: "Server error while processing template search",
@@ -167,146 +221,6 @@ const templateController = {
       });
     }
   },
-
-  //   try {
-  //     console.log("Request received - makeTemplatesByPrompt");
-
-  //     const { prompt } = req.body;
-  //     console.log("Prompt received:", prompt);
-
-  //     if (!prompt) {
-  //       console.warn(" No prompt provided in the request body");
-  //       return res.status(400).json({
-  //         success: false,
-  //         message: "Prompt is required",
-  //       });
-  //     }
-
-  //     // Extract relevant data from prompt
-  //     const { styles, colors, sectionTypes, keywords } = analyzePrompt(prompt);
-  //     console.log("Analyzed prompt result:", {
-  //       styles,
-  //       colors,
-  //       sectionTypes,
-  //       keywords,
-  //     });
-
-  //     // Use first detected style from prompt or fallback to null
-  //     const finalStyle = styles?.[0] || null;
-  //     console.log("Final style selected:", finalStyle);
-
-  //     // Use detected section types from prompt or fallback to empty array
-  //     const finalSectionTypes = sectionTypes || [];
-  //     console.log("Final section types selected:", finalSectionTypes);
-
-  //     // Get first color from prompt (or empty string if none)
-  //     const promptColor = colors?.[0] || "";
-  //     console.log("Final color selected:", promptColor);
-
-  //     let matchingTemplates = [];
-
-  //     // STEP 1: Try to find templates that match BOTH color AND style criteria
-  //     if (finalSectionTypes.length > 0 && finalStyle && promptColor) {
-  //       console.log("STEP 1: Searching by color, style, and section types");
-  //       const colorAndStyleQuery = {
-  //         isActive: true,
-  //         sectionType: {
-  //           $in: finalSectionTypes.map((type) => type.toLowerCase()),
-  //         },
-  //         style: finalStyle.toLowerCase(),
-  //         tags: promptColor.toLowerCase(),
-  //       };
-
-  //       console.log("QUERY (STEP 1):", colorAndStyleQuery);
-
-  //       matchingTemplates = await Template.find(colorAndStyleQuery)
-  //         .sort({ popularity: -1, updatedAt: -1 })
-  //         .limit(50);
-
-  //       console.log(`Found ${matchingTemplates.length} templates in STEP 1`);
-  //     }
-
-  //     // STEP 2: If no results, try with JUST the color and sectionTypes (ignoring style)
-  //     if (
-  //       matchingTemplates.length === 0 &&
-  //       promptColor &&
-  //       finalSectionTypes.length > 0
-  //     ) {
-  //       console.log(
-  //         "STEP 2: Falling back to search by color and section types only"
-  //       );
-
-  //       const colorOnlyQuery = {
-  //         isActive: true,
-  //         sectionType: {
-  //           $in: finalSectionTypes.map((type) => type.toLowerCase()),
-  //         },
-  //         tags: promptColor.toLowerCase(),
-  //       };
-
-  //       console.log("QUERY (STEP 2):", colorOnlyQuery);
-
-  //       matchingTemplates = await Template.find(colorOnlyQuery)
-  //         .sort({ popularity: -1, updatedAt: -1 })
-  //         .limit(50);
-
-  //       console.log(`✅ Found ${matchingTemplates.length} templates in STEP 2`);
-  //     }
-
-  //     // STEP 3: If still no results, fall back to just sectionTypes
-  //     if (matchingTemplates.length === 0 && finalSectionTypes.length > 0) {
-  //       console.log("STEP 3: Falling back to section types only");
-
-  //       const sectionOnlyQuery = {
-  //         isActive: true,
-  //         sectionType: {
-  //           $in: finalSectionTypes.map((type) => type.toLowerCase()),
-  //         },
-  //       };
-
-  //       console.log("QUERY (STEP 3):", sectionOnlyQuery);
-
-  //       matchingTemplates = await Template.find(sectionOnlyQuery)
-  //         .sort({ popularity: -1, updatedAt: -1 })
-  //         .limit(50);
-
-  //       console.log(`Found ${matchingTemplates.length} templates in STEP 3`);
-  //     }
-
-  //     // Final check
-  //     if (matchingTemplates.length === 0) {
-  //       console.log("No templates found after all steps.");
-  //     }
-
-  //     // Group templates by section and suggest an order
-  //     const templatesBySection = groupTemplatesBySection(matchingTemplates);
-  //     console.log("Templates grouped by section:", templatesBySection);
-
-  //     res.status(200).json({
-  //       success: true,
-  //       data: {
-  //         allTemplates: matchingTemplates,
-  //         templatesOrderedBySection: templatesBySection,
-  //         suggestedOrder: suggestTemplateOrder(Object.keys(templatesBySection)),
-  //         matchedConditions: {
-  //           style: finalStyle,
-  //           color: promptColor,
-  //           sectionTypes: finalSectionTypes,
-  //           keywords,
-  //         },
-  //       },
-  //     });
-  //   } catch (error) {
-  //     console.error("Error finding templates:", error.message);
-  //     console.error("Full error object:", error); // Optional: log full error for debugging
-
-  //     res.status(500).json({
-  //       success: false,
-  //       message: "Server error while processing template search",
-  //       error: error.message,
-  //     });
-  //   }
-  // },
 
   /* ----------------------------------------------------*
    * Search for templates and display it in the frontend
@@ -458,11 +372,6 @@ const templateController = {
   },
 };
 
-/* ----------------------------------------------------*
- * *prompt analyzer - helper function
-    analyzes the prompt and returns an object with keywords, style and sectionType
- * ----------------------------------------------------*/
-
 const analyzePrompt = (prompt) => {
   if (!prompt) return { styles: [], colors: [], sectionTypes: [] };
 
@@ -481,7 +390,6 @@ const analyzePrompt = (prompt) => {
     "of",
   ]);
 
-  // Possible styles, colors, and sections
   const possibleStyles = [
     "modern",
     "classic",
@@ -576,7 +484,6 @@ const analyzePrompt = (prompt) => {
   ];
 
   const possibleSections = [
-    "full template",
     "header",
     "about",
     "cta",
@@ -606,11 +513,10 @@ const analyzePrompt = (prompt) => {
     prompt.toLowerCase().includes(style)
   );
 
-  // Extract colors
+  // Extract colors using word boundaries to avoid partial matches (e.g., 'red' in 'colored')
   const colors = possibleColors
-    .filter((color) => prompt.toLowerCase().includes(color))
+    .filter((color) => new RegExp(`\\b${color}\\b`, "i").test(prompt))
     .map((color) => {
-      // Normalize 'grey' to 'gray'
       if (color === "grey") return "gray";
       return color;
     });
@@ -643,7 +549,7 @@ const groupTemplatesBySection = (templates) => {
   return templates.reduce((acc, template) => {
     const { sectionType } = template;
     if (!acc[sectionType]) {
-      acc[sectionType] = []; //checks if there's an object's value(not key) associated with the sectionType. Eg: for header-SectionType if empty, then initializes header: []_______ means acc.header = []. Helps in grouping by value.
+      acc[sectionType] = [];
     }
     acc[sectionType].push(template);
     return acc;
@@ -651,14 +557,20 @@ const groupTemplatesBySection = (templates) => {
 };
 
 // Helper function to suggest a logical order of sections
-// with additional sections inserted between features and testimonials
 const suggestTemplateOrder = (availableSections) => {
   const defaultOrder = [
     "header",
     "breadcrumbs",
+    "herospace",
+    "herospace slider",
     "about",
     "features",
-    // Additional sections will be inserted here
+    "services",
+    "gallery",
+    "before and afters",
+    "cards",
+    "meet the team",
+    "mission and vision",
     "testimonials",
     "faq",
     "cta",
@@ -667,33 +579,15 @@ const suggestTemplateOrder = (availableSections) => {
     "footer",
   ];
 
-  // Find the index where we want to insert additional sections (after 'features')
-  const featuresIndex = defaultOrder.indexOf("features");
-
-  // Split the default order into before and after parts
-  const beforeFeatures = defaultOrder.slice(0, featuresIndex + 1);
-  const afterFeatures = defaultOrder.slice(featuresIndex + 1);
-
-  // Filter the sections that are in the default order
-  const orderedBeforeFeatures = beforeFeatures.filter((section) =>
+  const orderedSections = defaultOrder.filter((section) =>
     availableSections.includes(section)
   );
 
-  const orderedAfterFeatures = afterFeatures.filter((section) =>
-    availableSections.includes(section)
-  );
-
-  // Find any sections that aren't in the default order
   const additionalSections = availableSections.filter(
     (section) => !defaultOrder.includes(section)
   );
 
-  // Combine the three parts: before features, additional sections, and after features
-  return [
-    ...orderedBeforeFeatures,
-    ...additionalSections,
-    ...orderedAfterFeatures,
-  ];
+  return [...orderedSections, ...additionalSections];
 };
 
 module.exports = { templateController };
