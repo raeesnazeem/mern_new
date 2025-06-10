@@ -33,7 +33,7 @@ let corsOptions;
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   };
-} 
+
 
 // Middlewares
 app.use(cors(corsOptions));
