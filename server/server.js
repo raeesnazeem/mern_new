@@ -78,8 +78,9 @@ let server;
 
 connectDB()
   .then(() => {
-    server = https.createServer(app).listen(PORT, () => {
-      console.log(`✅ Server is running securely on http://localhost:${PORT}`);
+    const PORT = process.env.PORT || 10000; // Use Render's PORT or fallback to 10000
+    server = https.createServer(app).listen(PORT, '0.0.0.0', () => {
+      console.log(`✅ Server is running securely on https://0.0.0.0:${PORT}`);
     });
   })
   .catch((err) => {
@@ -89,10 +90,12 @@ connectDB()
 
 // Process Handlers
 process.on("unhandledRejection", (err) => {
+  console.error("Unhandled Rejection:", err);
   if (server) server.close(() => process.exit(1));
   else process.exit(1);
 });
 process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
   if (server) server.close(() => process.exit(1));
   else process.exit(1);
 });
