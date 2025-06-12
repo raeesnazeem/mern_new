@@ -339,150 +339,160 @@ const BlockPreview = () => {
     return categories;
   }, []);
 
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setLoginError("");
 
-const handleLogin = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setLoginError("");
-
-  try {
-    const response = await axios.post(
-      "https://raeescodes.xyz/wp-json/custom-builder/v1/login",
-      { username, password },
-      { withCredentials: true }
-    );
-
-    console.log("Login response:", response.data);
-    console.log("Cookies after login:", document.cookie);
-    if (response.data.success) {
-      const newNonce = response.data.nonce;
-      setNonce(newNonce); // Update nonce state
-      console.log("New nonce set:", newNonce);
-      setShowLoginForm(false);
-      setLoginAttempts(0);
-      // Pass the new nonce directly to retryAuthCheck to avoid closure issues
-      await retryAuthCheck(3, 1000, newNonce);
-    } else {
-      setLoginError("Login failed. Please try again.");
-    }
-  } catch (error) {
-    console.error("Login error:", error);
-    if (error.response) {
-      if (error.response.status === 401) {
-        setLoginError("Invalid username or password.");
-      } else if (error.response.status === 500) {
-        setLoginError("Server error. Please try again later.");
-      } else {
-        setLoginError(
-          `Error: ${error.response.data?.message || "Unknown error"}`
-        );
-      }
-    } else {
-      setLoginError("Network error. Check your connection or server status.");
-    }
-    setLoginAttempts(loginAttempts + 1);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-const retryAuthCheck = async (maxAttempts, delay, initialNonce) => {
-  let currentNonce = initialNonce || nonce; // Use the passed nonce or state nonce
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      const authResult = await checkAuthAndLoadEditor(currentNonce);
-      if (authResult) return true;
-      console.log(`Auth check attempt ${attempt} failed. Retrying...`);
-      // Fetch a fresh nonce before retrying
-      const nonceResponse = await axios.get(
-        "https://raeescodes.xyz/wp-json/custom-builder/v1/get-nonce",
+      const response = await axios.post(
+        "https://raeescodes.xyz/wp-json/custom-builder/v1/login",
+        { username, password },
         { withCredentials: true }
       );
-      if (nonceResponse.data?.nonce) {
-        currentNonce = nonceResponse.data.nonce;
-        setNonce(currentNonce); // Update state
-        console.log("Fetched new nonce for retry:", currentNonce);
+
+      console.log("Login response:", response.data);
+      console.log("Cookies after login:", document.cookie);
+      if (response.data.success) {
+        const newNonce = response.data.nonce;
+        setNonce(newNonce); // Update nonce state
+        console.log("New nonce set:", newNonce);
+        setShowLoginForm(false);
+        setLoginAttempts(0);
+        // Pass the new nonce directly to retryAuthCheck to avoid closure issues
+        await retryAuthCheck(3, 1000, newNonce);
+      } else {
+        setLoginError("Login failed. Please try again.");
       }
-      await new Promise((resolve) => setTimeout(resolve, delay));
     } catch (error) {
-      console.error(`Auth check attempt ${attempt} error:`, error);
+      console.error("Login error:", error);
+      if (error.response) {
+        if (error.response.status === 401) {
+          setLoginError("Invalid username or password.");
+        } else if (error.response.status === 500) {
+          setLoginError("Server error. Please try again later.");
+        } else {
+          setLoginError(
+            `Error: ${error.response.data?.message || "Unknown error"}`
+          );
+        }
+      } else {
+        setLoginError("Network error. Check your connection or server status.");
+      }
+      setLoginAttempts(loginAttempts + 1);
+    } finally {
+      setIsLoading(false);
     }
-  }
-  alert(
-    "Failed to verify login status after multiple attempts. Please try logging in via WordPress."
-  );
-  setShowLoginForm(true);
-  return false;
-};
+  };
 
-const checkAuthAndLoadEditor = async (nonceToUse) => {
-  console.log("checkAuthAndLoadEditor called with editUrl:", editUrl);
-  if (!editUrl) {
-    console.warn("Edit URL not available:", editUrl);
-    alert("Edit URL is not available yet.");
+  const retryAuthCheck = async (maxAttempts, delay, initialNonce) => {
+    let currentNonce = initialNonce || nonce;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const authResult = await checkAuthAndLoadEditor(currentNonce);
+        if (authResult) return true;
+        console.log(`Auth check attempt ${attempt} failed. Retrying...`);
+
+        const cookies = document.cookie;
+        const hasSessionCookie = cookies.includes("wordpress_logged_in_");
+        if (!hasSessionCookie) {
+          console.warn(
+            "Session cookie not found in browser. Cannot authenticate."
+          );
+          alert(
+            "Session cookie not found. Please ensure third-party cookies are enabled in your browser and try logging in again."
+          );
+          setShowLoginForm(true);
+          return false;
+        }
+
+        const nonceResponse = await axios.get(
+          "https://raeescodes.xyz/wp-json/custom-builder/v1/get-nonce",
+          { withCredentials: true }
+        );
+        if (nonceResponse.data?.nonce) {
+          currentNonce = nonceResponse.data.nonce;
+          setNonce(currentNonce);
+          console.log("Fetched new nonce for retry:", currentNonce);
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      } catch (error) {
+        console.error(`Auth check attempt ${attempt} error:`, error);
+        if (attempt === maxAttempts) {
+          alert(
+            "Failed to verify login status after multiple attempts. Please ensure third-party cookies are enabled and try logging in via WordPress."
+          );
+          setShowLoginForm(true);
+          return false;
+        }
+      }
+    }
     return false;
-  }
+  };
 
-  setIsLoading(true);
-  const authStatusUrl = "https://raeescodes.xyz/wp-json/custom-builder/v1/auth-status";
-  const nonceForRequest = nonceToUse || nonce; // Use the passed nonce or state nonce
-
-  try {
-    console.log("Using nonce for auth-status:", nonceForRequest);
-    const response = await axios.get(authStatusUrl, {
-      headers: {
-        "X-WP-Nonce": nonceForRequest,
-      },
-      withCredentials: true,
-    });
-
-    console.log("Auth status response:", response.data);
-    console.log("Request headers:", response.config.headers);
-    console.log("Cookies sent in auth-status:", document.cookie);
-    if (response.data.logged_in) {
-      console.log(
-        "User authenticated. Loading Elementor editor with URL:",
-        editUrl
-      );
-      setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
-      setShowIframe(true);
-      setShowLoginForm(false);
-      return true;
-    } else {
-      console.log("User not authenticated. Showing login form...");
-      console.log("Nonce valid:", response.data.nonce_valid);
-      console.log("Session cookie present:", response.data.session_cookie);
-      console.log("Cookies received:", response.data.cookies);
-      console.log("Cookie domain:", response.data.cookie_domain);
-      console.log("Cookie path:", response.data.cookie_path);
-      setShowLoginForm(true);
+  const checkAuthAndLoadEditor = async (nonceToUse) => {
+    console.log("checkAuthAndLoadEditor called with editUrl:", editUrl);
+    if (!editUrl) {
+      console.warn("Edit URL not available:", editUrl);
+      alert("Edit URL is not available yet.");
       return false;
     }
-  } catch (error) {
-    console.error("Auth status error:", error);
-    if (error.response && error.response.status === 403) {
-      console.log("Forbidden. Possible nonce-cookie mismatch...");
-      console.log("Error details:", error.response.data);
-      setShowLoginForm(true);
-    } else {
-      console.error("Error checking auth status:", error.message);
+
+    setIsLoading(true);
+    const authStatusUrl =
+      "https://raeescodes.xyz/wp-json/custom-builder/v1/auth-status";
+    const nonceForRequest = nonceToUse || nonce;
+
+    try {
+      console.log("Using nonce for auth-status:", nonceForRequest);
+      console.log("Cookies before auth-status request:", document.cookie);
+      const response = await axios.get(authStatusUrl, {
+        headers: {
+          "X-WP-Nonce": nonceForRequest,
+        },
+        withCredentials: true,
+      });
+
+      console.log("Auth status response:", response.data);
+      console.log("Cookies after auth-status request:", document.cookie);
+      if (response.data.logged_in) {
+        console.log(
+          "User authenticated. Loading Elementor editor with URL:",
+          editUrl
+        );
+        setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
+        setShowIframe(true);
+        setShowLoginForm(false);
+        return true;
+      } else {
+        console.log("User not authenticated. Showing login form...");
+        console.log("Nonce valid:", response.data.nonce_valid);
+        console.log("Session cookie present:", response.data.session_cookie);
+        setShowLoginForm(true);
+        return false;
+      }
+    } catch (error) {
+      console.error("Auth status error:", error);
+      if (error.response && error.response.status === 403) {
+        console.log("Forbidden. Possible nonce-cookie mismatch...");
+        console.log("Error details:", error.response.data);
+        setShowLoginForm(true);
+      } else {
+        console.error("Error checking auth status:", error.message);
+      }
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-    return false;
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-// Update the useEffect for editUrl to use the latest nonce
-useEffect(() => {
-  if (editUrl && !showIframe) {
-    checkAuthAndLoadEditor(nonce);
-  }
-}, [editUrl, nonce]); // Add nonce as a dependency
-
-
-
+  };
+  // Update the useEffect for editUrl to use the latest nonce
+  useEffect(() => {
+    if (editUrl && !showIframe) {
+      checkAuthAndLoadEditor(nonce);
+    }
+  }, [editUrl, nonce]); // Add nonce as a dependency
 
   useEffect(() => {
     const newLocationTemplatesData = location.state?.templatesOrderedBySection;
@@ -656,7 +666,7 @@ useEffect(() => {
   }, []);
 
   const handleWordPressPageGenerated = useCallback(
-     (url, pageDataObjectFromWP) => {
+    (url, pageDataObjectFromWP) => {
       const { public_url, edit_url } = pageDataObjectFromWP.json || {};
 
       if (!edit_url) {
@@ -968,7 +978,7 @@ useEffect(() => {
                 boxShadow:
                   "0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)",
               }}
-              onClick={checkAuthAndLoadEditor}
+              onClick={() => checkAuthAndLoadEditor(nonce)}
               disabled={isLoading}
             >
               Edit Full Page in Editor
