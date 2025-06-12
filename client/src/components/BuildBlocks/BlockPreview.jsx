@@ -394,19 +394,7 @@ const BlockPreview = () => {
         if (authResult) return true;
         console.log(`Auth check attempt ${attempt} failed. Retrying...`);
 
-        const cookies = document.cookie;
-        const hasSessionCookie = cookies.includes("wordpress_logged_in_");
-        if (!hasSessionCookie) {
-          console.warn(
-            "Session cookie not found in browser. Cannot authenticate."
-          );
-          alert(
-            "Session cookie not found. Please ensure third-party cookies are enabled in your browser and try logging in again."
-          );
-          setShowLoginForm(true);
-          return false;
-        }
-
+        // Fetch a fresh nonce before retrying
         const nonceResponse = await axios.get(
           "https://raeescodes.xyz/wp-json/custom-builder/v1/get-nonce",
           { withCredentials: true }
@@ -422,7 +410,7 @@ const BlockPreview = () => {
         console.error(`Auth check attempt ${attempt} error:`, error);
         if (attempt === maxAttempts) {
           alert(
-            "Failed to verify login status after multiple attempts. Please ensure third-party cookies are enabled and try logging in via WordPress."
+            "Failed to verify login status after multiple attempts. This may be due to third-party cookies being blocked. Please ensure third-party cookies are enabled in your browser, or log in directly via WordPress."
           );
           setShowLoginForm(true);
           return false;
