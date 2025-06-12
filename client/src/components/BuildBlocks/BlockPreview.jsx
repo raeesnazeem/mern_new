@@ -625,33 +625,31 @@ const BlockPreview = () => {
     categorizeColorInstances,
   ]);
 
-  // Fetch nonce when component mounts
-  useEffect(() => {
-    const fetchNonce = async () => {
+  // Fetch nonce
+useEffect(() => {
+  const initializeNonceAndCheckAuth = async () => {
+    if (!nonce) {
       try {
-        const response = await axios.get(
+        const nonceResponse = await axios.get(
           "https://raeescodes.xyz/wp-json/custom-builder/v1/get-nonce",
           { withCredentials: true }
         );
-        const data = response.data;
-        if (data && data.nonce) {
-          console.log("Fetched nonce with axios:", data.nonce);
-          setNonce(data.nonce);
-        } else {
-          console.warn("Nonce not found in response.");
+        if (nonceResponse.data?.nonce) {
+          setNonce(nonceResponse.data.nonce);
+          console.log("Fetched initial nonce:", nonceResponse.data.nonce);
         }
       } catch (error) {
-        if (error.response) {
-          console.warn(
-            `Initial nonce fetch failed with status: ${error.response.status}`
-          );
-        } else {
-          console.error("Error fetching nonce with axios:", error.message);
-        }
+        console.error("Failed to fetch initial nonce:", error);
       }
-    };
-    fetchNonce();
-  }, []);
+    }
+
+    if (editUrl && !showIframe && nonce) {
+      checkAuthAndLoadEditor(nonce);
+    }
+  };
+
+  initializeNonceAndCheckAuth();
+}, [editUrl, showIframe, nonce]);
 
   const handleWordPressPageGenerated = useCallback(
     (url, pageDataObjectFromWP) => {
