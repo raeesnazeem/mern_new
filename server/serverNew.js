@@ -38,6 +38,7 @@ if (NODE_ENV === "production") {
     origin: [
       process.env.FRONTEND_DEVELOPMENT_URL || "https://localhost:5173",
       "https://127.0.0.1:5173",
+      "https://g99buildbot.raeescodes.xyz",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -59,15 +60,13 @@ app.use((req, res, next) => {
 });
 
 // 3. Define Body-Parser Middleware
-app.use( express.json({ limit: "30mb" }));
-app.use( express.urlencoded({ extended: true, limit: "30mb" }));
+app.use(express.json({ limit: "30mb" }));
+app.use(express.urlencoded({ extended: true, limit: "30mb" }));
 
 // 4. Internal API Routes with Body-Parser
 app.use("/api/v1/auth", router);
 app.use("/api/v1/template", tempRouter);
 app.use("/api/v1/frame-builder", frameBuilderRouter);
-
-
 
 // 6. Health Check Endpoint
 app.get("/api/health", (req, res) => {
