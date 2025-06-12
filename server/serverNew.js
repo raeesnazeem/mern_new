@@ -59,23 +59,15 @@ app.use((req, res, next) => {
 });
 
 // 3. Define Body-Parser Middleware
-const bodyParserMiddleware = [
-  express.json({ limit: "30mb" }),
-  express.urlencoded({ extended: true, limit: "30mb" }),
-];
+app.use( express.json({ limit: "30mb" }));
+app.use( express.urlencoded({ extended: true, limit: "30mb" }));
 
 // 4. Internal API Routes with Body-Parser
-app.use("/api/v1/auth", bodyParserMiddleware, router);
-app.use("/api/v1/template", bodyParserMiddleware, tempRouter);
-app.use("/api/v1/frame-builder", bodyParserMiddleware, frameBuilderRouter);
+app.use("/api/v1/auth", router);
+app.use("/api/v1/template", tempRouter);
+app.use("/api/v1/frame-builder", frameBuilderRouter);
 
-// 5. Proxy Routes (No Body-Parser)
-// app.use("/wp-admin", wpAdminProxy);
-// app.use("/wp-login.php", wpAdminProxy);
-// app.use("/wp-content", wpAdminProxy);
-// app.use("/wp-includes", wpAdminProxy);
-// app.use("/wp-json", wpAdminProxy);
-// app.use("/resources", wpAdminProxy);
+
 
 // 6. Health Check Endpoint
 app.get("/api/health", (req, res) => {
