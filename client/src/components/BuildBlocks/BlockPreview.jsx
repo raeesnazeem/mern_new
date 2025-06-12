@@ -339,7 +339,8 @@ const BlockPreview = () => {
     return categories;
   }, []);
 
-  //handle login
+
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -356,7 +357,7 @@ const BlockPreview = () => {
       console.log("Cookies after login:", document.cookie);
       if (response.data.success) {
         const newNonce = response.data.nonce;
-        setNonce(newNonce); // Update nonce with the one from /login
+        setNonce(newNonce);
         console.log("New nonce set:", newNonce);
         setShowLoginForm(false);
         setLoginAttempts(0);
@@ -404,62 +405,62 @@ const BlockPreview = () => {
   };
 
   const checkAuthAndLoadEditor = async () => {
-    if (!editUrl.current) {
-      console.warn("Edit URL not available:", editUrl.current);
-      alert("Edit URL is not available yet.");
+  console.log("checkAuthAndLoadEditor called with editUrl:", editUrl);
+  if (!editUrl) {
+    console.warn("Edit URL not available:", editUrl);
+    alert("Edit URL is not available yet.");
+    return false;
+  }
+
+  setIsLoading(true);
+  const authStatusUrl =
+    "https://raeescodes.xyz/wp-json/custom-builder/v1/auth-status";
+
+  try {
+    console.log("Using nonce for auth-status:", nonce);
+    const response = await axios.get(authStatusUrl, {
+      headers: {
+        "X-WP-Nonce": nonce,
+      },
+      withCredentials: true,
+    });
+
+    console.log("Auth status response:", response.data);
+    console.log("Request headers:", response.config.headers);
+    console.log("Cookies sent in auth-status:", document.cookie);
+    if (response.data.logged_in) {
+      console.log(
+        "User authenticated. Loading Elementor editor with URL:",
+        editUrl
+      );
+      setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
+      setShowIframe(true);
+      setShowLoginForm(false);
+      return true;
+    } else {
+      console.log("User not authenticated. Showing login form...");
+      console.log("Nonce valid:", response.data.nonce_valid);
+      console.log("Session cookie present:", response.data.session_cookie);
+      console.log("Cookies received:", response.data.cookies);
+      console.log("Cookie domain:", response.data.cookie_domain);
+      console.log("Cookie path:", response.data.cookie_path);
+      setShowLoginForm(true);
       return false;
     }
-
-    setIsLoading(true);
-    const authStatusUrl =
-      "https://raeescodes.xyz/wp-json/custom-builder/v1/auth-status";
-
-    try {
-      console.log("Using nonce for auth-status:", nonce);
-      const response = await axios.get(authStatusUrl, {
-        headers: {
-          "X-WP-Nonce": nonce,
-        },
-        withCredentials: true,
-      });
-
-      console.log("Auth status response:", response.data);
-      console.log("Request headers:", response.config.headers);
-      console.log("Cookies sent in auth-status:", document.cookie);
-      if (response.data.logged_in) {
-        console.log(
-          "User authenticated. Loading Elementor editor with URL:",
-          editUrl.current
-        );
-        setIframeUrl(editUrl.current + "&cache_bust=" + new Date().getTime());
-        setShowIframe(true);
-        setShowLoginForm(false);
-        return true;
-      } else {
-        console.log("User not authenticated. Showing login form...");
-        console.log("Nonce valid:", response.data.nonce_valid);
-        console.log("Session cookie present:", response.data.session_cookie);
-        console.log("Cookies received:", response.data.cookies);
-        console.log("Cookie domain:", response.data.cookie_domain);
-        console.log("Cookie path:", response.data.cookie_path);
-        setShowLoginForm(true);
-        return false;
-      }
-    } catch (error) {
-      console.error("Auth status error:", error);
-      if (error.response && error.response.status === 403) {
-        console.log("Forbidden. Possible nonce-cookie mismatch...");
-        console.log("Error details:", error.response.data);
-        setShowLoginForm(true);
-      } else {
-        console.error("Error checking auth status:", error.message);
-      }
-      return false;
-    } finally {
-      setIsLoading(false);
+  } catch (error) {
+    console.error("Auth status error:", error);
+    if (error.response && error.response.status === 403) {
+      console.log("Forbidden. Possible nonce-cookie mismatch...");
+      console.log("Error details:", error.response.data);
+      setShowLoginForm(true);
+    } else {
+      console.error("Error checking auth status:", error.message);
     }
-  };
-
+    return false;
+  } finally {
+    setIsLoading(false);
+  }
+};
   useEffect(() => {
     const newLocationTemplatesData = location.state?.templatesOrderedBySection;
     const newLocationTemplatesString = newLocationTemplatesData
@@ -632,7 +633,7 @@ const BlockPreview = () => {
   }, []);
 
   const handleWordPressPageGenerated = useCallback(
-    async (url, pageDataObjectFromWP) => {
+     (url, pageDataObjectFromWP) => {
       const { public_url, edit_url } = pageDataObjectFromWP.json || {};
 
       if (!edit_url) {
