@@ -340,71 +340,83 @@ const BlockPreview = () => {
   }, []);
 
 
+const handleLogin = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setLoginError("");
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setLoginError("");
+  try {
+    const response = await axios.post(
+      "https://raeescodes.xyz/wp-json/custom-builder/v1/login",
+      { username, password },
+      { withCredentials: true }
+    );
 
+    console.log("Login response:", response.data);
+    console.log("Cookies after login:", document.cookie);
+    if (response.data.success) {
+      const newNonce = response.data.nonce;
+      setNonce(newNonce); // Update nonce state
+      console.log("New nonce set:", newNonce);
+      setShowLoginForm(false);
+      setLoginAttempts(0);
+      // Pass the new nonce directly to retryAuthCheck to avoid closure issues
+      await retryAuthCheck(3, 1000, newNonce);
+    } else {
+      setLoginError("Login failed. Please try again.");
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    if (error.response) {
+      if (error.response.status === 401) {
+        setLoginError("Invalid username or password.");
+      } else if (error.response.status === 500) {
+        setLoginError("Server error. Please try again later.");
+      } else {
+        setLoginError(
+          `Error: ${error.response.data?.message || "Unknown error"}`
+        );
+      }
+    } else {
+      setLoginError("Network error. Check your connection or server status.");
+    }
+    setLoginAttempts(loginAttempts + 1);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+const retryAuthCheck = async (maxAttempts, delay, initialNonce) => {
+  let currentNonce = initialNonce || nonce; // Use the passed nonce or state nonce
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      const response = await axios.post(
-        "https://raeescodes.xyz/wp-json/custom-builder/v1/login",
-        { username, password },
+      const authResult = await checkAuthAndLoadEditor(currentNonce);
+      if (authResult) return true;
+      console.log(`Auth check attempt ${attempt} failed. Retrying...`);
+      // Fetch a fresh nonce before retrying
+      const nonceResponse = await axios.get(
+        "https://raeescodes.xyz/wp-json/custom-builder/v1/get-nonce",
         { withCredentials: true }
       );
-
-      console.log("Login response:", response.data);
-      console.log("Cookies after login:", document.cookie);
-      if (response.data.success) {
-        const newNonce = response.data.nonce;
-        setNonce(newNonce);
-        console.log("New nonce set:", newNonce);
-        setShowLoginForm(false);
-        setLoginAttempts(0);
-        await retryAuthCheck(3, 1000);
-      } else {
-        setLoginError("Login failed. Please try again.");
+      if (nonceResponse.data?.nonce) {
+        currentNonce = nonceResponse.data.nonce;
+        setNonce(currentNonce); // Update state
+        console.log("Fetched new nonce for retry:", currentNonce);
       }
+      await new Promise((resolve) => setTimeout(resolve, delay));
     } catch (error) {
-      console.error("Login error:", error);
-      if (error.response) {
-        if (error.response.status === 401) {
-          setLoginError("Invalid username or password.");
-        } else if (error.response.status === 500) {
-          setLoginError("Server error. Please try again later.");
-        } else {
-          setLoginError(
-            `Error: ${error.response.data?.message || "Unknown error"}`
-          );
-        }
-      } else {
-        setLoginError("Network error. Check your connection or server status.");
-      }
-      setLoginAttempts(loginAttempts + 1);
-    } finally {
-      setIsLoading(false);
+      console.error(`Auth check attempt ${attempt} error:`, error);
     }
-  };
+  }
+  alert(
+    "Failed to verify login status after multiple attempts. Please try logging in via WordPress."
+  );
+  setShowLoginForm(true);
+  return false;
+};
 
-  const retryAuthCheck = async (maxAttempts, delay) => {
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const authResult = await checkAuthAndLoadEditor();
-        if (authResult) return true;
-        console.log(`Auth check attempt ${attempt} failed. Retrying...`);
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      } catch (error) {
-        console.error(`Auth check attempt ${attempt} error:`, error);
-      }
-    }
-    alert(
-      "Failed to verify login status after multiple attempts. Please try logging in via WordPress."
-    );
-    setShowLoginForm(true);
-    return false;
-  };
-
-  const checkAuthAndLoadEditor = async () => {
+const checkAuthAndLoadEditor = async (nonceToUse) => {
   console.log("checkAuthAndLoadEditor called with editUrl:", editUrl);
   if (!editUrl) {
     console.warn("Edit URL not available:", editUrl);
@@ -413,14 +425,14 @@ const BlockPreview = () => {
   }
 
   setIsLoading(true);
-  const authStatusUrl =
-    "https://raeescodes.xyz/wp-json/custom-builder/v1/auth-status";
+  const authStatusUrl = "https://raeescodes.xyz/wp-json/custom-builder/v1/auth-status";
+  const nonceForRequest = nonceToUse || nonce; // Use the passed nonce or state nonce
 
   try {
-    console.log("Using nonce for auth-status:", nonce);
+    console.log("Using nonce for auth-status:", nonceForRequest);
     const response = await axios.get(authStatusUrl, {
       headers: {
-        "X-WP-Nonce": nonce,
+        "X-WP-Nonce": nonceForRequest,
       },
       withCredentials: true,
     });
@@ -461,6 +473,17 @@ const BlockPreview = () => {
     setIsLoading(false);
   }
 };
+
+// Update the useEffect for editUrl to use the latest nonce
+useEffect(() => {
+  if (editUrl && !showIframe) {
+    checkAuthAndLoadEditor(nonce);
+  }
+}, [editUrl, nonce]); // Add nonce as a dependency
+
+
+
+
   useEffect(() => {
     const newLocationTemplatesData = location.state?.templatesOrderedBySection;
     const newLocationTemplatesString = newLocationTemplatesData
