@@ -396,7 +396,7 @@ const BlockPreview = () => {
 
         // Fetch a fresh nonce before retrying
         const nonceResponse = await axios.get(
-          "https://raeescodes.xyz/wp-json/custom-builder/v1/get-nonce",
+          `https://raeescodes.xyz/wp-json/custom-builder/v1/get-nonce?t=${new Date().getTime()}`,
           { withCredentials: true }
         );
         if (nonceResponse.data?.nonce) {
@@ -429,8 +429,8 @@ const BlockPreview = () => {
     }
 
     setIsLoading(true);
-    const authStatusUrl =
-      "https://raeescodes.xyz/wp-json/custom-builder/v1/auth-status";
+
+    const authStatusUrl = `https://raeescodes.xyz/wp-json/custom-builder/v1/auth-status?t=${new Date().getTime()}`;
     const nonceForRequest = nonceToUse || nonce;
 
     try {
@@ -626,30 +626,30 @@ const BlockPreview = () => {
   ]);
 
   // Fetch nonce
-useEffect(() => {
-  const initializeNonceAndCheckAuth = async () => {
-    if (!nonce) {
-      try {
-        const nonceResponse = await axios.get(
-          "https://raeescodes.xyz/wp-json/custom-builder/v1/get-nonce",
-          { withCredentials: true }
-        );
-        if (nonceResponse.data?.nonce) {
-          setNonce(nonceResponse.data.nonce);
-          console.log("Fetched initial nonce:", nonceResponse.data.nonce);
+  useEffect(() => {
+    const initializeNonceAndCheckAuth = async () => {
+      if (!nonce) {
+        try {
+          const nonceResponse = await axios.get(
+            `https://raeescodes.xyz/wp-json/custom-builder/v1/get-nonce?t=${new Date().getTime()}`,
+            { withCredentials: true }
+          );
+          if (nonceResponse.data?.nonce) {
+            setNonce(nonceResponse.data.nonce);
+            console.log("Fetched initial nonce:", nonceResponse.data.nonce);
+          }
+        } catch (error) {
+          console.error("Failed to fetch initial nonce:", error);
         }
-      } catch (error) {
-        console.error("Failed to fetch initial nonce:", error);
       }
-    }
 
-    if (editUrl && !showIframe && nonce) {
-      checkAuthAndLoadEditor(nonce);
-    }
-  };
+      if (editUrl && !showIframe && nonce) {
+        checkAuthAndLoadEditor(nonce);
+      }
+    };
 
-  initializeNonceAndCheckAuth();
-}, [editUrl, showIframe, nonce]);
+    initializeNonceAndCheckAuth();
+  }, [editUrl, showIframe, nonce]);
 
   const handleWordPressPageGenerated = useCallback(
     (url, pageDataObjectFromWP) => {
