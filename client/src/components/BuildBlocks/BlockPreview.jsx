@@ -339,51 +339,6 @@ const BlockPreview = () => {
     return categories;
   }, []);
 
-  // const handleLogin = async (e) => {
-  //   e.preventDefault();
-  //   setIsLoading(true);
-  //   setLoginError("");
-
-  //   try {
-  //     const response = await axios.post(
-  //       "https://raeescodes.xyz/wp-json/custom-builder/v1/login",
-  //       { username, password },
-  //       { withCredentials: true }
-  //     );
-
-  //     console.log("Login response:", response.data);
-  //     console.log("Cookies after login:", document.cookie);
-  //     if (response.data.success) {
-  //       const newNonce = response.data.nonce;
-  //       setNonce(newNonce); // Update nonce state
-  //       console.log("New nonce set:", newNonce);
-  //       setShowLoginForm(false);
-  //       setLoginAttempts(0);
-  //       // Pass the new nonce directly to retryAuthCheck to avoid closure issues
-  //       await retryAuthCheck(3, 1000, newNonce);
-  //     } else {
-  //       setLoginError("Login failed. Please try again.");
-  //     }
-  //   } catch (error) {
-  //     console.error("Login error:", error);
-  //     if (error.response) {
-  //       if (error.response.status === 401) {
-  //         setLoginError("Invalid username or password.");
-  //       } else if (error.response.status === 500) {
-  //         setLoginError("Server error. Please try again later.");
-  //       } else {
-  //         setLoginError(
-  //           `Error: ${error.response.data?.message || "Unknown error"}`
-  //         );
-  //       }
-  //     } else {
-  //       setLoginError("Network error. Check your connection or server status.");
-  //     }
-  //     setLoginAttempts(loginAttempts + 1);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -408,19 +363,21 @@ const BlockPreview = () => {
           expiration,
         } = response.data;
 
-        // *** THE CRITICAL CHANGE IS HERE ***
-        // Manually set the cookie using JavaScript
         const expires = new Date(expiration * 1000).toUTCString();
         document.cookie = `${cookie_name}=${cookie_value}; expires=${expires}; path=${cookie_path}; domain=${cookie_domain}; SameSite=None; Secure`;
 
-        console.log("Cookie manually set in browser:", document.cookie);
+        console.log(
+          "Cookie manually set in browser. Waiting for browser to process..."
+        );
 
         setNonce(nonce);
         setShowLoginForm(false);
         setLoginAttempts(0);
 
-        // Now, immediately try to load the editor
-        await checkAuthAndLoadEditor(nonce);
+        // Add a small delay to ensure the browser processes the cookie before the next request.
+        setTimeout(() => {
+          checkAuthAndLoadEditor(nonce);
+        }, 100); // 100 milliseconds is more than enough time.
       } else {
         setLoginError(
           response.data?.message || "Login failed. Please try again."
