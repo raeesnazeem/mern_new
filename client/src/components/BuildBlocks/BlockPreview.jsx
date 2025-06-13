@@ -339,6 +339,51 @@ const BlockPreview = () => {
     return categories;
   }, []);
 
+  // const handleLogin = async (e) => {
+  //   e.preventDefault();
+  //   setIsLoading(true);
+  //   setLoginError("");
+
+  //   try {
+  //     const response = await axios.post(
+  //       "https://raeescodes.xyz/wp-json/custom-builder/v1/login",
+  //       { username, password },
+  //       { withCredentials: true }
+  //     );
+
+  //     console.log("Login response:", response.data);
+  //     console.log("Cookies after login:", document.cookie);
+  //     if (response.data.success) {
+  //       const newNonce = response.data.nonce;
+  //       setNonce(newNonce); // Update nonce state
+  //       console.log("New nonce set:", newNonce);
+  //       setShowLoginForm(false);
+  //       setLoginAttempts(0);
+  //       // Pass the new nonce directly to retryAuthCheck to avoid closure issues
+  //       await retryAuthCheck(3, 1000, newNonce);
+  //     } else {
+  //       setLoginError("Login failed. Please try again.");
+  //     }
+  //   } catch (error) {
+  //     console.error("Login error:", error);
+  //     if (error.response) {
+  //       if (error.response.status === 401) {
+  //         setLoginError("Invalid username or password.");
+  //       } else if (error.response.status === 500) {
+  //         setLoginError("Server error. Please try again later.");
+  //       } else {
+  //         setLoginError(
+  //           `Error: ${error.response.data?.message || "Unknown error"}`
+  //         );
+  //       }
+  //     } else {
+  //       setLoginError("Network error. Check your connection or server status.");
+  //     }
+  //     setLoginAttempts(loginAttempts + 1);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -346,36 +391,47 @@ const BlockPreview = () => {
 
     try {
       const response = await axios.post(
-        "https://raeescodes.xyz/wp-json/custom-builder/v1/login",
+        `https://raeescodes.xyz/wp-json/custom-builder/v1/login`,
         { username, password },
         { withCredentials: true }
       );
 
       console.log("Login response:", response.data);
-      console.log("Cookies after login:", document.cookie);
+
       if (response.data.success) {
-        const newNonce = response.data.nonce;
-        setNonce(newNonce); // Update nonce state
-        console.log("New nonce set:", newNonce);
+        const {
+          nonce,
+          cookie_name,
+          cookie_value,
+          cookie_domain,
+          cookie_path,
+          expiration,
+        } = response.data;
+
+        // *** THE CRITICAL CHANGE IS HERE ***
+        // Manually set the cookie using JavaScript
+        const expires = new Date(expiration * 1000).toUTCString();
+        document.cookie = `${cookie_name}=${cookie_value}; expires=${expires}; path=${cookie_path}; domain=${cookie_domain}; SameSite=None; Secure`;
+
+        console.log("Cookie manually set in browser:", document.cookie);
+
+        setNonce(nonce);
         setShowLoginForm(false);
         setLoginAttempts(0);
-        // Pass the new nonce directly to retryAuthCheck to avoid closure issues
-        await retryAuthCheck(3, 1000, newNonce);
+
+        // Now, immediately try to load the editor
+        await checkAuthAndLoadEditor(nonce);
       } else {
-        setLoginError("Login failed. Please try again.");
+        setLoginError(
+          response.data?.message || "Login failed. Please try again."
+        );
       }
     } catch (error) {
       console.error("Login error:", error);
       if (error.response) {
-        if (error.response.status === 401) {
-          setLoginError("Invalid username or password.");
-        } else if (error.response.status === 500) {
-          setLoginError("Server error. Please try again later.");
-        } else {
-          setLoginError(
-            `Error: ${error.response.data?.message || "Unknown error"}`
-          );
-        }
+        setLoginError(
+          `Error: ${error.response.data?.message || "Unknown error"}`
+        );
       } else {
         setLoginError("Network error. Check your connection or server status.");
       }
@@ -384,7 +440,6 @@ const BlockPreview = () => {
       setIsLoading(false);
     }
   };
-
   const retryAuthCheck = async (maxAttempts, delay, initialNonce) => {
     let currentNonce = initialNonce || nonce;
 
