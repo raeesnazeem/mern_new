@@ -196,11 +196,8 @@ const ProcessBlockResults = ({
     );
 
     try {
-      const username = import.meta.env.VITE_WP_USERNAME;
-      const appPassword = import.meta.env.VITE_WP_PASS;
-      const token = btoa(`${username}:${appPassword}`);
 
-      const { content: transformedContent, pageSettings: inputPageSettings } =
+    const { content: transformedContent, pageSettings: inputPageSettings } =
         transformTemplatesToWorkingFormat(
           rawTemplatesBySection,
           currentSuggestedOrder
@@ -248,11 +245,10 @@ const ProcessBlockResults = ({
       );
 
       const response = await axios.post(
-        `${import.meta.env.VITE_WP_IMPORT_API_URL}`,
+        `${import.meta.env.VITE_WP_IMPORT_API_URL}/api/v1/create-wp-page`,
         requestData,
         {
           headers: {
-            // Authorization: `Basic ${token}`,
             "Content-Type": "application/json",
           },
         }
