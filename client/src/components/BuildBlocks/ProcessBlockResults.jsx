@@ -245,7 +245,7 @@ const ProcessBlockResults = ({
       );
 
       const response = await axios.post(
-        `${import.meta.env.VITE_WP_IMPORT_API_URL}/api/v1/create-wp-page`,
+        `${import.meta.env.VITE_TO_SERVER_API_URL}/api/v1/create-wp-page`,
         requestData,
         {
           headers: {
