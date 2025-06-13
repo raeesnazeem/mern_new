@@ -339,6 +339,7 @@ const BlockPreview = () => {
     return categories;
   }, []);
 
+  //handleLogin
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -356,32 +357,35 @@ const BlockPreview = () => {
       if (response.data.success) {
         const {
           nonce,
-          cookie_name,
-          cookie_value,
+          logged_in_cookie,
+          secure_auth_cookie,
           cookie_domain,
           cookie_path,
+          admin_cookie_path,
           expiration,
         } = response.data;
 
         const expires = new Date(expiration * 1000).toUTCString();
-        document.cookie = `${cookie_name}=${cookie_value}; expires=${expires}; path=${cookie_path}; domain=${cookie_domain}; SameSite=None; Secure`;
 
-        console.log(
-          "Cookie manually set in browser. Waiting for browser to process..."
-        );
+        // *** CRITICAL CHANGE: Set BOTH cookies received from the server ***
+
+        // 1. Set the standard logged_in cookie
+        document.cookie = `${logged_in_cookie.name}=${logged_in_cookie.value}; expires=${expires}; path=${cookie_path}; domain=${cookie_domain}; SameSite=None; Secure`;
+
+        // 2. Set the secure_auth cookie
+        document.cookie = `${secure_auth_cookie.name}=${secure_auth_cookie.value}; expires=${expires}; path=${admin_cookie_path}; domain=${cookie_domain}; SameSite=None; Secure`;
+
+        console.log("Cookies manually set in browser:", document.cookie);
 
         setNonce(nonce);
         setShowLoginForm(false);
         setLoginAttempts(0);
 
-        // Add a small delay to ensure the browser processes the cookie before the next request.
         setTimeout(() => {
           checkAuthAndLoadEditor(nonce);
-        }, 100); // 100 milliseconds is more than enough time.
+        }, 100);
       } else {
-        setLoginError(
-          response.data?.message || "Login failed. Please try again."
-        );
+        setLoginError(response.data?.message || "Login failed.");
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -390,7 +394,7 @@ const BlockPreview = () => {
           `Error: ${error.response.data?.message || "Unknown error"}`
         );
       } else {
-        setLoginError("Network error. Check your connection or server status.");
+        setLoginError("Network error. Check your connection.");
       }
       setLoginAttempts(loginAttempts + 1);
     } finally {
