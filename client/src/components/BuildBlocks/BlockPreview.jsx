@@ -362,20 +362,24 @@ const BlockPreview = () => {
           cookie_domain,
           cookie_path,
           admin_cookie_path,
+          plugins_cookie_path, // <-- Receive the new path
           expiration,
         } = response.data;
 
         const expires = new Date(expiration * 1000).toUTCString();
 
-        // *** CRITICAL CHANGE: Set BOTH cookies received from the server ***
+        // *** CRITICAL CHANGE: Set ALL THREE required cookies ***
 
-        // 1. Set the standard logged_in cookie
+        // 1. Set the standard logged_in cookie for the root path
         document.cookie = `${logged_in_cookie.name}=${logged_in_cookie.value}; expires=${expires}; path=${cookie_path}; domain=${cookie_domain}; SameSite=None; Secure`;
 
-        // 2. Set the secure_auth cookie
+        // 2. Set the secure_auth cookie for the admin path
         document.cookie = `${secure_auth_cookie.name}=${secure_auth_cookie.value}; expires=${expires}; path=${admin_cookie_path}; domain=${cookie_domain}; SameSite=None; Secure`;
 
-        console.log("Cookies manually set in browser:", document.cookie);
+        // 3. Set the secure_auth cookie for the plugins path
+        document.cookie = `${secure_auth_cookie.name}=${secure_auth_cookie.value}; expires=${expires}; path=${plugins_cookie_path}; domain=${cookie_domain}; SameSite=None; Secure`;
+
+        console.log("All three cookies manually set in browser.");
 
         setNonce(nonce);
         setShowLoginForm(false);
