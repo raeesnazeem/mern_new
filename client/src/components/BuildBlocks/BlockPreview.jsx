@@ -190,6 +190,7 @@ const BlockPreview = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isOrderFinalized, setIsOrderFinalized] = useState(false);
   const [editUrl, setEditUrl] = useState("");
+  const [appPassword, setAppPassword] = useState(null);
 
   //login states
   const [showLoginForm, setShowLoginForm] = useState(false);
@@ -339,6 +340,20 @@ const BlockPreview = () => {
     return categories;
   }, []);
 
+  const checkAuthAndLoadEditor = () => {
+    // If we have an application password stored, we are authenticated. Load the editor.
+    if (appPassword) {
+      console.log("Already authenticated. Loading editor.");
+      setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
+      setShowIframe(true);
+      return; // Stop here
+    }
+
+    // If we don't have a password, we need to log in.
+    console.log("Not authenticated. Showing login form.");
+    setShowLoginForm(true);
+  };
+
   //handleLogin
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -346,155 +361,35 @@ const BlockPreview = () => {
     setLoginError("");
 
     try {
-      const response = await axios.post(
-        `https://raeescodes.xyz/wp-json/custom-builder/v1/login`,
-        { username, password },
-        { withCredentials: true }
+      const loginResponse = await axios.post(
+        `https://raeescodes.xyz/wp-json/custom-builder/v1/login?t=${new Date().getTime()}`,
+        { username, password }
       );
 
-      console.log("Login response:", response.data);
+      if (loginResponse.data.success) {
+        console.log("Login Successful. Received Application Password.");
 
-      if (response.data.success) {
-        const {
-          nonce,
-          logged_in_cookie,
-          secure_auth_cookie,
-          cookie_domain,
-          cookie_path,
-          admin_cookie_path,
-          plugins_cookie_path, // <-- Receive the new path
-          expiration,
-        } = response.data;
+        // 1. Store the application password for future use
+        setAppPassword(loginResponse.data.application_password);
 
-        const expires = new Date(expiration * 1000).toUTCString();
-
-        // *** CRITICAL CHANGE: Set ALL THREE required cookies ***
-
-        // 1. Set the standard logged_in cookie for the root path
-        document.cookie = `${logged_in_cookie.name}=${logged_in_cookie.value}; expires=${expires}; path=${cookie_path}; domain=${cookie_domain}; SameSite=None; Secure`;
-
-        // 2. Set the secure_auth cookie for the admin path
-        document.cookie = `${secure_auth_cookie.name}=${secure_auth_cookie.value}; expires=${expires}; path=${admin_cookie_path}; domain=${cookie_domain}; SameSite=None; Secure`;
-
-        // 3. Set the secure_auth cookie for the plugins path
-        document.cookie = `${secure_auth_cookie.name}=${secure_auth_cookie.value}; expires=${expires}; path=${plugins_cookie_path}; domain=${cookie_domain}; SameSite=None; Secure`;
-
-        console.log("All three cookies manually set in browser.");
-
-        setNonce(nonce);
+        // 2. Close the login form
         setShowLoginForm(false);
-        setLoginAttempts(0);
 
-        setTimeout(() => {
-          checkAuthAndLoadEditor(nonce);
-        }, 100);
+        // 3. IMMEDIATELY load the editor, completing the action the user started.
+        console.log("Login complete. Proceeding to load editor.");
+        setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
+        setShowIframe(true);
       } else {
-        setLoginError(response.data?.message || "Login failed.");
+        setLoginError(loginResponse.data?.message || "Login failed.");
       }
     } catch (error) {
       console.error("Login error:", error);
-      if (error.response) {
-        setLoginError(
-          `Error: ${error.response.data?.message || "Unknown error"}`
-        );
-      } else {
-        setLoginError("Network error. Check your connection.");
-      }
-      setLoginAttempts(loginAttempts + 1);
+      setLoginError(error.response?.data?.message || "An error occurred.");
     } finally {
       setIsLoading(false);
     }
   };
-  const retryAuthCheck = async (maxAttempts, delay, initialNonce) => {
-    let currentNonce = initialNonce || nonce;
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const authResult = await checkAuthAndLoadEditor(currentNonce);
-        if (authResult) return true;
-        console.log(`Auth check attempt ${attempt} failed. Retrying...`);
-
-        // Fetch a fresh nonce before retrying
-        const nonceResponse = await axios.get(
-          `https://raeescodes.xyz/wp-json/custom-builder/v1/get-nonce?t=${new Date().getTime()}`,
-          { withCredentials: true }
-        );
-        if (nonceResponse.data?.nonce) {
-          currentNonce = nonceResponse.data.nonce;
-          setNonce(currentNonce);
-          console.log("Fetched new nonce for retry:", currentNonce);
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      } catch (error) {
-        console.error(`Auth check attempt ${attempt} error:`, error);
-        if (attempt === maxAttempts) {
-          alert(
-            "Failed to verify login status after multiple attempts. This may be due to third-party cookies being blocked. Please ensure third-party cookies are enabled in your browser, or log in directly via WordPress."
-          );
-          setShowLoginForm(true);
-          return false;
-        }
-      }
-    }
-    return false;
-  };
-
-  const checkAuthAndLoadEditor = async (nonceToUse) => {
-    console.log("checkAuthAndLoadEditor called with editUrl:", editUrl);
-    if (!editUrl) {
-      console.warn("Edit URL not available:", editUrl);
-      alert("Edit URL is not available yet.");
-      return false;
-    }
-
-    setIsLoading(true);
-
-    const authStatusUrl = `https://raeescodes.xyz/wp-json/custom-builder/v1/auth-status?t=${new Date().getTime()}`;
-    const nonceForRequest = nonceToUse || nonce;
-
-    try {
-      console.log("Using nonce for auth-status:", nonceForRequest);
-      console.log("Cookies before auth-status request:", document.cookie);
-      const response = await axios.get(authStatusUrl, {
-        headers: {
-          "X-WP-Nonce": nonceForRequest,
-        },
-        withCredentials: true,
-      });
-
-      console.log("Auth status response:", response.data);
-      console.log("Cookies after auth-status request:", document.cookie);
-      if (response.data.logged_in) {
-        console.log(
-          "User authenticated. Loading Elementor editor with URL:",
-          editUrl
-        );
-        setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
-        setShowIframe(true);
-        setShowLoginForm(false);
-        return true;
-      } else {
-        console.log("User not authenticated. Showing login form...");
-        console.log("Nonce valid:", response.data.nonce_valid);
-        console.log("Session cookie present:", response.data.session_cookie);
-        setShowLoginForm(true);
-        return false;
-      }
-    } catch (error) {
-      console.error("Auth status error:", error);
-      if (error.response && error.response.status === 403) {
-        console.log("Forbidden. Possible nonce-cookie mismatch...");
-        console.log("Error details:", error.response.data);
-        setShowLoginForm(true);
-      } else {
-        console.error("Error checking auth status:", error.message);
-      }
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
   // Update the useEffect for editUrl to use the latest nonce
   useEffect(() => {
     if (editUrl && !showIframe) {
