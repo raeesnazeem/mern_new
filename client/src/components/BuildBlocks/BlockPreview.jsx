@@ -9,9 +9,9 @@ import "../../styles/TemplatePreviewPage.css";
 import "../../styles/ColorEditorOverlay.css";
 import modalStyles from "../../styles/BlockPreviewModals.module.css";
 import { useLocation, useNavigate } from "react-router-dom";
-
 import axios from "axios";
-// ----- Helper Constants and Functions -----
+
+// ----- Helper functions (isTransparentWhite, generateContextName, etc.) are unchanged -----
 function isTransparentWhite(color) {
   if (typeof color !== "string") return true;
   color = color.trim().toLowerCase();
@@ -74,8 +74,9 @@ const HSLA_REGEX =
 function generateContextName(node, key, path) {
   if (node._title) return `${node._title} - ${key}`;
   if (node.widgetType)
-    return `${node.widgetType} (${node.id || "N/A"}) - ${key}`;
-  if (node.elType) return `${node.elType} (${node.id || "N/A"}) - ${key}`;
+    return `<span class="math-inline">\{node\.widgetType\} \(</span>{node.id || "N/A"}) - ${key}`;
+  if (node.elType)
+    return `<span class="math-inline">\{node\.elType\} \(</span>{node.id || "N/A"}) - ${key}`;
   const pathParts = path.split(".");
   return pathParts.slice(Math.max(pathParts.length - 3, 0)).join(" > ");
 }
@@ -92,15 +93,12 @@ const setValueByPath = (obj, path, value) => {
     );
     return false;
   }
-
   const keys = path.replace(/\[(\d+)\]/g, ".$1").split(".");
   let current = obj;
-
   for (let i = 0; i < keys.length - 1; i++) {
     const key = keys[i];
     const nextKey = keys[i + 1];
     const nextKeyIsArrayIndex = !isNaN(parseInt(nextKey, 10));
-
     if (!current || (typeof current !== "object" && !Array.isArray(current))) {
       console.error(
         `setValueByPath Error: Traverse fail. Seg for "${keys
@@ -110,7 +108,6 @@ const setValueByPath = (obj, path, value) => {
       );
       return false;
     }
-
     if (Array.isArray(current)) {
       const numKey = parseInt(key, 10);
       if (isNaN(numKey) || numKey < 0) {
@@ -138,7 +135,6 @@ const setValueByPath = (obj, path, value) => {
       current = current[key];
     }
   }
-
   const finalKey = keys[keys.length - 1];
   if (
     current &&
@@ -160,7 +156,7 @@ const setValueByPath = (obj, path, value) => {
     return true;
   } else {
     console.error(
-      `setValueByPath Error: Failed set final key "${finalKey}" for path "${path}". Curr not object/array or finalKey undef. Curr:`,
+      `setValueByPath Error: Failed set final key "<span class="math-inline">\{finalKey\}" for path "</span>{path}". Curr not object/array or finalKey undef. Curr:`,
       current,
       "FinalKey:",
       finalKey
@@ -169,14 +165,13 @@ const setValueByPath = (obj, path, value) => {
   }
 };
 
-// ----- END OF HELPERS -----
-
 const BlockPreview = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const iframeRef = useRef(null);
 
-  const [isLoading, setIsLoading] = useState(false); //loading and login visibility
+  // Simplified State - old auth/nonce state removed
+  const [isLoading, setIsLoading] = useState(false);
   const [initialRawTemplates, setInitialRawTemplates] = useState(null);
   const [originalJsonProcessed, setOriginalJsonProcessed] = useState(null);
   const [iframeUrl, setIframeUrl] = useState("");
@@ -190,8 +185,7 @@ const BlockPreview = () => {
   const [isOrderFinalized, setIsOrderFinalized] = useState(false);
   const [editUrl, setEditUrl] = useState("");
 
-  
-  //login states
+  // Login State
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -201,7 +195,6 @@ const BlockPreview = () => {
   const initialRawTemplatesFromLocationCacheRef = useRef(null);
   const allowNextPopState = useRef(false);
 
-  //handle browser back navigation
   useEffect(() => {
     window.history.pushState(
       { page: "BlockPreviewLoaded" },
@@ -229,7 +222,7 @@ const BlockPreview = () => {
         node.forEach((item, index) =>
           extractColorsRecursively(
             item,
-            `${currentPath}[${index}]`,
+            `<span class="math-inline">\{currentPath\}\[</span>{index}]`,
             foundColors,
             idCounter
           )
@@ -243,7 +236,9 @@ const BlockPreview = () => {
           )
             continue;
           const value = node[key];
-          const newPath = currentPath ? `${currentPath}.${key}` : key;
+          const newPath = currentPath
+            ? `<span class="math-inline">\{currentPath\}\.</span>{key}`
+            : key;
           if (
             COLOR_KEYS.includes(key) &&
             typeof value === "string" &&
@@ -339,47 +334,25 @@ const BlockPreview = () => {
     return categories;
   }, []);
 
-  const checkAuthAndLoadEditor = () => {
-    // If we have an application password stored, we are authenticated. Load the editor.
-    if (appPassword) {
-      console.log("Already authenticated. Loading editor.");
-      setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
-      setShowIframe(true);
-      return; // Stop here
-    }
-
-    // If we don't have a password, we need to log in.
-    console.log("Not authenticated. Showing login form.");
-    setShowLoginForm(true);
-  };
-
-  //handleLogin using user auth from App autogenerated by wordpress
+  // Simplified login handler for the iframe session
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setLoginError("");
-
     try {
       const loginResponse = await axios.post(
-        `https://raeescodes.xyz/wp-json/custom-builder/v1/login?t=${new Date().getTime()}`,
-        { username, password }
+        `https://raeescodes.xyz/wp-json/custom-builder/v1/login`,
+        { username, password },
+        { withCredentials: true }
       );
 
       if (loginResponse.data.success) {
-        console.log("Login Successful. Received Application Password.");
-
-        // 1. Store the application password for future use in the NEXT button click
-        setAppPassword(loginResponse.data.application_password);
-
-        // 2. Close the login form
+        console.log("Login successful, browser cookies should be set.");
         setShowLoginForm(false);
-
-        // 3. IMMEDIATELY load the editor, completing the action the user started.
-        console.log("Login complete. Proceeding to load editor.");
+        // After successful login, load the editor URL into the iframe.
         setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
-        setShowIframe(true);
       } else {
-        setLoginError(loginResponse.data?.message || "Login failed.");
+        setLoginError(loginResponse.data.message || "Login failed.");
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -389,7 +362,11 @@ const BlockPreview = () => {
     }
   };
 
-
+  // This function is now very simple. It just shows the login form.
+  const handleEditClick = () => {
+    console.log("Edit button clicked. Showing login form.");
+    setShowLoginForm(true);
+  };
 
   useEffect(() => {
     const newLocationTemplatesData = location.state?.templatesOrderedBySection;
@@ -534,31 +511,28 @@ const BlockPreview = () => {
     categorizeColorInstances,
   ]);
 
-
-  const handleWordPressPageGenerated = useCallback(
-    (url, pageDataObjectFromWP) => {
-      const { public_url, edit_url } = pageDataObjectFromWP.json || {};
-
-      if (!edit_url) {
-        alert("Error: The server did not provide an edit URL.");
-        setIsPageLoading(false);
-        return;
-      }
-
-      // The nonce should already be fetched by the time this runs.
-
-      console.log("Received edit_url:", edit_url);
-      console.log("Using nonce:", nonce);
-
-      setIframeUrl(public_url || url); // For the "view" link
-      setEditUrl(edit_url); // For the "edit" button
-
-      setOriginalJsonProcessed(structuredClone(pageDataObjectFromWP));
-      setShowIframe(true);
+  const handleWordPressPageGenerated = useCallback((pageDataFromServer) => {
+    if (!pageDataFromServer?.edit_url) {
+      alert("Error: The server did not provide an edit URL.");
       setIsPageLoading(false);
-    },
-    [nonce] // Add nonce as a dependency
-  );
+      return;
+    }
+    console.log("Received URLs from Node.js:", pageDataFromServer);
+    setIframeUrl(pageDataFromServer.public_url);
+    setEditUrl(pageDataFromServer.edit_url);
+
+    const pageDataObjectForState = {
+      name: pageDataFromServer.name || "Generated Page",
+      json: {
+        public_url: pageDataFromServer.public_url,
+        edit_url: pageDataFromServer.edit_url,
+      },
+    };
+    setOriginalJsonProcessed(structuredClone(pageDataObjectForState));
+
+    setShowIframe(true);
+    setIsPageLoading(false);
+  }, []);
 
   const applyChangesAndRegenerate = useCallback(
     async (changesArray) => {
@@ -611,7 +585,7 @@ const BlockPreview = () => {
         `Total successful calls to setValueByPath: ${actualModificationsCount}`
       );
 
-      const newPageName = `${originalJsonProcessed.name || "Page"} (Colors V${
+      const newPageName = `<span class="math-inline">\{originalJsonProcessed\.name \|\| "Page"\} \(Colors V</span>{
         Date.now() % 10000
       })`;
 
@@ -848,7 +822,7 @@ const BlockPreview = () => {
                 boxShadow:
                   "0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)",
               }}
-              onClick={() => checkAuthAndLoadEditor(nonce)}
+              onClick={handleEditClick}
               disabled={isLoading}
             >
               Edit Full Page in Editor
@@ -954,54 +928,21 @@ const BlockPreview = () => {
         </div>
       </div>
     );
-  } else if (initialRawTemplates && originalJsonProcessed && !showIframe) {
+  } else if (initialRawTemplates) {
+    // This part is simplified: if we have templates, we show the processing component
     rightPanelDisplay = (
       <ProcessBlockResults
         templatesOrderedBySection={initialRawTemplates}
         onPreview={handleWordPressPageGenerated}
       />
     );
-  } else if (isPageLoading) {
+  } else {
+    // Default/initial loading state
     rightPanelDisplay = (
       <AILoader
-        heading="Your page is being generated"
-        subHeading="powered by Buildbot from Growth99"
+        heading="Preparing Interface..."
+        subHeading="Please provide templates to begin."
       />
-    );
-  } else if (initialRawTemplates && !originalJsonProcessed && !isPageLoading) {
-    rightPanelDisplay = (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100%",
-          padding: "20px",
-          textAlign: "center",
-        }}
-      >
-        <h4>Error Processing Templates</h4>
-        <p>Could not prepare page content.</p>
-      </div>
-    );
-  } else if (!initialRawTemplates && !isPageLoading) {
-    rightPanelDisplay = (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100%",
-        }}
-      >
-        <p>No template data found.</p>
-      </div>
-    );
-  } else {
-    rightPanelDisplay = (
-      <AILoader heading="Preparing Interface..." subHeading="Please wait." />
     );
   }
 
