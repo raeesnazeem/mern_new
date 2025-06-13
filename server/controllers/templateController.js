@@ -250,7 +250,7 @@ const templateController = {
 
             // 3. Forward the request to WordPress with the Authorization header
             const wpResponse = await axios.post(
-                `${process.env.VITE_WP_IMPORT_API_URL}`, // The URL to your /import-template endpoint
+                `${process.env.WP_PAGE_GENERATE}`, 
                 requestData,
                 {
                     headers: {
