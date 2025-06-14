@@ -10,7 +10,7 @@ const connectDB = require("./utils/db");
 const router = require("./router/authRouter");
 const tempRouter = require("./router/templateRouter");
 const frameBuilderRouter = require("./router/frameBuilderRouter");
-const wpAdminProxy = require("./controllers/iFrameController");
+
 
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || "development";
@@ -38,6 +38,7 @@ if (NODE_ENV === "production") {
     origin: [
       process.env.FRONTEND_DEVELOPMENT_URL || "https://localhost:5173",
       "https://127.0.0.1:5173",
+      "https://g99buildbot.raeescodes.xyz",
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -58,24 +59,14 @@ app.use((req, res, next) => {
   next();
 });
 
-// 3. Define Body-Parser Middleware
-const bodyParserMiddleware = [
-  express.json({ limit: "30mb" }),
-  express.urlencoded({ extended: true, limit: "30mb" }),
-];
 
-// 4. Internal API Routes with Body-Parser
-app.use("/api/v1/auth", bodyParserMiddleware, router);
-app.use("/api/v1/template", bodyParserMiddleware, tempRouter);
-app.use("/api/v1/frame-builder", bodyParserMiddleware, frameBuilderRouter);
+app.use(express.json({ limit: "30mb" }));
+app.use(express.urlencoded({ extended: true, limit: "30mb" }));
 
-// 5. Proxy Routes (No Body-Parser)
-// app.use("/wp-admin", wpAdminProxy);
-// app.use("/wp-login.php", wpAdminProxy);
-// app.use("/wp-content", wpAdminProxy);
-// app.use("/wp-includes", wpAdminProxy);
-// app.use("/wp-json", wpAdminProxy);
-// app.use("/resources", wpAdminProxy);
+
+app.use("/api/v1/auth", router);
+app.use("/api/v1/template", tempRouter);
+app.use("/api/v1/frame-builder", frameBuilderRouter);
 
 // 6. Health Check Endpoint
 app.get("/api/health", (req, res) => {

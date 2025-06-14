@@ -181,8 +181,6 @@ const ProcessBlockResults = ({
     }
   }, [templatesOrderedBySection, suggestedOrderProp, loading, onPreview]);
 
-  
-
   const sendToWordPress = async (
     rawTemplatesBySection,
     currentSuggestedOrder
@@ -196,10 +194,6 @@ const ProcessBlockResults = ({
     );
 
     try {
-      const username = import.meta.env.VITE_WP_USERNAME;
-      const appPassword = import.meta.env.VITE_WP_PASS;
-      const token = btoa(`${username}:${appPassword}`);
-
       const { content: transformedContent, pageSettings: inputPageSettings } =
         transformTemplatesToWorkingFormat(
           rawTemplatesBySection,
@@ -249,14 +243,12 @@ const ProcessBlockResults = ({
 
       const response = await axios.post(
         `${import.meta.env.VITE_WP_IMPORT_API_URL}`,
-        requestData,
-        {
-          headers: {
-            // Authorization: `Basic ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+        requestData
       );
+
+      if (!response.data || !response.data.success) {
+        throw new Error("Page creation failed. Invalid response from server. Here's the response: " + JSON.stringify(response.data));
+      }
 
       if (!response.data?.public_url) {
         throw new Error(
@@ -272,7 +264,7 @@ const ProcessBlockResults = ({
       const loadStartTime = Date.now();
       const checkAndProceed = () => {
         if (Date.now() - loadStartTime >= minimumLoadTime) {
-          onPreview(response.data.public_url, {
+           onPreview(response.data.public_url, {
             name: response.data.name || requestData.name,
             json: {
               ...fullJsonStructure,

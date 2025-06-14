@@ -10,7 +10,7 @@ import "../../styles/ColorEditorOverlay.css";
 import modalStyles from "../../styles/BlockPreviewModals.module.css";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import axios from "axios";
+import axios from "axios"; //new
 // ----- Helper Constants and Functions -----
 function isTransparentWhite(color) {
   if (typeof color !== "string") return true;
@@ -176,6 +176,8 @@ const BlockPreview = () => {
   const navigate = useNavigate();
   const iframeRef = useRef(null);
 
+ 
+  const [isLoading, setIsLoading] = useState(false); //loading and login visibility
   const [initialRawTemplates, setInitialRawTemplates] = useState(null);
   const [originalJsonProcessed, setOriginalJsonProcessed] = useState(null);
   const [iframeUrl, setIframeUrl] = useState("");
@@ -188,8 +190,14 @@ const BlockPreview = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isOrderFinalized, setIsOrderFinalized] = useState(false);
   const [editUrl, setEditUrl] = useState("");
-  const [nonce, setNonce] = useState("");
-  const [isLoading, setIsLoading] = useState(false); //loading and login visibility
+  const [appPassword, setAppPassword] = useState(null);
+
+  //login states
+  const [showLoginForm, setShowLoginForm] = useState(false);
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
 
   const locationTemplatesRef = useRef(null);
   const initialRawTemplatesFromLocationCacheRef = useRef(null);
@@ -332,45 +340,57 @@ const BlockPreview = () => {
     return categories;
   }, []);
 
-  const checkAuthAndLoadEditor = async () => {
-    if (!editUrl) {
-      alert("Edit URL is not available yet.");
-      return;
+  const checkAuthAndLoadEditor = () => {
+    // If we have an application password stored, we are authenticated. Load the editor.
+    if (appPassword) {
+      console.log("Already authenticated. Loading editor.");
+      setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
+      setShowIframe(true);
+      return; // Stop here
     }
 
+    // If we don't have a password, we need to log in.
+    console.log("Not authenticated. Showing login form.");
+    setShowLoginForm(true);
+  };
+
+  //handleLogin
+  const handleLogin = async (e) => {
+    e.preventDefault();
     setIsLoading(true);
-    // const authStatusUrl = "https://customlayout.gogroth.com/wp-json/custom-builder/v1/auth-status";
-    const authStatusUrl =
-      "https://customlayout.gogroth.com/wp-json/custom-builder/v1/auth-status";
+    setLoginError("");
 
     try {
-      // We use axios.get for the auth check
-      await axios.get(authStatusUrl, { withCredentials: true });
+      const loginResponse = await axios.post(
+        `https://raeescodes.xyz/wp-json/custom-builder/v1/login?t=${new Date().getTime()}`,
+        { username, password }
+      );
 
-      // If the line above does not throw an error, it means the status was 2xx (OK).
-      console.log("User is authenticated. Loading Elementor editor...");
-      // Add a cache-buster to ensure the iframe reloads
-      setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
-    } catch (error) {
-      // We check if the error object has a response with status 401.
-      // This is the expected "Not Logged In" case.
-      if (error.response && error.response.status === 401) {
-        console.log("User not authenticated. Showing login form...");
-        // Construct the login URL that redirects back to the editor
-        // const loginUrl = `https://customlayout.gogroth.com/wp-login.php?redirect_to=${encodeURIComponent(editUrl)}`;
-        const loginUrl = `https://customlayout.gogroth.com/wp-login.php?redirect_to=${encodeURIComponent(
-          editUrl
-        )}`;
-        setIframeUrl(loginUrl);
+      if (loginResponse.data.success) {
+        console.log("Login Successful. Received Application Password.");
+
+        // 1. Store the application password for future use
+        setAppPassword(loginResponse.data.application_password);
+
+        // 2. Close the login form
+        setShowLoginForm(false);
+
+        // 3. IMMEDIATELY load the editor, completing the action the user started.
+        console.log("Login complete. Proceeding to load editor.");
+        setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
+        setShowIframe(true);
       } else {
-        // This handles other errors (network errors, 5xx server errors, etc.)
-        console.error("Error checking auth status:", error.message);
-        alert("Error verifying login status. Please check your connection.");
+        setLoginError(loginResponse.data?.message || "Login failed.");
       }
+    } catch (error) {
+      console.error("Login error:", error);
+      setLoginError(error.response?.data?.message || "An error occurred.");
     } finally {
       setIsLoading(false);
     }
   };
+
+
 
   useEffect(() => {
     const newLocationTemplatesData = location.state?.templatesOrderedBySection;
@@ -515,69 +535,10 @@ const BlockPreview = () => {
     categorizeColorInstances,
   ]);
 
-  // Fetch nonce when component mounts
-  useEffect(() => {
-    const fetchNonce = async () => {
-      try {
-        const response = await axios.get(
-          // "https://customlayout.gogroth.com/wp-json/custom-builder/v1/get-nonce",
-          "https://customlayout.gogroth.com/wp-json/custom-builder/v1/get-nonce",
-          {
-            // This is the axios equivalent of fetch's 'credentials: "include"'
-            withCredentials: true,
-          }
-        );
 
-        // In axios, the JSON data is automatically parsed and available in response.data
-        const data = response.data;
-
-        if (data && data.nonce) {
-          console.log("Fetched nonce with axios:", data.nonce);
-          setNonce(data.nonce);
-        } else {
-          console.warn("Nonce not found in response.");
-        }
-      } catch (error) {
-        // Axios automatically rejects promises for non-2xx status codes.
-        // The error object often contains a 'response' property with details.
-        if (error.response) {
-          // This handles errors like 401, 404, 500 etc.
-          console.warn(
-            `Initial nonce fetch failed with status: ${error.response.status}`
-          );
-        } else {
-          // This handles network errors where no response was received
-          console.error("Error fetching nonce with axios:", error.message);
-        }
-      }
-    };
-
-    fetchNonce();
-  }, []);
-
-  // const handleWordPressPageGenerated = useCallback(
-  //   (url, pageDataObjectFromWP) => {
-  //     const { public_url, edit_url } = pageDataObjectFromWP.json || {};
-
-  //     const proxy_edit_url = editUrl
-  //       .replace("https://localhost:3000, "https://localhost:3000")
-  //       .replace(/(\?.*)?$/, (match) =>
-  //         match
-  //           ? match + "&elementor-preview=true&reauth=1"
-  //           : "?elementor-preview=true&reauth=1"
-  //       );
-
-  //     setIframeUrl(public_url || url);
-  //     setEditUrl(proxy_edit_url || "");
-  //     setOriginalJsonProcessed(structuredClone(pageDataObjectFromWP));
-  //     setShowIframe(true);
-  //     setIsPageLoading(false);
-  //   },
-  //   []
-  // );
 
   const handleWordPressPageGenerated = useCallback(
-    async (url, pageDataObjectFromWP) => {
+    (url, pageDataObjectFromWP) => {
       const { public_url, edit_url } = pageDataObjectFromWP.json || {};
 
       if (!edit_url) {
@@ -586,22 +547,10 @@ const BlockPreview = () => {
         return;
       }
 
-      // The nonce should already be fetched by the time this runs.
-      // Your existing useEffect for fetching the nonce is good.
+     
 
       console.log("Received edit_url:", edit_url);
-      console.log("Using nonce:", nonce);
-
-      // Construct the proxied URL for the editor
-      // Note: The nonce is now part of the URL.
-      // const proxy_edit_url = edit_url.replace(
-      //   "https://customlayout.gogroth.com",
-      //   "https://localhost:3000"
-      // );
-      // No need to add nonce here if PHP already handles it via the '?_wpnonce' param in the link from elementor.
-      // But if need to add it manually:
-      // + `&_wpnonce=${nonce}`
-
+     
       setIframeUrl(public_url || url); // For the "view" link
       setEditUrl(edit_url); // For the "edit" button
 
@@ -609,8 +558,8 @@ const BlockPreview = () => {
       setShowIframe(true);
       setIsPageLoading(false);
     },
-    [nonce] // Add nonce as a dependency
-  );
+    [] 
+  )
 
   const applyChangesAndRegenerate = useCallback(
     async (changesArray) => {
@@ -624,6 +573,7 @@ const BlockPreview = () => {
         setIsColorEditorOpen(false);
         return;
       }
+      
 
       const modifiedPageJson = structuredClone(originalJsonProcessed.json);
       let actualModificationsCount = 0;
@@ -738,6 +688,70 @@ const BlockPreview = () => {
     setIsConfirmModalOpen(false);
   };
 
+  // Render login form
+  const renderLoginForm = () => {
+    if (!showLoginForm) return null;
+    return (
+      <div className={modalStyles.modalBackdrop}>
+        <div className={modalStyles.modalContent}>
+          <h4>Login to WordPress</h4>
+          <form onSubmit={handleLogin}>
+            <div style={{ marginBottom: "15px" }}>
+              <label>
+                Username:
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  style={{ width: "100%", padding: "8px", marginTop: "5px" }}
+                />
+              </label>
+            </div>
+            <div style={{ marginBottom: "15px" }}>
+              <label>
+                Password:
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  style={{ width: "100%", padding: "8px", marginTop: "5px" }}
+                />
+              </label>
+            </div>
+            {loginError && <p style={{ color: "red" }}>{loginError}</p>}
+            <div className={modalStyles.modalActions}>
+              <button
+                type="button"
+                onClick={() => setShowLoginForm(false)}
+                className={`${modalStyles.modalButton} ${modalStyles.modalButtonSecondary}`}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className={`${modalStyles.modalButton} ${modalStyles.modalButtonPrimary}`}
+                disabled={isLoading}
+              >
+                Login
+              </button>
+            </div>
+          </form>
+          <p style={{ marginTop: "15px", fontSize: "0.9em" }}>
+            <a
+              href={`https://raeescodes.xyz/wp-login.php?redirect_to=${encodeURIComponent(
+                editUrl
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Login via WordPress
+            </a>
+          </p>
+        </div>
+      </div>
+    );
+  };
+
   // Left Panel Content
   const leftPanelContent = (
     <div
@@ -746,11 +760,11 @@ const BlockPreview = () => {
         padding: "20px",
         borderRadius: "16px",
         backgroundColor: "white",
-        minHeight:"100%",
+        minHeight: "100%",
         display: "flex",
         flexDirection: "row",
         alignContent: "start",
-        flexWrap: "wrap"
+        flexWrap: "wrap",
       }}
     >
       <div className="promptDisplayPanel">
@@ -836,7 +850,7 @@ const BlockPreview = () => {
                 boxShadow:
                   "0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)",
               }}
-              onClick={checkAuthAndLoadEditor}
+              onClick={() => checkAuthAndLoadEditor()}
               disabled={isLoading}
             >
               Edit Full Page in Editor
@@ -859,8 +873,6 @@ const BlockPreview = () => {
           </p>
         )}
 
-        
-
         <button
           className="backToReorderButton"
           onClick={handleProgrammaticBackNavigation}
@@ -876,8 +888,8 @@ const BlockPreview = () => {
             borderRadius: "5px",
             cursor: isOrderFinalized ? "not-allowed" : "pointer",
             opacity: isOrderFinalized ? 0.5 : 1,
-            marginTop:"40px",
-            minWidth:"200px"
+            marginTop: "40px",
+            minWidth: "200px",
           }}
         >
           Back One Step
@@ -1032,6 +1044,7 @@ const BlockPreview = () => {
       rightPanel={rightPanelDisplay}
     >
       {renderConfirmModal()}
+      {renderLoginForm()}
       {isColorEditorOpen && (
         <ColorEditorOverlay
           isOpen={isColorEditorOpen}
