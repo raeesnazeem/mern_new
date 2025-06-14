@@ -52,3 +52,6 @@ server/coverage/
 client/.cache/
 server/.cache/
 repo-dev.code-workspace
+
+#Folders
+server-new/

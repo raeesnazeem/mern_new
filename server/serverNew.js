@@ -10,7 +10,7 @@ const connectDB = require("./utils/db");
 const router = require("./router/authRouter");
 const tempRouter = require("./router/templateRouter");
 const frameBuilderRouter = require("./router/frameBuilderRouter");
-const wpAdminProxy = require("./controllers/iFrameController");
+
 
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || "development";
@@ -59,11 +59,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// 3. Define Body-Parser Middleware
+
 app.use(express.json({ limit: "30mb" }));
 app.use(express.urlencoded({ extended: true, limit: "30mb" }));
 
-// 4. Internal API Routes with Body-Parser
+
 app.use("/api/v1/auth", router);
 app.use("/api/v1/template", tempRouter);
 app.use("/api/v1/frame-builder", frameBuilderRouter);

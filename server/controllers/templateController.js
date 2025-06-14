@@ -1,6 +1,5 @@
 const Template = require("../models/templateModel");
 const { v4: uuid } = require("uuid");
-const axios = require("axios");
 
 const templateController = {
   /* ----------------------------------------------------*
@@ -185,9 +184,8 @@ const templateController = {
         );
       } else {
         finalTemplates = allFoundTemplates.filter(
-          (template) => !(template.tags || []).includes("dark")
-        );
-        console.log(
+          (template) => !(template.tags || []).includes("dark") )
+          console.log(
           `   Style is 'empty', defaulting to 'light' tag. Count is now ${finalTemplates.length}.`
         );
       }
@@ -225,77 +223,7 @@ const templateController = {
   },
 
   /* ----------------------------------------------------*
-   * Send data to wordpress and create a page
-   * ----------------------------------------------------*/
-
-  createWordPressPage: async (req, res) => {
-    try {
-      // 1. Get the page data from the frontend's request
-      const requestData = req.body;
-      const wpUsername = process.env.WP_USERNAME;
-      const appPassword = process.env.WP_APPLICATION_PASSWORD;
-
-      if (!wpUsername || !appPassword) {
-        console.error("WordPress credentials are not set on the server.");
-        return res
-          .status(500)
-          .json({ success: false, message: "Server configuration error." });
-      }
-
-      if (!requestData || !requestData.name || !requestData.json) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid page data received." });
-      }
-
-      // 2. Create the Authorization token
-      const token = Buffer.from(`${wpUsername}:${appPassword}`).toString(
-        "base64"
-      );
-
-      console.log(
-        "Proxying request to WordPress to create page:",
-        requestData.name
-      );
-
-      // 3. Forward the request to WordPress with the Authorization header
-      const wpResponse = await axios.post(
-        `${process.env.WP_PAGE_GENERATE}`,
-        requestData,
-        {
-          headers: {
-            Authorization: `Basic ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      // 4. Combine the necessary elements into one 
-      const combinedResponse = {
-            success: wpResponse.data.success,
-            wp_data: wpResponse.data, // This will have { public_url, edit_url, post_id }
-            original_payload: requestData // This is the full { name, json } payload
-      };
-
-      // 5. Send the successful response from WordPress back to the React frontend
-      res.status(200).json(combinedResponse);
-
-      
-    } catch (error) {
-      console.error(
-        "Error in createWordPressPage proxy:",
-        error.response ? error.response.data : error.message
-      );
-      res.status(error.response?.status || 500).json({
-        success: false,
-        message: "Failed to create WordPress page.",
-        error: error.response?.data || error.message,
-      });
-    }
-  },
-
-  /* ----------------------------------------------------*
-   * Search for single templates and display it in the frontend
+   * Search for templates and display it in the frontend
    * ----------------------------------------------------*/
   fetchAndDisplay: async (req, res) => {
     try {

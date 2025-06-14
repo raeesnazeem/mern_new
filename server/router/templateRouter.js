@@ -3,7 +3,6 @@ const tempRouter = express.Router()
 const templateController = require("../controllers/templateController")
 
 tempRouter.route("/make-template-prompt").post(templateController.templateController.makeTemplatesByPrompt)
-tempRouter.route("/create-wp-page").post(templateController.templateController.createWordPressPage);
 tempRouter.route("/create-template").post(templateController.templateController.createTemplate)
 tempRouter.route("/fetch-template").get(templateController.templateController.fetchAndDisplay)
 
