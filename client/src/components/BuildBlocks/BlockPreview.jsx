@@ -547,7 +547,7 @@ const BlockPreview = () => {
         return;
       }
 
-      // The nonce should already be fetched by the time this runs.
+     
 
       console.log("Received edit_url:", edit_url);
      
@@ -558,8 +558,7 @@ const BlockPreview = () => {
       setShowIframe(true);
       setIsPageLoading(false);
     },
-    [] // Add nonce as a dependency
-  );
+    [] 
 
   const applyChangesAndRegenerate = useCallback(
     async (changesArray) => {
@@ -849,7 +848,7 @@ const BlockPreview = () => {
                 boxShadow:
                   "0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)",
               }}
-              onClick={() => checkAuthAndLoadEditor(nonce)}
+              onClick={() => checkAuthAndLoadEditor()}
               disabled={isLoading}
             >
               Edit Full Page in Editor
