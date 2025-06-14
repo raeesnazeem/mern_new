@@ -181,8 +181,6 @@ const ProcessBlockResults = ({
     }
   }, [templatesOrderedBySection, suggestedOrderProp, loading, onPreview]);
 
-  
-
   const sendToWordPress = async (
     rawTemplatesBySection,
     currentSuggestedOrder
@@ -196,8 +194,7 @@ const ProcessBlockResults = ({
     );
 
     try {
-
-    const { content: transformedContent, pageSettings: inputPageSettings } =
+      const { content: transformedContent, pageSettings: inputPageSettings } =
         transformTemplatesToWorkingFormat(
           rawTemplatesBySection,
           currentSuggestedOrder
@@ -246,13 +243,12 @@ const ProcessBlockResults = ({
 
       const response = await axios.post(
         `${import.meta.env.VITE_TO_SERVER_API_URL}/template/create-wp-page`,
-        requestData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+        requestData
       );
+
+      if (!response.data || !response.data.success) {
+        throw new Error("Page creation failed. Invalid response from server. Here's the response: " + JSON.stringify(response.data));
+      }
 
       if (!response.data?.public_url) {
         throw new Error(
@@ -268,14 +264,7 @@ const ProcessBlockResults = ({
       const loadStartTime = Date.now();
       const checkAndProceed = () => {
         if (Date.now() - loadStartTime >= minimumLoadTime) {
-          onPreview(response.data.public_url, {
-            name: response.data.name || requestData.name,
-            json: {
-              ...fullJsonStructure,
-              public_url: response.data.public_url,
-              edit_url: response.data.edit_url,
-            },
-          });
+          onPreview(response.data);
           setShowLoader(false);
           setLoading(false);
         } else {

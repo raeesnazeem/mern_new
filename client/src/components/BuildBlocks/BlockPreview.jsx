@@ -170,7 +170,6 @@ const BlockPreview = () => {
   const navigate = useNavigate();
   const iframeRef = useRef(null);
 
-  // Simplified State - old auth/nonce state removed
   const [isLoading, setIsLoading] = useState(false);
   const [initialRawTemplates, setInitialRawTemplates] = useState(null);
   const [originalJsonProcessed, setOriginalJsonProcessed] = useState(null);
@@ -334,7 +333,7 @@ const BlockPreview = () => {
     return categories;
   }, []);
 
-  // Simplified login handler for the iframe session
+  //login handler for the iframe session
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -362,7 +361,7 @@ const BlockPreview = () => {
     }
   };
 
-  // This function is now very simple. It just shows the login form.
+  // shows the login form.
   const handleEditClick = () => {
     console.log("Edit button clicked. Showing login form.");
     setShowLoginForm(true);
@@ -511,28 +510,53 @@ const BlockPreview = () => {
     categorizeColorInstances,
   ]);
 
-  const handleWordPressPageGenerated = useCallback((pageDataFromServer) => {
-    if (!pageDataFromServer?.edit_url) {
-      alert("Error: The server did not provide an edit URL.");
+  // const handleWordPressPageGenerated = useCallback((pageDataFromServer) => {
+  //   if (!pageDataFromServer?.edit_url) {
+  //     alert("Error: The server did not provide an edit URL.");
+  //     setIsPageLoading(false);
+  //     return;
+  //   }
+  //   console.log("Received URLs from Node.js:", pageDataFromServer);
+  //   setIframeUrl(pageDataFromServer.public_url);
+  //   setEditUrl(pageDataFromServer.edit_url);
+
+  //   const pageDataObjectForState = {
+  //     name: pageDataFromServer.name || "Generated Page",
+  //     json: {
+  //       public_url: pageDataFromServer.public_url,
+  //       edit_url: pageDataFromServer.edit_url,
+  //     },
+  //   };
+  //   setOriginalJsonProcessed(structuredClone(pageDataObjectForState));
+
+  //   setShowIframe(true);
+  //   setIsPageLoading(false);
+  // }, []);
+
+  const handleWordPressPageGenerated = useCallback((responseData) => {
+    console.log("Received combined data object from Node.js:", responseData);
+
+    const { public_url, edit_url } = responseData.wp_data;
+    const originalPayload = responseData.original_payload;
+
+    if (!edit_url) {
+      alert(
+        "Error: The final response from the server did not contain the required edit_url."
+      );
       setIsPageLoading(false);
       return;
     }
-    console.log("Received URLs from Node.js:", pageDataFromServer);
-    setIframeUrl(pageDataFromServer.public_url);
-    setEditUrl(pageDataFromServer.edit_url);
 
-    const pageDataObjectForState = {
-      name: pageDataFromServer.name || "Generated Page",
-      json: {
-        public_url: pageDataFromServer.public_url,
-        edit_url: pageDataFromServer.edit_url,
-      },
-    };
-    setOriginalJsonProcessed(structuredClone(pageDataObjectForState));
+    // Set the URLs for the iframe and "Edit" button
+    setIframeUrl(public_url);
+    setEditUrl(edit_url);
+
+    // Store the full original payload in state so the color editor can use it later
+    setOriginalJsonProcessed(originalPayload);
 
     setShowIframe(true);
     setIsPageLoading(false);
-  }, []);
+  }, []); // No dependencies needed
 
   const applyChangesAndRegenerate = useCallback(
     async (changesArray) => {
