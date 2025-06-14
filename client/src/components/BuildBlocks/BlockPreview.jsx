@@ -176,7 +176,7 @@ const BlockPreview = () => {
   const navigate = useNavigate();
   const iframeRef = useRef(null);
 
-  const [nonce, setNonce] = useState(null);
+ 
   const [isLoading, setIsLoading] = useState(false); //loading and login visibility
   const [initialRawTemplates, setInitialRawTemplates] = useState(null);
   const [originalJsonProcessed, setOriginalJsonProcessed] = useState(null);
@@ -390,12 +390,7 @@ const BlockPreview = () => {
     }
   };
 
-  // Update the useEffect for editUrl to use the latest nonce
-  useEffect(() => {
-    if (editUrl && !showIframe) {
-      checkAuthAndLoadEditor(nonce);
-    }
-  }, [editUrl, nonce]); // Add nonce as a dependency
+
 
   useEffect(() => {
     const newLocationTemplatesData = location.state?.templatesOrderedBySection;
@@ -540,31 +535,7 @@ const BlockPreview = () => {
     categorizeColorInstances,
   ]);
 
-  // Fetch nonce
-  useEffect(() => {
-    const initializeNonceAndCheckAuth = async () => {
-      if (!nonce) {
-        try {
-          const nonceResponse = await axios.get(
-            `https://raeescodes.xyz/wp-json/custom-builder/v1/get-nonce?t=${new Date().getTime()}`,
-            { withCredentials: true }
-          );
-          if (nonceResponse.data?.nonce) {
-            setNonce(nonceResponse.data.nonce);
-            console.log("Fetched initial nonce:", nonceResponse.data.nonce);
-          }
-        } catch (error) {
-          console.error("Failed to fetch initial nonce:", error);
-        }
-      }
 
-      if (editUrl && !showIframe && nonce) {
-        checkAuthAndLoadEditor(nonce);
-      }
-    };
-
-    initializeNonceAndCheckAuth();
-  }, [editUrl, showIframe, nonce]);
 
   const handleWordPressPageGenerated = useCallback(
     (url, pageDataObjectFromWP) => {
@@ -579,8 +550,7 @@ const BlockPreview = () => {
       // The nonce should already be fetched by the time this runs.
 
       console.log("Received edit_url:", edit_url);
-      console.log("Using nonce:", nonce);
-
+     
       setIframeUrl(public_url || url); // For the "view" link
       setEditUrl(edit_url); // For the "edit" button
 
@@ -588,7 +558,7 @@ const BlockPreview = () => {
       setShowIframe(true);
       setIsPageLoading(false);
     },
-    [nonce] // Add nonce as a dependency
+    [] // Add nonce as a dependency
   );
 
   const applyChangesAndRegenerate = useCallback(
