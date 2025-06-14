@@ -176,7 +176,6 @@ const BlockPreview = () => {
   const navigate = useNavigate();
   const iframeRef = useRef(null);
 
- 
   const [isLoading, setIsLoading] = useState(false); //loading and login visibility
   const [initialRawTemplates, setInitialRawTemplates] = useState(null);
   const [originalJsonProcessed, setOriginalJsonProcessed] = useState(null);
@@ -355,6 +354,40 @@ const BlockPreview = () => {
   };
 
   //handleLogin
+  // const handleLogin = async (e) => {
+  //   e.preventDefault();
+  //   setIsLoading(true);
+  //   setLoginError("");
+
+  //   try {
+  //     const loginResponse = await axios.post(
+  //       `https://raeescodes.xyz/wp-json/custom-builder/v1/login?t=${new Date().getTime()}`,
+  //       { username, password }
+  //     );
+
+  //     if (loginResponse.data.success) {
+  //       console.log("Login Successful. Received Application Password.");
+
+  //       // 1. Store the application password for future use
+  //       setAppPassword(loginResponse.data.application_password);
+
+  //       // 2. Close the login form
+  //       setShowLoginForm(false);
+
+  //       // 3. IMMEDIATELY load the editor, completing the action the user started.
+  //       console.log("Login complete. Proceeding to load editor.");
+  //       setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
+  //       setShowIframe(true);
+  //     } else {
+  //       setLoginError(loginResponse.data?.message || "Login failed.");
+  //     }
+  //   } catch (error) {
+  //     console.error("Login error:", error);
+  //     setLoginError(error.response?.data?.message || "An error occurred.");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -362,25 +395,39 @@ const BlockPreview = () => {
 
     try {
       const loginResponse = await axios.post(
-        `https://raeescodes.xyz/wp-json/custom-builder/v1/login?t=${new Date().getTime()}`,
+        `https://raeescodes.xyz/wp-json/custom-builder/v1/login`,
         { username, password }
       );
 
       if (loginResponse.data.success) {
-        console.log("Login Successful. Received Application Password.");
+        const {
+          logged_in_cookie,
+          secure_auth_cookie,
+          cookie_domain,
+          cookie_path,
+          admin_cookie_path,
+          plugins_cookie_path,
+          expiration,
+        } = loginResponse.data;
 
-        // 1. Store the application password for future use
-        setAppPassword(loginResponse.data.application_password);
+        const expires = new Date(expiration * 1000).toUTCString();
 
-        // 2. Close the login form
+        // Manually and explicitly set all three required cookies
+        document.cookie = `${logged_in_cookie.name}=${logged_in_cookie.value}; expires=${expires}; path=${cookie_path}; domain=${cookie_domain}; SameSite=None; Secure`;
+        document.cookie = `${secure_auth_cookie.name}=${secure_auth_cookie.value}; expires=${expires}; path=${admin_cookie_path}; domain=${cookie_domain}; SameSite=None; Secure`;
+        document.cookie = `${secure_auth_cookie.name}=${secure_auth_cookie.value}; expires=${expires}; path=${plugins_cookie_path}; domain=${cookie_domain}; SameSite=None; Secure`;
+
+        console.log("All cookies have been manually set via JavaScript.");
+
         setShowLoginForm(false);
 
-        // 3. IMMEDIATELY load the editor, completing the action the user started.
-        console.log("Login complete. Proceeding to load editor.");
-        setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
-        setShowIframe(true);
+        // Use a timeout to ensure the browser has processed the cookie updates before navigating the iframe
+        setTimeout(() => {
+          console.log("Proceeding to load editor URL into iframe.");
+          setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
+        }, 150); // A 150ms delay is robust enough to handle this.
       } else {
-        setLoginError(loginResponse.data?.message || "Login failed.");
+        setLoginError(loginResponse.data.message || "Login failed.");
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -389,8 +436,6 @@ const BlockPreview = () => {
       setIsLoading(false);
     }
   };
-
-
 
   useEffect(() => {
     const newLocationTemplatesData = location.state?.templatesOrderedBySection;
@@ -535,8 +580,6 @@ const BlockPreview = () => {
     categorizeColorInstances,
   ]);
 
-
-
   const handleWordPressPageGenerated = useCallback(
     (url, pageDataObjectFromWP) => {
       const { public_url, edit_url } = pageDataObjectFromWP.json || {};
@@ -547,10 +590,8 @@ const BlockPreview = () => {
         return;
       }
 
-     
-
       console.log("Received edit_url:", edit_url);
-     
+
       setIframeUrl(public_url || url); // For the "view" link
       setEditUrl(edit_url); // For the "edit" button
 
@@ -558,8 +599,8 @@ const BlockPreview = () => {
       setShowIframe(true);
       setIsPageLoading(false);
     },
-    [] 
-  )
+    []
+  );
 
   const applyChangesAndRegenerate = useCallback(
     async (changesArray) => {
@@ -573,7 +614,6 @@ const BlockPreview = () => {
         setIsColorEditorOpen(false);
         return;
       }
-      
 
       const modifiedPageJson = structuredClone(originalJsonProcessed.json);
       let actualModificationsCount = 0;
