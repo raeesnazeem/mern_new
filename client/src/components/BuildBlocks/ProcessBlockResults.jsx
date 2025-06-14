@@ -264,7 +264,14 @@ const ProcessBlockResults = ({
       const loadStartTime = Date.now();
       const checkAndProceed = () => {
         if (Date.now() - loadStartTime >= minimumLoadTime) {
-          onPreview(response.data);
+           onPreview(response.data.public_url, {
+            name: response.data.name || requestData.name,
+            json: {
+              ...fullJsonStructure,
+              public_url: response.data.public_url,
+              edit_url: response.data.edit_url,
+            },
+          });
           setShowLoader(false);
           setLoading(false);
         } else {
