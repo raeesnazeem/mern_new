@@ -559,6 +559,7 @@ const BlockPreview = () => {
       setIsPageLoading(false);
     },
     [] 
+  )
 
   const applyChangesAndRegenerate = useCallback(
     async (changesArray) => {
@@ -572,6 +573,7 @@ const BlockPreview = () => {
         setIsColorEditorOpen(false);
         return;
       }
+      
 
       const modifiedPageJson = structuredClone(originalJsonProcessed.json);
       let actualModificationsCount = 0;
