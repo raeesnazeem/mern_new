@@ -73,7 +73,10 @@ const templateSchema = new mongoose.Schema({
     type: Object,
     required: [true, "JSON content is required"],
   },
-
+  screenshot: {
+    type: String,
+    default: null, // Optional: set a default value
+  },
   isActive: {
     type: Boolean,
     default: true,

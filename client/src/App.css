@@ -1,6 +1,6 @@
 html, body{
   width:100%;
-  overflow-y:hidden;
+  /* overflow-y:hidden; */
 }
 
 /* Base styles for :root (only typographic/foundation styles) */
