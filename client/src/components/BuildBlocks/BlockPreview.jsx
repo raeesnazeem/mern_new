@@ -204,6 +204,7 @@ const BlockPreview = () => {
   const allowNextPopState = useRef(false);
 
   const [isImporterOpen, setIsImporterOpen] = useState(false);
+  const [sectionImporter, setSectionImporter] = useState(false);
 
   useEffect(() => {
     window.history.pushState(
@@ -429,6 +430,7 @@ const BlockPreview = () => {
           console.log("Proceeding to load editor URL into iframe.");
           setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
         }, 150); // A 150ms delay is robust enough to handle this.
+        setSectionImporter(true);
       } else {
         setLoginError(loginResponse.data.message || "Login failed.");
       }
@@ -927,6 +929,12 @@ const BlockPreview = () => {
           >
             Section order is finalized. You can continue to edit colors.
           </p>
+        )}
+
+        {sectionImporter && (
+          <button onClick={() => setIsImporterOpen(true)}>
+            Generate Sections
+          </button>
         )}
 
         <button
