@@ -39,6 +39,7 @@ if (NODE_ENV === "production") {
       process.env.FRONTEND_DEVELOPMENT_URL || "https://localhost:5173",
       "https://127.0.0.1:5173",
       "https://g99buildbot.raeescodes.xyz",
+      "https://raeescodes.xyz"
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],

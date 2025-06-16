@@ -8,6 +8,7 @@ import Typewriter from "../Typewriter";
 import "../../styles/TemplatePreviewPage.css";
 import "../../styles/ColorEditorOverlay.css";
 import modalStyles from "../../styles/BlockPreviewModals.module.css";
+import SectionImporterOverlay from "../SectionImporterOverlay";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import axios from "axios"; //new
@@ -201,6 +202,8 @@ const BlockPreview = () => {
   const locationTemplatesRef = useRef(null);
   const initialRawTemplatesFromLocationCacheRef = useRef(null);
   const allowNextPopState = useRef(false);
+
+  const [isImporterOpen, setIsImporterOpen] = useState(false);
 
   useEffect(() => {
     window.history.pushState(
@@ -792,6 +795,19 @@ const BlockPreview = () => {
     );
   };
 
+  //sending data from overlay to the iframe
+  const handleInsertSection = useCallback((sectionJson) => {
+    const iframe = iframeRef.current;
+    if (iframe && iframe.contentWindow) {
+      const message = {
+        type: "ADD_ELEMENTOR_SECTION",
+        payload: sectionJson,
+      };
+      iframe.contentWindow.postMessage(message, "https://raeescodes.xyz");
+      setIsImporterOpen(false); // Close the overlay after inserting
+    }
+  }, []);
+
   // Left Panel Content
   const leftPanelContent = (
     <div
@@ -1091,6 +1107,12 @@ const BlockPreview = () => {
           onClose={() => setIsColorEditorOpen(false)}
           categorizedPalette={categorizedColorPalette}
           onApplyChanges={applyChangesAndRegenerate}
+        />
+      )}
+      {isImporterOpen && (
+        <SectionImporterOverlay
+          onClose={() => setIsImporterOpen(false)}
+          onInsertSection={handleInsertSection}
         />
       )}
     </DashboardLayout>
