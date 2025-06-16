@@ -429,8 +429,7 @@ const BlockPreview = () => {
         setTimeout(() => {
           console.log("Proceeding to load editor URL into iframe.");
           setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
-        }, 150); // A 150ms delay is robust enough to handle this.
-        setSectionImporter(true);
+        }, 150); // A 150ms delay is enough to handle this.
       } else {
         setLoginError(loginResponse.data.message || "Login failed.");
       }
@@ -810,6 +809,13 @@ const BlockPreview = () => {
     }
   }, []);
 
+  const handleIframeLoad = () => {
+    console.log("Elementor iframe has finished loading. Showing Generate Sections button.");
+    setIsPageLoading(false); // Make sure any main loaders are hidden
+    setSectionImporter(true); // **This is the correct place to show the button**
+};
+
+
   // Left Panel Content
   const leftPanelContent = (
     <div
@@ -1016,6 +1022,7 @@ const BlockPreview = () => {
             sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
             referrerPolicy="no-referrer"
             allow="fullscreen; camera; microphone; clipboard-read; clipboard-write;"
+            onLoad={handleIframeLoad}
           />
         </div>
       </div>
