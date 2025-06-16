@@ -201,8 +201,30 @@ const SectionImporterOverlay = ({ onClose, onInsertSection }) => {
   };
 
   // 3. Handle selecting a specific section screenshot in the right panel
+  // const handleSectionSelect = (template) => {
+  //   console.log("Section selected:", template.name);
+
+  //   // Validate that the template has the correct JSON structure
+  //   if (
+  //     template.json &&
+  //     Array.isArray(template.json.content) &&
+  //     template.json.content.length > 0
+  //   ) {
+  //     // Pass the entire 'content' array to the parent component's function
+  //     // This is the payload Elementor expects for importing sections
+  //     onInsertSection(template.json.content);
+  //     onClose(); // Optional: close the overlay after selection
+  //   } else {
+  //     console.error("Invalid template JSON structure:", template);
+  //     alert(
+  //       "Error: This template is missing valid content and cannot be imported."
+  //     );
+  //   }
+  // };
   const handleSectionSelect = (template) => {
-    console.log("Section selected:", template.name);
+    // --- DEBUG LOG 1 ---
+    console.log("--- Step 1: handleSectionSelect fired ---");
+    console.log("Template Data:", template);
 
     // Validate that the template has the correct JSON structure
     if (
@@ -210,12 +232,19 @@ const SectionImporterOverlay = ({ onClose, onInsertSection }) => {
       Array.isArray(template.json.content) &&
       template.json.content.length > 0
     ) {
-      // Pass the entire 'content' array to the parent component's function
-      // This is the payload Elementor expects for importing sections
+      // --- DEBUG LOG 2 ---
+      console.log(
+        "--- Step 2: Template JSON is VALID. Calling onInsertSection ---"
+      );
+      console.log("Payload being sent up:", template.json.content);
+
       onInsertSection(template.json.content);
       onClose(); // Optional: close the overlay after selection
     } else {
-      console.error("Invalid template JSON structure:", template);
+      console.error(
+        "CRITICAL ERROR: Invalid or missing template.json.content. Data structure is wrong.",
+        template
+      );
       alert(
         "Error: This template is missing valid content and cannot be imported."
       );

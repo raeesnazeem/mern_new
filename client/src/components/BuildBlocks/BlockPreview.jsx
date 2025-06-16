@@ -797,24 +797,64 @@ const BlockPreview = () => {
   };
 
   //sending data from overlay to the iframe
-  const handleInsertSection = useCallback((sectionJson) => {
-    const iframe = iframeRef.current;
-    if (iframe && iframe.contentWindow) {
-      const message = {
-        type: "ADD_ELEMENTOR_SECTION",
-        payload: sectionJson,
-      };
-      iframe.contentWindow.postMessage(message, "https://raeescodes.xyz");
-      setIsImporterOpen(false); // Close the overlay after inserting
-    }
-  }, []);
+  // const handleInsertSection = useCallback((sectionJson) => {
+  //   const iframe = iframeRef.current;
+  //   if (iframe && iframe.contentWindow) {
+  //     const message = {
+  //       type: "ADD_ELEMENTOR_SECTION",
+  //       payload: sectionJson,
+  //     };
+  //     iframe.contentWindow.postMessage(message, "https://raeescodes.xyz");
+  //     setIsImporterOpen(false); // Close the overlay after inserting
+  //   }
+  // }, []);
+  const handleInsertSection = useCallback(
+    (sectionJsonContent) => {
+      // --- DEBUG LOG 3 ---
+      console.log("--- Step 3: handleInsertSection in BlockPreview fired ---");
+
+      const iframe = iframeRef.current;
+
+      if (iframe && iframe.contentWindow) {
+        const message = {
+          type: "ADD_ELEMENTOR_SECTION",
+          payload: sectionJsonContent,
+        };
+
+        const elementorOrigin = "https://raeescodes.xyz";
+
+        // --- DEBUG LOG 4 ---
+        console.log(
+          "--- Step 4: Iframe is ready. Attempting to post message ---"
+        );
+        console.log("Target Origin:", elementorOrigin);
+        console.log("Message Object:", message);
+
+        iframe.contentWindow.postMessage(message, elementorOrigin);
+
+        console.log(
+          "Message SENT. If the listener does not respond, the Target Origin is likely wrong."
+        );
+
+        setIsImporterOpen(false);
+      } else {
+        console.error(
+          "CRITICAL ERROR: Iframe reference not found or contentWindow is missing. Cannot post message.",
+          { iframe }
+        );
+        alert("Editor connection error. Could not send data.");
+      }
+    },
+    [iframeRef]
+  );
 
   const handleIframeLoad = () => {
-    console.log("Elementor iframe has finished loading. Showing Generate Sections button.");
+    console.log(
+      "Elementor iframe has finished loading. Showing Generate Sections button."
+    );
     setIsPageLoading(false); // Make sure any main loaders are hidden
     setSectionImporter(true); // **This is the correct place to show the button**
-};
-
+  };
 
   // Left Panel Content
   const leftPanelContent = (
