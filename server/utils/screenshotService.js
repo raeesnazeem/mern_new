@@ -35,6 +35,12 @@ async function sendToWordPressAndTakeScreenshot(templateData) {
 
     const page = await browser.newPage();
 
+    //render page at standard desktop resolution
+    await page.setViewport({
+      width: 1366,
+      height: 768,
+    });
+
     // Wait until DOM is loaded, max 10s
     await page.goto(pageUrl, {
       waitUntil: "domcontentloaded",

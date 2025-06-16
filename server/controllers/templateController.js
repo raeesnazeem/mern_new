@@ -271,6 +271,37 @@ const templateController = {
   },
 
   /* ----------------------------------------------------*
+   * Fetch Sections for WP plugin
+   * ----------------------------------------------------*/
+  fetchSectionsByType: async (req, res) => {
+    try {
+      const { sectionType } = req.body;
+      if (!sectionType) {
+        return res
+          .status(400)
+          .json({ success: false, message: "sectionType is required" });
+      }
+
+      // Query your MongoDB database for all templates of the specified type
+      const templates = await Template.find({
+        isActive: true,
+        sectionType: sectionType.toLowerCase(),
+      })
+        .select("name json tags style")
+        .lean(); // Get all necessary data
+
+      if (!templates || templates.length === 0) {
+        return res.status(404).json({ success: false, data: [] });
+      }
+
+      res.status(200).json({ success: true, data: templates });
+    } catch (error) {
+      console.error("Error in fetchSectionsByType:", error);
+      res.status(500).json({ success: false, message: "Server error." });
+    }
+  },
+
+  /* ----------------------------------------------------*
    * Create/Upload/edit a template
    * POST /api/templates
    * Required fields: name, sectionType, json
@@ -539,6 +570,25 @@ const templateController = {
         .lean();
       res.json({ success: true, data: templates });
     } catch (error) {
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  },
+
+  // DELETE /template/delete/:id
+  deleteTemplate: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await Template.findByIdAndDelete(id);
+
+      if (!deleted) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Template not found" });
+      }
+
+      res.json({ success: true, message: "Template deleted successfully" });
+    } catch (err) {
+      console.error("Error deleting template:", err);
       res.status(500).json({ success: false, message: "Server error" });
     }
   },

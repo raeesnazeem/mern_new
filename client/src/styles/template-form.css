@@ -140,81 +140,293 @@ body {
     cursor: not-allowed;
 }
 
+
 /* Template Gallery */
 .template-gallery {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 24px;
+  padding: 24px;
 }
 
-.template-gallery h2 {
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin-bottom: 16px;
-}
-
-/* Grid Layout */
 .gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 25px;
 }
 
-/* Template Card */
+/* Card container */
 .template-card {
-    background-color: #ffffff;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease-in-out;
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
 }
 
 .template-card:hover {
-    transform: translateY(-4px);
+  transform: translateY(-2px);
 }
 
-.template-card img {
-    width: 100%;
-    height: 160px;
-    object-fit: cover;
+.template-card:hover .template-card__overlay {
+  opacity: 1;
 }
 
-.template-card .card-body {
-    padding: 16px;
+.template-card__image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 160px;
+  overflow: hidden;
 }
 
-.template-card .card-title {
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: #2d3748;
+.template-card__image-wrapper img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
-.template-card .card-subtitle {
-    font-size: 0.875rem;
-    color: #718096;
-    /* gray-600 */
-    margin-top: 4px;
-    text-transform: capitalize;
+.no-preview {
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  color: #cbd5e0;
+  background-color: #f7fafc;
 }
 
-.template-card .card-tags {
-    margin-top: 8px;
+/* Overlay with buttons */
+.template-card__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-.template-card .tag {
-    display: inline-block;
-    background-color: #e0f7fa;
-    color: #00796b;
-    padding: 2px 8px;
-    font-size: 0.75rem;
-    border-radius: 999px;
-    margin-right: 4px;
-    margin-bottom: 4px;
+.template-card:hover .template-card__overlay {
+  opacity: 1;
+  visibility: visible;
+}
+
+.overlay-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.icon-button {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: white;
+  border: none;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1f2937;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: background 0.2s ease;
+  position: relative;
+}
+
+.icon-button:hover {
+  background-color: #f7fafc;
+}
+
+.icon-button:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+.icon-button--danger {
+  color: #ef4444;
+}
+
+
+.card-body {
+  padding: 12px;
+  border-top: 0.6px solid rgb(239, 238, 238);
+  box-shadow: 0px -20px 20px 12px rgb(239, 238, 238) !important;
+}
+
+.card-title {
+  font-weight: bold;
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.card-subtitle {
+  color: #718096;
+  font-size: 0.875rem;
+  margin-bottom: 8px;
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tag {
+  font-size: 0.75rem;
+  background-color: #e2ffe8;
+  color: teal;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+/* Lightbox */
+.lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.lightbox-content {
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+.lightbox-image {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+}
+
+/* Tooltip Text */
+.tooltip-text {
+  visibility: hidden;
+  width: 120px;
+  background: #111;
+  color: #fff;
+  text-align: center;
+  border-radius: 4px;
+  padding: 4px 8px;
+  position: absolute;
+  z-index: 10;
+  bottom: 120%; /* Above the icon */
+  left: 50%;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #111 transparent transparent transparent;
+}
+
+
+/* Lightbox */
+.lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.lightbox-content {
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+.lightbox-image {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border: 2px solid white;
+  border-radius: 6px;
+}
+
+/* Delete Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-box {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.modal-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.modal-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s ease;
+}
+
+.modal-button--secondary {
+  background: #e2e8f0; /* gray-200 */
+  color: #1f2937;
+}
+
+.modal-button--secondary:hover {
+  background: #cbd5e0;
+}
+
+.modal-button--danger {
+  background: #ef4444;
+  color: white;
+}
+
+.modal-button--danger:hover {
+  background: #dc2626;
 }
 
 /* Edit Template Form - Same as Create */
 .edit-template-form {
-    max-width: 600px;
+    max-width: 1200px;
     height: auto;
     margin: 0 auto;
     padding: 24px;
