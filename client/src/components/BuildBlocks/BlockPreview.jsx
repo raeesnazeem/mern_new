@@ -10,6 +10,7 @@ import "../../styles/ColorEditorOverlay.css";
 import modalStyles from "../../styles/BlockPreviewModals.module.css";
 import "../../styles/LoginModal.css";
 import SectionImporterOverlay from "../SectionImporterOverlay";
+import PageEditorToolBar from "../PageEditorToolBar";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
@@ -24,6 +25,7 @@ import {
   FiEdit3,
   FiExternalLink,
   FiZap,
+  FiTool,
 } from "react-icons/fi";
 import "../../styles/LeftPanelModern.css";
 
@@ -224,6 +226,8 @@ const BlockPreview = () => {
 
   const [toastMessage, setToastMessage] = useState(null);
   const [toastType, setToastType] = useState("success");
+
+  const [showToolbarOverlay, setShowToolbarOverlay] = useState(false);
 
   useEffect(() => {
     window.history.pushState(
@@ -584,6 +588,12 @@ const BlockPreview = () => {
     categorizeColorInstances,
   ]);
 
+  useEffect(() => {
+    const handler = () => setShowToolbarOverlay(false);
+    window.addEventListener("closeEditorToolbar", handler);
+    return () => window.removeEventListener("closeEditorToolbar", handler);
+  }, []);
+
   const handleWordPressPageGenerated = useCallback(
     (url, pageDataObjectFromWP) => {
       const { public_url, edit_url } = pageDataObjectFromWP.json || {};
@@ -735,7 +745,6 @@ const BlockPreview = () => {
     setIsConfirmModalOpen(false);
   };
 
-  
   const renderLoginForm = () => {
     if (!showLoginForm) return null;
     return (
@@ -868,7 +877,6 @@ const BlockPreview = () => {
 
       <div className="buttonGroup">
         <div className="buttonGroup">
-          
           <hr style={{ margin: "16px 0", borderColor: "#e0e0e0" }} />
 
           <div
@@ -920,14 +928,24 @@ const BlockPreview = () => {
             </p>
           )}
           {sectionImporter && (
-            <button
-              className="menu-style-button"
-              onClick={() => setIsImporterOpen(true)}
-            >
-              <FiZap />
-              Generate Sections
-            </button>
+            <>
+              <button
+                className="menu-style-button"
+                onClick={() => setIsImporterOpen(true)}
+              >
+                <FiZap />
+                Generate Sections
+              </button>
+              <button
+                className="menu-style-button"
+                onClick={() => setShowToolbarOverlay(true)}
+              >
+                <FiTool />
+                Editor Tools
+              </button>
+            </>
           )}
+
           <button
             className="backToReorderButton"
             onClick={handleProgrammaticBackNavigation}
@@ -1086,6 +1104,7 @@ const BlockPreview = () => {
           onInsertSection={handleInsertSection}
         />
       )}
+      {showToolbarOverlay && <PageEditorToolBar />}
       {toastMessage && (
         <div
           className={`toast-message ${
