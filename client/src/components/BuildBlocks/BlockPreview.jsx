@@ -8,8 +8,24 @@ import Typewriter from "../Typewriter";
 import "../../styles/TemplatePreviewPage.css";
 import "../../styles/ColorEditorOverlay.css";
 import modalStyles from "../../styles/BlockPreviewModals.module.css";
+import "../../styles/LoginModal.css";
 import SectionImporterOverlay from "../SectionImporterOverlay";
 import { useLocation, useNavigate } from "react-router-dom";
+
+import {
+  FiLayers,
+  FiLayout,
+  FiPlusCircle,
+  FiEye,
+  FiSearch,
+  FiFolderPlus,
+  FiArrowLeft,
+  FiHome,
+  FiEdit3,
+  FiExternalLink,
+  FiZap,
+} from "react-icons/fi";
+import "../../styles/LeftPanelModern.css";
 
 import axios from "axios"; //new
 // ----- Helper Constants and Functions -----
@@ -206,6 +222,9 @@ const BlockPreview = () => {
   const [isImporterOpen, setIsImporterOpen] = useState(false);
   const [sectionImporter, setSectionImporter] = useState(false);
 
+  const [toastMessage, setToastMessage] = useState(null);
+  const [toastType, setToastType] = useState("success");
+
   useEffect(() => {
     window.history.pushState(
       { page: "BlockPreviewLoaded" },
@@ -225,6 +244,13 @@ const BlockPreview = () => {
     };
     window.addEventListener("popstate", handleBrowserBack);
     return () => window.removeEventListener("popstate", handleBrowserBack);
+  }, []);
+
+  //for toasts
+  const showToast = useCallback((msg, type = "success") => {
+    setToastMessage(msg);
+    setToastType(type);
+    setTimeout(() => setToastMessage(null), 2000);
   }, []);
 
   const extractColorsRecursively = useCallback(
@@ -349,49 +375,16 @@ const BlockPreview = () => {
       console.log("Already authenticated. Loading editor.");
       setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
       setShowIframe(true);
-      return; // Stop here
+      return;
     }
 
     // If we don't have a password, we need to log in.
     console.log("Not authenticated. Showing login form.");
     setShowLoginForm(true);
+    showToast("Let's login to continue");
   };
 
   //handleLogin
-  // const handleLogin = async (e) => {
-  //   e.preventDefault();
-  //   setIsLoading(true);
-  //   setLoginError("");
-
-  //   try {
-  //     const loginResponse = await axios.post(
-  //       `https://raeescodes.xyz/wp-json/custom-builder/v1/login?t=${new Date().getTime()}`,
-  //       { username, password }
-  //     );
-
-  //     if (loginResponse.data.success) {
-  //       console.log("Login Successful. Received Application Password.");
-
-  //       // 1. Store the application password for future use
-  //       setAppPassword(loginResponse.data.application_password);
-
-  //       // 2. Close the login form
-  //       setShowLoginForm(false);
-
-  //       // 3. IMMEDIATELY load the editor, completing the action the user started.
-  //       console.log("Login complete. Proceeding to load editor.");
-  //       setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
-  //       setShowIframe(true);
-  //     } else {
-  //       setLoginError(loginResponse.data?.message || "Login failed.");
-  //     }
-  //   } catch (error) {
-  //     console.error("Login error:", error);
-  //     setLoginError(error.response?.data?.message || "An error occurred.");
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -424,6 +417,7 @@ const BlockPreview = () => {
         console.log("All cookies have been manually set via JavaScript.");
 
         setShowLoginForm(false);
+        showToast("Logged in");
 
         // Use a timeout to ensure the browser has processed the cookie updates before navigating the iframe
         setTimeout(() => {
@@ -432,10 +426,12 @@ const BlockPreview = () => {
         }, 150); // A 150ms delay is enough to handle this.
       } else {
         setLoginError(loginResponse.data.message || "Login failed.");
+        showToast("Oops! something's wrong!", "warning");
       }
     } catch (error) {
       console.error("Login error:", error);
       setLoginError(error.response?.data?.message || "An error occurred.");
+      showToast("Oops! something's wrong!", "warning");
     } finally {
       setIsLoading(false);
     }
@@ -446,6 +442,10 @@ const BlockPreview = () => {
     const newLocationTemplatesString = newLocationTemplatesData
       ? JSON.stringify(newLocationTemplatesData)
       : null;
+
+    if (newLocationTemplatesData) {
+      showToast("Just a moment! we are generating your page!");
+    }
 
     setOriginalPrompt(
       location.state?.originalPrompt ||
@@ -619,6 +619,7 @@ const BlockPreview = () => {
         return;
       }
 
+      showToast("Applying changes");
       const modifiedPageJson = structuredClone(originalJsonProcessed.json);
       let actualModificationsCount = 0;
 
@@ -698,6 +699,7 @@ const BlockPreview = () => {
       allColorInstances,
       categorizeColorInstances,
       initialRawTemplatesFromLocationCacheRef,
+      showToast,
     ]
   );
 
@@ -721,6 +723,7 @@ const BlockPreview = () => {
     setIsConfirmModalOpen(false);
     setIsColorEditorOpen(true);
     setIsOrderFinalized(true);
+    showToast("Select colors");
   };
 
   const handleProgrammaticBackNavigation = () => {
@@ -732,55 +735,57 @@ const BlockPreview = () => {
     setIsConfirmModalOpen(false);
   };
 
-  // Render login form
+  
   const renderLoginForm = () => {
     if (!showLoginForm) return null;
     return (
-      <div className={modalStyles.modalBackdrop}>
-        <div className={modalStyles.modalContent}>
-          <h4>Login to WordPress</h4>
-          <form onSubmit={handleLogin}>
-            <div style={{ marginBottom: "15px" }}>
-              <label>
-                Username:
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  style={{ width: "100%", padding: "8px", marginTop: "5px" }}
-                />
-              </label>
+      <div className="custom-login-backdrop">
+        <div className="custom-login-modal">
+          <h2 className="custom-login-heading">Login to Continue</h2>
+          <form onSubmit={handleLogin} className="custom-login-form">
+            <div className="form-group">
+              <input
+                id="username"
+                type="text"
+                placeholder=" "
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="form-input"
+                autoFocus
+              />
+              <label htmlFor="username">Username</label>
             </div>
-            <div style={{ marginBottom: "15px" }}>
-              <label>
-                Password:
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={{ width: "100%", padding: "8px", marginTop: "5px" }}
-                />
-              </label>
+
+            <div className="form-group">
+              <input
+                id="password"
+                type="password"
+                placeholder=" "
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="form-input"
+              />
+              <label htmlFor="password">Password</label>
             </div>
-            {loginError && <p style={{ color: "red" }}>{loginError}</p>}
-            <div className={modalStyles.modalActions}>
+            {loginError && <p className="form-error">{loginError}</p>}
+            <div className="form-actions">
               <button
                 type="button"
                 onClick={() => setShowLoginForm(false)}
-                className={`${modalStyles.modalButton} ${modalStyles.modalButtonSecondary}`}
+                className="btn btn-secondary"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className={`${modalStyles.modalButton} ${modalStyles.modalButtonPrimary}`}
+                className="btn btn-primary"
                 disabled={isLoading}
               >
                 Login
               </button>
             </div>
           </form>
-          <p style={{ marginTop: "15px", fontSize: "0.9em" }}>
+          <p className="alt-login">
             <a
               href={`https://raeescodes.xyz/wp-login.php?redirect_to=${encodeURIComponent(
                 editUrl
@@ -797,17 +802,6 @@ const BlockPreview = () => {
   };
 
   //sending data from overlay to the iframe
-  // const handleInsertSection = useCallback((sectionJson) => {
-  //   const iframe = iframeRef.current;
-  //   if (iframe && iframe.contentWindow) {
-  //     const message = {
-  //       type: "ADD_ELEMENTOR_SECTION",
-  //       payload: sectionJson,
-  //     };
-  //     iframe.contentWindow.postMessage(message, "https://raeescodes.xyz");
-  //     setIsImporterOpen(false); // Close the overlay after inserting
-  //   }
-  // }, []);
   const handleInsertSection = useCallback(
     (sectionJsonContent) => {
       // --- DEBUG LOG 3 ---
@@ -858,19 +852,7 @@ const BlockPreview = () => {
 
   // Left Panel Content
   const leftPanelContent = (
-    <div
-      className="template-preview-left-panel"
-      style={{
-        padding: "20px",
-        borderRadius: "16px",
-        backgroundColor: "white",
-        minHeight: "100%",
-        display: "flex",
-        flexDirection: "row",
-        alignContent: "start",
-        flexWrap: "wrap",
-      }}
-    >
+    <div className="template-preview-left-panel">
       <div className="promptDisplayPanel">
         <h3 style={{ marginTop: 0, marginBottom: "10px" }}>You said:</h3>
         {originalPrompt ? (
@@ -885,155 +867,89 @@ const BlockPreview = () => {
       </div>
 
       <div className="buttonGroup">
-        {/* Edit Colors Button */}
-        {originalJsonProcessed && showIframe && (
-          <button
-            className="editColorsButton"
-            onClick={handleAttemptEditColors}
-            disabled={
-              !(
-                categorizedColorPalette &&
-                Object.values(categorizedColorPalette).some(
-                  (arr) => arr.length > 0
-                )
-              ) || isPageLoading
-            }
+        <div className="buttonGroup">
+          
+          <hr style={{ margin: "16px 0", borderColor: "#e0e0e0" }} />
+
+          <div
             style={{
-              display: "block",
-              width: "100%",
-              padding: "10px",
-              marginTop: "20px",
-              marginBottom: "15px",
-              backgroundColor: "teal",
-              color: "white",
-              border: "none",
-              borderRadius: "5px",
-              cursor:
-                !(
-                  categorizedColorPalette &&
-                  Object.values(categorizedColorPalette).some(
-                    (arr) => arr.length > 0
-                  )
-                ) || isPageLoading
-                  ? "not-allowed"
-                  : "pointer",
-              fontSize: "1rem",
-              fontWeight: "bold",
-              opacity:
-                !(
-                  categorizedColorPalette &&
-                  Object.values(categorizedColorPalette).some(
-                    (arr) => arr.length > 0
-                  )
-                ) || isPageLoading
-                  ? 0.6
-                  : 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
             }}
           >
-            Edit Colors
-            {categorizedColorPalette &&
-            Object.values(categorizedColorPalette).some((arr) => arr.length > 0)
-              ? ` (Colors Available)`
-              : " (No colors found)"}
-          </button>
-        )}
+            <span className="leftPanel-subHeadings">ACTIONS</span>
+          </div>
 
-        {editUrl && (
-          <p style={{ fontSize: "0.9em", marginTop: "10px" }}>
+          {originalJsonProcessed && showIframe && (
             <button
-              style={{
-                width: "100%",
-                padding: "8px",
-                backgroundColor: "#fff7e5",
-                color: "#333",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                fontWeight: "normal",
-                opacity: isLoading ? 0.6 : 1,
-                boxShadow:
-                  "0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)",
-              }}
+              className="menu-style-button teal"
+              onClick={handleAttemptEditColors}
+              disabled={
+                !(
+                  categorizedColorPalette &&
+                  Object.values(categorizedColorPalette).some(
+                    (arr) => arr.length > 0
+                  )
+                ) || isPageLoading
+              }
+            >
+              <FiEdit3 />
+              Edit Colors
+            </button>
+          )}
+          {editUrl && (
+            <button
+              className="menu-style-button"
               onClick={() => checkAuthAndLoadEditor()}
               disabled={isLoading}
             >
+              <FiExternalLink />
               Edit Full Page in Editor
             </button>
-          </p>
-        )}
-
-        {/* Optional Finalized Message */}
-        {isOrderFinalized && (
-          <p
-            style={{
-              marginTop: "0px",
-              marginBottom: "15px",
-              color: "#555",
-              fontSize: "0.85rem",
-              textAlign: "center",
-            }}
-          >
-            Section order is finalized. You can continue to edit colors.
-          </p>
-        )}
-
-        {sectionImporter && (
-          <button onClick={() => setIsImporterOpen(true)}>
-            Generate Sections
-          </button>
-        )}
-
-        <button
-          className="backToReorderButton"
-          onClick={handleProgrammaticBackNavigation}
-          disabled={isOrderFinalized}
-          style={{
-            display: "block",
-            width: "100%",
-            padding: "10px",
-            marginBottom: "15px",
-            backgroundColor: isOrderFinalized ? "#A9A9A9" : "#6c757d",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: isOrderFinalized ? "not-allowed" : "pointer",
-            opacity: isOrderFinalized ? 0.5 : 1,
-            marginTop: "40px",
-            minWidth: "200px",
-          }}
-        >
-          Back One Step
-        </button>
-
-        <button
-          className="backToDashboardButton"
-          onClick={() => navigate("/")}
-          style={{
-            display: "block",
-            width: "100%",
-            padding: "10px",
-            backgroundColor: "#37352f",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-        >
-          Back to Dashboard
-        </button>
-
-        {showIframe && iframeUrl && (
-          <p className={modalStyles.previewLink}>
-            <a
-              href={iframeUrl}
-              style={{ fontSize: "0.5em", marginTop: "15px" }}
-              target="_blank"
-              rel="noopener noreferrer"
+          )}
+          {isOrderFinalized && (
+            <p
+              style={{
+                fontSize: "0.85rem",
+                textAlign: "center",
+                color: "#666",
+              }}
             >
-              Open preview in new tab
-            </a>
-          </p>
-        )}
+              Section order is finalized. You can continue to edit colors.
+            </p>
+          )}
+          {sectionImporter && (
+            <button
+              className="menu-style-button"
+              onClick={() => setIsImporterOpen(true)}
+            >
+              <FiZap />
+              Generate Sections
+            </button>
+          )}
+          <button
+            className="backToReorderButton"
+            onClick={handleProgrammaticBackNavigation}
+            disabled={isOrderFinalized}
+          >
+            <FiArrowLeft style={{ marginRight: 6 }} />
+            Back One Step
+          </button>
+          <button
+            className="backToDashboardButton"
+            onClick={() => navigate("/")}
+          >
+            <FiHome
+              style={{
+                marginRight: 6,
+                fontSize: "13px",
+                verticalAlign: "middle",
+              }}
+            />
+            Back to Dashboard
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1169,6 +1085,15 @@ const BlockPreview = () => {
           onClose={() => setIsImporterOpen(false)}
           onInsertSection={handleInsertSection}
         />
+      )}
+      {toastMessage && (
+        <div
+          className={`toast-message ${
+            toastType === "warning" ? "warning" : ""
+          }`}
+        >
+          {toastMessage}
+        </div>
       )}
     </DashboardLayout>
   );

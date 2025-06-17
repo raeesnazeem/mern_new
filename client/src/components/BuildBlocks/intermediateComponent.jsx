@@ -8,8 +8,9 @@ import React, {
 } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import LogoComponent from "../LogoComponent";
+import { FiCheckCircle } from "react-icons/fi";
 
-// --- (ICONS are unchanged) ---
+// --- (ICONS) ---
 const ZoomInIcon = () => (
   <svg
     width="20"
@@ -490,6 +491,47 @@ const listStyles = `
   min-width: 35px;
   text-align: center;
 }
+.toast-message {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #e0f2f2;
+  color: #108888;
+  padding: 12px 20px;
+  border-radius: 12px;
+  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
+  font-size: 0.8rem;
+  font-weight: 600;
+  z-index: 9999;
+  opacity: 0;
+  animation: fadeToast 2s ease-in-out forwards;
+  pointer-events: none;
+}
+
+.toast-message.warning {
+  background-color: #ffe5e5;
+  color: #a80000;
+}
+
+@keyframes fadeToast {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+  10% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  90% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+}
 `;
 
 if (!document.getElementById("reorder-list-styles")) {
@@ -500,10 +542,10 @@ if (!document.getElementById("reorder-list-styles")) {
   document.head.appendChild(styleSheet);
 }
 
-// --- (SectionItemHTML5 and SectionListContainer are unchanged) ---
+// --- (SectionItemHTML5 and SectionListContainer)
 const SectionItemHTML5 = React.memo(
   ({
-    sectionSlot, // Changed from `section` to `sectionSlot`
+    sectionSlot,
     index,
     isFirst,
     isLast,
@@ -555,7 +597,7 @@ const SectionItemHTML5 = React.memo(
           </div>
 
           <div className="section-controls-html5">
-            {/* --- NEW: Section Cycler UI --- */}
+            {/* --- Section Cycler UI --- */}
             {canCycle && (
               <div className="section-cycler">
                 <button
@@ -822,7 +864,7 @@ const SectionListContainer = React.forwardRef(
   }
 );
 
-// --- (buildPageSections and other helpers are unchanged) ---
+// --- (buildPageSections and other helpers) ---
 const parseColorFromPrompt = (prompt) => {
   if (!prompt) return null;
   const colors = [
@@ -969,7 +1011,7 @@ const buildPageSections = (
   return finalSectionSlots;
 };
 
-// --- UPDATED COMPONENT ---
+// --- Actual Component---
 const IntermediateComponent = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -980,6 +1022,8 @@ const IntermediateComponent = () => {
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [transform, setTransform] = useState({ x: 0, y: 0 });
   const [svgPaths, setSvgPaths] = useState([]);
+  const [toastMessage, setToastMessage] = useState(null);
+  const [toastType, setToastType] = useState("success"); // or "warning"
   const [activePages, setActivePages] = useState({
     home: false,
     about: false,
@@ -1006,6 +1050,12 @@ const IntermediateComponent = () => {
     [location.state?.originalPrompt]
   );
 
+  const getToastContent = (icon, message) => (
+    <div>
+      <span style={{ verticalAlign: "middle", fontSize:"0.9rem" }}>{icon} </span> {message}
+    </div>
+  );
+
   useEffect(() => {
     const checkIsActive = (tag) =>
       allAvailableSections.some((section) => section.tags?.includes(tag));
@@ -1015,6 +1065,37 @@ const IntermediateComponent = () => {
       services: checkIsActive("services-page"),
       contact: checkIsActive("contact-page"),
     });
+  }, [allAvailableSections]);
+
+  //useEffect that sets activePages to show the correct toast
+  useEffect(() => {
+    const checkIsActive = (tag) =>
+      allAvailableSections.some((section) => section.tags?.includes(tag));
+
+    const hasTemplates = allAvailableSections.length > 0;
+
+    setActivePages({
+      home: checkIsActive("home-page"),
+      about: checkIsActive("about-page"),
+      services: checkIsActive("services-page"),
+      contact: checkIsActive("contact-page"),
+    });
+
+    // Show toast
+    if (hasTemplates) {
+      setToastMessage(
+        getToastContent(<FiCheckCircle />, " Yay! We got some templates generated for you!")
+      );
+      setToastType("success");
+    } else {
+      setToastMessage(
+        getToastContent(<FiCheckCircle />, " No Templates to load!")
+      );
+      setToastType("warning");
+    }
+
+    const timer = setTimeout(() => setToastMessage(null), 6000); // 6 seconds only
+    return () => clearTimeout(timer);
   }, [allAvailableSections]);
 
   const [homeSections, setHomeSections] = useState(() =>
@@ -1159,6 +1240,15 @@ const IntermediateComponent = () => {
     >
       {/*Top-left info panel */}
       <LogoComponent />
+      {toastMessage && (
+        <div
+          className={`toast-message ${
+            toastType === "warning" ? "warning" : ""
+          }`}
+        >
+          {toastMessage}
+        </div>
+      )}
       <div className="canvas-info-panel">
         <div className="prompt-display-box">
           {location.state?.originalPrompt || "No prompt provided."}

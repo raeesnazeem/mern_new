@@ -32,3 +32,13 @@
   50% { color:teal; } /* Cursor color */
 }
 
+/*Smaller Desktop Styles*/
+@media (max-width: 1400px) {
+  .typewriterText {
+    white-space: pre-wrap; /* Preserve whitespace and wrap text */
+    word-wrap: break-word; /* Break long words */
+    margin: 0;
+    font-size: 0.65rem !important;
+    line-height: 1.5;
+  }
+}

@@ -1,0 +1,295 @@
+.template-preview-left-panel {
+  background-color: #ffffff;
+  border-radius: 20px;
+  padding: 24px 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  min-height: 100%;
+  min-width:280px;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', sans-serif;
+}
+
+.template-preview-left-panel .promptDisplayPanel h3,
+.template-preview-left-panel .leftPanel-subHeadings {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #008080;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.template-preview-left-panel .buttonGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.template-preview-left-panel .menu-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  font-size: 0.8rem;
+  line-height: 1.25rem;
+  color: #004d4d;
+  background-color: transparent;
+  border: none;
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.template-preview-left-panel .menu-item:hover {
+  background-color: #e6f7f7;
+}
+
+.template-preview-left-panel .menu-item.selected {
+  background-color: #d5f3f3;
+  font-weight: 600;
+  color: #008080;
+}
+
+.template-preview-left-panel .backToReorderButton,
+.template-preview-left-panel .backToDashboardButton {
+  background-color: #f6f7f7;
+  color: #008080;
+  padding: 10px;
+  border: 1px solid #008080;
+  border-radius: 10px;
+  font-weight: bold;
+  margin-top: 30px;
+  vertical-align: middle;
+  margin-bottom: -15px;
+}
+
+.template-preview-left-panel .backToReorderButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.template-preview-left-panel .preview-link {
+  font-size: 0.75rem;
+  text-align: center;
+  margin-top: 12px;
+  color: #555;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 22px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider.round {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  border-radius: 22px;
+  transition: 0.3s;
+}
+
+.slider.round:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+input:checked + .slider.round {
+  background-color: #b2dfdb;
+}
+
+input:checked + .slider.round:before {
+  transform: translateX(20px);
+}
+
+.menu-style-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  color: #004d4d;
+  background-color: transparent;
+  border: none;
+  border-radius: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 100%;
+}
+
+.menu-style-button:hover {
+  background-color: #e6f7f7;
+}
+
+.menu-style-button.teal {
+  background-color: #d5f3f3;
+  font-weight: 600;
+  color: #008080;
+}
+
+/* Base responsiveness */
+@media (max-width: 1024px) {
+  .template-preview-left-panel {
+    padding: 20px 12px;
+    border-radius: 16px;
+  }
+
+  .template-preview-left-panel .promptDisplayPanel h3 {
+    font-size: 0.85rem;
+  }
+
+  .template-preview-left-panel .menu-style-button,
+  .template-preview-left-panel .menu-item {
+    font-size: 0.85rem;
+    padding: 9px 12px;
+  }
+
+  .template-preview-left-panel .buttonGroup {
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .template-preview-left-panel .backToReorderButton,
+  .template-preview-left-panel .backToDashboardButton {
+    padding: 8px;
+    font-size: 0.85rem;
+    border-radius: 8px;
+  }
+}
+
+/* Tablet view */
+@media (max-width: 1400px) {
+  .template-preview-left-panel {
+    min-width: 240px;
+    padding: 18px 10px;
+    border-radius: 12px;
+  }
+
+  .template-preview-left-panel .promptDisplayPanel h3 {
+    font-size: 0.8rem;
+    gap: 6px;
+  }
+
+  .template-preview-left-panel .promptDisplayPanel p {
+    font-size: 0.85rem;
+  }
+
+  .template-preview-left-panel .menu-style-button,
+  .template-preview-left-panel .menu-item {
+    font-size: 0.8rem;
+    padding: 8px 10px;
+  }
+
+  .template-preview-left-panel .switch {
+    width: 38px;
+    height: 18px;
+  }
+
+  .slider.round:before {
+    height: 14px;
+    width: 14px;
+    left: 2px;
+  }
+
+  input:checked + .slider.round:before {
+    transform: translateX(18px);
+  }
+
+  .template-preview-left-panel .buttonGroup {
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .template-preview-left-panel .backToReorderButton,
+  .template-preview-left-panel .backToDashboardButton {
+    font-size: 0.8rem;
+    padding: 7px;
+    margin-top: 20px;
+  }
+
+  .template-preview-left-panel .preview-link {
+    font-size: 0.7rem;
+    margin-top: 10px;
+  }
+}
+
+/* Mobile view */
+@media (max-width: 768px) {
+  .template-preview-left-panel {
+    padding: 16px 8px;
+    border-radius: 10px;
+    min-width: 100%;
+  }
+
+  .template-preview-left-panel .promptDisplayPanel h3 {
+    font-size: 0.75rem;
+    gap: 4px;
+  }
+
+  .template-preview-left-panel .promptDisplayPanel p {
+    font-size: 0.75rem;
+  }
+
+  .template-preview-left-panel .menu-style-button,
+  .template-preview-left-panel .menu-item {
+    font-size: 0.75rem;
+    padding: 7px 8px;
+  }
+
+  .template-preview-left-panel .switch {
+    width: 34px;
+    height: 16px;
+  }
+
+  .slider.round:before {
+    height: 12px;
+    width: 12px;
+    left: 2px;
+  }
+
+  input:checked + .slider.round:before {
+    transform: translateX(16px);
+  }
+
+  .template-preview-left-panel .buttonGroup {
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .template-preview-left-panel .backToReorderButton,
+  .template-preview-left-panel .backToDashboardButton {
+    font-size: 0.75rem;
+    padding: 6px;
+    margin-top: 15px;
+    border-radius: 6px;
+  }
+
+  .template-preview-left-panel .preview-link {
+    font-size: 0.65rem;
+    margin-top: 8px;
+  }
+}
+
