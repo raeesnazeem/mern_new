@@ -19,7 +19,7 @@ const NODE_ENV = process.env.NODE_ENV || "development";
 let corsOptions;
 if (NODE_ENV === "production") {
   const allowedOrigins = [
-    process.env.FRONTEND_PRODUCTION_URL || "https://g99buildbot.vercel.app",
+    process.env.FRONTEND_PRODUCTION_URL || "https://g99buildbot.vercel.app" || "https://g99buildbot.raeescodes.xyz"
   ].filter(Boolean);
   corsOptions = {
     origin: function (origin, callback) {
