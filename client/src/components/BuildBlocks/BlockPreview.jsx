@@ -938,13 +938,13 @@ const BlockPreview = () => {
                 <FiZap />
                 Generate Sections
               </button>
-              <button
+              {/* <button
                 className="menu-style-button"
                 onClick={() => setShowToolbarOverlay(true)}
               >
                 <FiTool />
                 Editor Tools
-              </button>
+              </button> */}
             </>
           )}
 
