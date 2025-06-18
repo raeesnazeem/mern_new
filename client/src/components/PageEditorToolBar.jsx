@@ -53,7 +53,10 @@ const PageEditorToolBar = ({ onAction }) => {
         <div className="tooltip-wrapper" key={action}>
           <button
             className="toolbar-btn"
-            onClick={() => onAction(action)}
+            onClick={() => {
+              onAction(action);
+              console.log("Toolbar button clicked:", action);
+            }}
             aria-label={label}
           >
             {icon}

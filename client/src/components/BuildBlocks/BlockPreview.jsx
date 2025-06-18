@@ -848,6 +848,7 @@ const BlockPreview = () => {
   //handling edit form action
   const handleEditorToolAction = (action) => {
     if (action === "edit_text") {
+      console.log("Sending postMessage: EDITOR_TOOL_EDIT_TEXT");
       window.postMessage({ type: "EDITOR_TOOL_EDIT_TEXT" }, "*");
     }
   };
