@@ -218,21 +218,24 @@ const ProcessBlockResults = ({
         version: "0.4",
         type: "wp-page",
       };
+      console.log("fulljson structure", JSON.stringify(fullJsonStructure));
       const wrappedAsSingleSection = {
         _id: `fp-${Date.now()}`,
         name: rawTemplatesBySection?.name || "Generated Page",
         sectionType: "fullPageContentUpdate",
         json: fullJsonStructure,
       };
+      console.log("wrapped as single section: ", JSON.stringify(wrappedAsSingleSection));
       const newRawTemplates = {
         ...rawTemplatesBySection,
         reorderedGlobalSections: [wrappedAsSingleSection],
       };
-
+      console.log("New raw templates: ", JSON.stringify(newRawTemplates));
       const requestData = {
         name: newRawTemplates?.name,
         json: structuredClone(fullJsonStructure),
       };
+      console.log("Actual data being sent to WP: ", JSON.stringify(requestData));
 
       console.log(
         "[ProcessBlockResults] Sending to WordPress. Name:",
