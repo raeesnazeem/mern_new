@@ -14,12 +14,6 @@ import PageEditorToolBar from "../PageEditorToolBar";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
-  FiLayers,
-  FiLayout,
-  FiPlusCircle,
-  FiEye,
-  FiSearch,
-  FiFolderPlus,
   FiArrowLeft,
   FiHome,
   FiEdit3,
@@ -851,6 +845,13 @@ const BlockPreview = () => {
     [iframeRef]
   );
 
+  //handling edit form action
+  const handleEditorToolAction = (action) => {
+    if (action === "edit_text") {
+      window.postMessage({ type: "EDITOR_TOOL_EDIT_TEXT" }, "*");
+    }
+  };
+
   const handleIframeLoad = () => {
     console.log(
       "Elementor iframe has finished loading. Showing Generate Sections button."
@@ -1104,7 +1105,9 @@ const BlockPreview = () => {
           onInsertSection={handleInsertSection}
         />
       )}
-      {showToolbarOverlay && <PageEditorToolBar />}
+      {showToolbarOverlay && (
+        <PageEditorToolBar onAction={handleEditorToolAction} />
+      )}
       {toastMessage && (
         <div
           className={`toast-message ${
