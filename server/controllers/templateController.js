@@ -282,7 +282,7 @@ const templateController = {
           .json({ success: false, message: "sectionType is required" });
       }
 
-      // Query your MongoDB database for all templates of the specified type
+      // Query MongoDB database for all templates of the specified type
       const templates = await Template.find({
         isActive: true,
         sectionType: sectionType.toLowerCase(),

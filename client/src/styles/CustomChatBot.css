@@ -11,7 +11,7 @@
 
 /* The header bar at the top */
 .rsc-header {
-  background-color: #fff !important; /* Your dark teal */
+  background-color: #fff !important; /* dark teal */
   color: white !important;
   padding: 16px !important;
 }
@@ -26,7 +26,7 @@
 
 /* The scrollable area where messages appear */
 .rsc-content {
-  background-color: #ffffff !important; /* Your white background */
+  background-color: #ffffff !important;
   padding: 20px 10px !important;
 }
 

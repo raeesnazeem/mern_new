@@ -29,7 +29,7 @@ const WelcomePage = () => {
     
     console.log("Generated Prompt:", finalPrompt); // For debugging
 
-    // Here you would call your backend API
+    // Here call backend API
     // axios.post(`${import.meta.env.VITE_TO_SERVER_API_URL}/api/process-brief`, { answers: finalAnswers });
     
     setTimeout(() => {

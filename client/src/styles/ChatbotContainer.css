@@ -10,5 +10,5 @@
 }
 
 .chatbot-display-container .react-chatbot-kit-chat-message-container {
-  height: calc(100% - 60px); /* Adjust based on your input form height */
+  height: calc(100% - 60px); /* Adjust based on input form height */
 }
