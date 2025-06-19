@@ -2,7 +2,7 @@ import React, { useState } from 'react'; // Import useState
 import PropTypes from 'prop-types';
 import { TypeAnimation } from 'react-type-animation';
 import styles from '../styles/BotBubble.module.css';
-import '../styles/Customchatbot.css';
+
 
 const BotBubble = ({ step, triggerNextStep }) => {
   // Get our custom props from the step object
