@@ -1,13 +1,12 @@
 .dashboard {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
   width: 100%;
   max-width: 100%;
-  /* font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; */
-  /* font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; */
   font-family: "Manrope", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color: #37352f;
+  overflow-y: auto !important;
 }
 
 
@@ -15,7 +14,7 @@
   /*left panel content */
   display: flex;
   flex: 1;
-  overflow: hidden;
+  overflow-y:auto !important ;
   /* background-color: #f9fafe; */
   background-color: #fcfcfc !important;
 }
@@ -63,5 +62,4 @@
   border-left: 1px solid #ececec;
   box-shadow: rgba(0, 30, 43, 0.3) 0px 4px 10px -4px;
   height: calc(100vh - 95px);
-
 }

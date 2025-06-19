@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ChatBot from "react-simple-chatbot";
 import axios from "axios";
 import ChatTyper from "./BotBubble";
@@ -6,43 +6,81 @@ import ChatTyper from "./BotBubble";
 const ChatbotContainer = ({ onComplete }) => {
   const [steps, setSteps] = useState(null);
   const [originalQuestions, setOriginalQuestions] = useState([]);
+  const observer = useRef(null);
+
+  // NEW: This function will scroll to the bottom and focus the input field.
+  const handleBotTypingEnd = () => {
+    const chatContainer = document.querySelector(".rsc-content");
+    if (chatContainer) {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // Find all possible input types from react-simple-chatbot
+    const input = document.querySelector(".rsc-input") || document.querySelector(".rsc-input[type='text']");
+    if (input) {
+      input.focus();
+    }
+  };
+
+  useEffect(() => {
+    // This MutationObserver is still useful for scrolling after a USER action.
+    const scrollToBottomAfterUser = (mutations) => {
+      const chatContainer = document.querySelector(".rsc-content");
+      if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    };
+
+    const chatContainer = document.querySelector(".rsc-content");
+
+    if (chatContainer) {
+      observer.current = new MutationObserver(scrollToBottomAfterUser);
+      observer.current.observe(chatContainer, { childList: true });
+    }
+
+    return () => {
+      if (observer.current) {
+        observer.current.disconnect();
+      }
+    };
+  }, [steps]);
 
   useEffect(() => {
     const buildSteps = (questions) => {
       if (!questions || questions.length === 0) return [];
       const chatSteps = [];
 
-      // This is the new, simplified logic
       questions.forEach((q) => {
-         console.log(`Inside buildSteps, text for question ${q.id} is:`, q.text);
         const nextStepId = q.next || "end-message";
 
-        // Step 1: The bot asks the question using the self-contained ChatTyper.
-        // This component handles its own "thinking -> typing" animation.
         chatSteps.push({
           id: q.id,
-          component: <ChatTyper message={q.text} avatarUrl="/bot-avatar.png" />,
+          // CHANGED: Pass the new callback function as a prop
+          component: (
+            <ChatTyper
+              message={q.text}
+              avatarUrl="/bot-avatar.png"
+              onTypingEnd={handleBotTypingEnd}
+            />
+          ),
           waitAction: true,
-          // The trigger points to the user response step.
           trigger: `response-for-${q.id}`,
         });
 
-        // Step 2: The bot waits for the user's response.
-        // This step is triggered AFTER the ChatTyper is completely finished.
         if (q.type === "multiple-choice") {
           chatSteps.push({
             id: `response-for-${q.id}`,
             options: q.options.map((opt) => ({
               value: opt,
               label: opt,
-              trigger: nextStepId, // Go to the next question after user chooses
+              trigger: nextStepId,
             })),
           });
         } else {
           chatSteps.push({
             id: `response-for-${q.id}`,
             user: true,
-            trigger: nextStepId, // Go to the next question after user types
+            trigger: nextStepId,
           });
         }
       });
@@ -55,19 +93,19 @@ const ChatbotContainer = ({ onComplete }) => {
               "Thank you! That's all the questions I have. Processing your answers now..."
             }
             avatarUrl="/bot-avatar.png"
+            // Note: No callback needed here as it's the end.
           />
         ),
         waitAction: true,
         end: true,
       };
       chatSteps.push(endMessageStep);
-
       setSteps(chatSteps);
     };
+
     axios
       .get("/questions.json")
       .then((response) => {
-         console.log("Data received from server:", response.data);
         setOriginalQuestions(response.data);
         buildSteps(response.data);
       })
@@ -92,9 +130,14 @@ const ChatbotContainer = ({ onComplete }) => {
       handleEnd={handleEnd}
       width="100%"
       height="100vh"
-      contentStyle={{ height: "calc(100% - 112px)" }}
+      contentStyle={{
+        height: "calc(100% - 112px)",
+        overflowY: "auto",
+        paddingBottom: "20px",
+      }}
       hideUserAvatar={true}
       hideBotAvatar={true}
+      enableSmoothScroll={false}
     />
   );
 };

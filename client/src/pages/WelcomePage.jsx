@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import DashboardLayout from '../components/DashboardLayout';
 import ChatBoardLayout from '../components/ChatBoardLayout';
 import AnswerDisplay from '../components/AnswerDisplay';
 import ChatbotContainer from '../components/ChatbotContainer';
@@ -61,7 +60,7 @@ const WelcomePage = () => {
   }
 
   return (
-    <DashboardLayout
+    <ChatBoardLayout
       topBar={<TopBar />}
       leftPanel={<AnswerDisplay />}
       rightPanel={<ChatbotContainer onComplete={handleConversationComplete} />}

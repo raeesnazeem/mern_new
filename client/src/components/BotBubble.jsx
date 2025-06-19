@@ -1,14 +1,12 @@
-import React, { useState } from 'react'; // Import useState
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { TypeAnimation } from 'react-type-animation';
 import styles from '../styles/BotBubble.module.css';
+import '../chatbotstyles.css';
 
-
-const BotBubble = ({ step, triggerNextStep }) => {
-  // Get our custom props from the step object
+// CHANGED: Accept the new 'onTypingEnd' prop
+const BotBubble = ({ step, triggerNextStep, onTypingEnd }) => {
   const { message, avatarUrl } = step.component.props;
-
-  // 1. ADD STATE TO CONTROL THE CURSOR'S VISIBILITY
   const [showCursor, setShowCursor] = useState(true);
 
   return (
@@ -16,25 +14,23 @@ const BotBubble = ({ step, triggerNextStep }) => {
       <img src={avatarUrl} alt="bot avatar" className={styles.avatarImage} />
       <div className={styles.typewriterBubble}>
         <TypeAnimation
-          // 2. UPDATE THE SEQUENCE TO HANDLE ALL REFINEMENTS
           sequence={[
-            // First, type the "thinking" dots. The number sets the pause time after.
             '...',
             1200,
-            // Next, automatically delete the dots and type the real message.
             message,
-            1500, // Wait 1.5 seconds after the message is typed.
-            // Finally, call a function to hide the cursor and trigger the next step.
+            1500,
             () => {
-              setShowCursor(false); // Hide the cursor
+              setShowCursor(false);
+              // CHANGED: Call the function passed from the parent
+              onTypingEnd();
               if (triggerNextStep) {
-                triggerNextStep(); // Proceed to the next step
+                triggerNextStep();
               }
             },
           ]}
           wrapper="span"
-          speed={70} // Typing speed
-          cursor={showCursor} // 3. CONTROL THE CURSOR WITH OUR STATE
+          speed={70}
+          cursor={showCursor}
           repeat={0}
           style={{ display: 'inline-block', verticalAlign: 'middle' }}
         />
@@ -46,10 +42,14 @@ const BotBubble = ({ step, triggerNextStep }) => {
 BotBubble.propTypes = {
   step: PropTypes.object.isRequired,
   triggerNextStep: PropTypes.func,
+  // NEW: Add prop type for our new callback function
+  onTypingEnd: PropTypes.func,
 };
 
 BotBubble.defaultProps = {
   triggerNextStep: () => {},
+  // NEW: Provide a default empty function to prevent errors
+  onTypingEnd: () => {},
 };
 
 export default BotBubble;

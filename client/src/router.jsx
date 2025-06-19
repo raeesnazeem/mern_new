@@ -1,4 +1,8 @@
 import { createBrowserRouter } from "react-router-dom";
+
+// 1. Import your new RootLayout component
+import RootLayout from "./pages/RootLayout"; 
+
 import WelcomePage from "./pages/WelcomePage";
 import DashboardPage from "./pages/DashboardPage";
 import TemplatePreviewPage from "./pages/TemplatePreviewPage";
@@ -11,59 +15,68 @@ import EditTemplateList from "./components/EditTemplateList";
 import EditTemplateForm from "./components/EditTemplateForm";
 import TemplateGallery from "./components/TemplateGallery";
 
-
 const router = createBrowserRouter([
   {
+    // 2. Define the RootLayout as the parent route for everything.
     path: "/",
-    element: <WelcomePage />, // The new entry point for the chatbot/skip choice
-  },
-  {
-    path: "/dashboard", // The path for the main dashboard after the briefing
-    element: <DashboardPage />,
-  },
-  {
-    path: "/preview-main",
-    element: <TemplatePreviewPage />,
-  },
-  {
-    path: "/frame-builder",
-    element: <FrameBuilder />,
-  },
-  {
-    path: "/build-blocks-main",
-    element: <BuildBlocks />,
-  },
-  {
-    path: "/intermediate-component",
-    element: <IntermediateComponent />,
-  },
-  {
-    path: "/builder-block-preview-main",
-    element: <BlockPreview />,
-  },
-  {
-    path: "/add-templates",
-    element: <CreateTemplateAndSS />,
-  },
-  {
-    path: "/edit-templates",
-    element: <EditTemplateList />,
-  },
-  {
-    path: "template/edit/:id",
-    element: <CreateTemplateAndSS />,
-    loader: async ({ params }) => {
-      const { id } = params;
-      const response = await fetch(
-        `${import.meta.env.VITE_TO_SERVER_API_URL}/template/edit/${id}`
-      );
-      if (!response.ok) throw new Error("Template not found");
-      return response.json();
-    },
-  },
-  {
-    path: "/templates",
-    element: <TemplateGallery />,
+    element: <RootLayout />,
+    // 3. Move all your original routes into a 'children' array.
+    children: [
+      {
+        // The path for WelcomePage is now an 'index' route,
+        // meaning it renders when the path is exactly "/".
+        index: true, 
+        element: <WelcomePage />,
+      },
+      {
+        path: "/dashboard",
+        element: <DashboardPage />,
+      },
+      {
+        path: "/preview-main",
+        element: <TemplatePreviewPage />,
+      },
+      {
+        path: "/frame-builder",
+        element: <FrameBuilder />,
+      },
+      {
+        path: "/build-blocks-main",
+        element: <BuildBlocks />,
+      },
+      {
+        path: "/intermediate-component",
+        element: <IntermediateComponent />,
+      },
+      {
+        path: "/builder-block-preview-main",
+        element: <BlockPreview />,
+      },
+      {
+        path: "/add-templates",
+        element: <CreateTemplateAndSS />,
+      },
+      {
+        path: "/edit-templates",
+        element: <EditTemplateList />,
+      },
+      {
+        path: "template/edit/:id",
+        element: <CreateTemplateAndSS />,
+        loader: async ({ params }) => {
+          const { id } = params;
+          const response = await fetch(
+            `${import.meta.env.VITE_TO_SERVER_API_URL}/template/edit/${id}`
+          );
+          if (!response.ok) throw new Error("Template not found");
+          return response.json();
+        },
+      },
+      {
+        path: "/templates",
+        element: <TemplateGallery />,
+      },
+    ],
   },
 ]);
 
