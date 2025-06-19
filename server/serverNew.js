@@ -4,12 +4,16 @@ const https = require("https"); // Import HTTPS
 const fs = require("fs"); // Import File System
 const app = express();
 
+const { InferenceClient } = require('@huggingface/inference'); //huggingface
+const hf = new InferenceClient(process.env.HF_TOKEN);
+
 const cors = require("cors");
 const connectDB = require("./utils/db");
 
 const router = require("./router/authRouter");
 const tempRouter = require("./router/templateRouter");
 const frameBuilderRouter = require("./router/frameBuilderRouter");
+const AiRouter = require("./router/AiRouter")
 
 
 const PORT = process.env.PORT || 3000;
@@ -68,6 +72,7 @@ app.use(express.urlencoded({ extended: true, limit: "30mb" }));
 app.use("/api/v1/auth", router);
 app.use("/api/v1/template", tempRouter);
 app.use("/api/v1/frame-builder", frameBuilderRouter);
+app.use("/api/v1/ai-gen", AiRouter)
 
 // 6. Health Check Endpoint
 app.get("/api/health", (req, res) => {

@@ -1,0 +1,19 @@
+.answerContainer {
+  padding: 2rem;
+  background-color: #ffffff;
+  height: 100%;
+}
+
+.title {
+  font-size: 1.5rem;
+  color: #333;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.placeholder {
+  color: #888;
+  font-style: italic;
+  line-height: 1.6;
+}

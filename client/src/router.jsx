@@ -1,4 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
+import WelcomePage from "./pages/WelcomePage";
 import DashboardPage from "./pages/DashboardPage";
 import TemplatePreviewPage from "./pages/TemplatePreviewPage";
 import FrameBuilder from "./pages/FrameBuilderPage";
@@ -14,6 +15,10 @@ import TemplateGallery from "./components/TemplateGallery";
 const router = createBrowserRouter([
   {
     path: "/",
+    element: <WelcomePage />, // The new entry point for the chatbot/skip choice
+  },
+  {
+    path: "/dashboard", // The path for the main dashboard after the briefing
     element: <DashboardPage />,
   },
   {
@@ -32,27 +37,34 @@ const router = createBrowserRouter([
     path: "/intermediate-component",
     element: <IntermediateComponent />,
   },
-  { path: "/builder-block-preview-main", 
+  {
+    path: "/builder-block-preview-main",
     element: <BlockPreview />,
-   },
-   { path: "/add-templates", 
-    element: <CreateTemplateAndSS />,
-   },
-   { path: "/edit-templates", 
-    element: <EditTemplateList/>,
-   },
-   { path: "template/edit/:id",
-     element: <CreateTemplateAndSS />,
-  loader: async ({ params }) => {
-    const { id } = params;
-    const response = await fetch(`${import.meta.env.VITE_TO_SERVER_API_URL}/template/edit/${id}`);
-    if (!response.ok) throw new Error("Template not found");
-    return response.json();
-    }
   },
-   { path: "/templates", 
-    element: <TemplateGallery/>,
-   },
+  {
+    path: "/add-templates",
+    element: <CreateTemplateAndSS />,
+  },
+  {
+    path: "/edit-templates",
+    element: <EditTemplateList />,
+  },
+  {
+    path: "template/edit/:id",
+    element: <CreateTemplateAndSS />,
+    loader: async ({ params }) => {
+      const { id } = params;
+      const response = await fetch(
+        `${import.meta.env.VITE_TO_SERVER_API_URL}/template/edit/${id}`
+      );
+      if (!response.ok) throw new Error("Template not found");
+      return response.json();
+    },
+  },
+  {
+    path: "/templates",
+    element: <TemplateGallery />,
+  },
 ]);
 
 export default router;

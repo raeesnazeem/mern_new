@@ -1,5 +1,5 @@
-import styles from '../styles/DashboardLayout.module.css';
-import TopBar from '../components/TopBar';
+import styles from '../styles/ChatBoardLayout.module.css';
+
 
 const DashboardLayout = ({ leftPanel, rightPanel, topBar, children }) => { 
   return (
