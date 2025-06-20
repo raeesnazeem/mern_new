@@ -152,7 +152,9 @@ const SectionImporterOverlay = ({ onClose, onInsertSection }) => {
                 ? `${activeSectionType} Designs`
                 : "Select a Section Type"}
             </h3>
-            <div className={styles.positionControls}>
+
+            {/* custom position insertion selector - to be worked on later */}
+            {/* <div className={styles.positionControls}>
               <label className={styles.positionLabel}>
                 Insert Position:
                 <select
@@ -191,7 +193,7 @@ const SectionImporterOverlay = ({ onClose, onInsertSection }) => {
                   </span>
                 </div>
               )}
-            </div>
+            </div> */}
 
             {isLoading && <p>Loading Templates...</p>}
             {error && <p className={styles.errorMessage}>{error}</p>}
