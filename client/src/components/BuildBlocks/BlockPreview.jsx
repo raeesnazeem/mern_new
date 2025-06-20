@@ -79,10 +79,8 @@ const COLOR_KEYS = [
 ];
 
 const HEX_REGEX = /^#([0-9A-Fa-f]{3,4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
-const RGBA_REGEX =
-  /^rgba?\(\s*\d+%?\s*,\s*\d+%?\s*,\s*\d+%?\s*(,\s*[\d\.]+\s*)?\)$/;
-const HSLA_REGEX =
-  /^hsla?\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*(,\s*[\d\.]+\s*)?\)$/;
+const RGBA_REGEX = /^rgba?\(\s*\d+%?\s*,\s*\d+%?\s*,\s*\d+%?\s*(,\s*[\d\.]+\s*)?\)$/;
+const HSLA_REGEX = /^hsla?\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*(,\s*[\d\.]+\s*)?\)$/;
 
 function generateContextName(node, key, path) {
   if (node._title) return `${node._title} - ${key}`;
@@ -319,7 +317,10 @@ const BlockPreview = () => {
     colorInstances.forEach((inst) => {
       if (seenOverall.has(inst.originalValue)) return;
       seenOverall.add(inst.originalValue);
-      const pk = inst.path.split(".").pop().toLowerCase();
+      const pk = inst.path
+        .split(".")
+        .pop()
+        .toLowerCase();
       let assigned = false;
       if (
         pk.includes("background_color_b") ||
@@ -662,9 +663,8 @@ const BlockPreview = () => {
         `Total successful calls to setValueByPath: ${actualModificationsCount}`
       );
 
-      const newPageName = `${originalJsonProcessed.name || "Page"} (Colors V${
-        Date.now() % 10000
-      })`;
+      const newPageName = `${originalJsonProcessed.name ||
+        "Page"} (Colors V${Date.now() % 10000})`;
 
       const updatedPageAsSingleSection = {
         _id: `updated-page-${Date.now()}`,
@@ -805,9 +805,47 @@ const BlockPreview = () => {
   };
 
   //sending data from overlay to the iframe
+  // const handleInsertSection = useCallback(
+  //   (sectionJsonContent) => {
+  //     // --- DEBUG LOG 3 ---
+  //     console.log("--- Step 3: handleInsertSection in BlockPreview fired ---");
+
+  //     const iframe = iframeRef.current;
+
+  //     if (iframe && iframe.contentWindow) {
+  //       const message = {
+  //         type: "ADD_ELEMENTOR_SECTION",
+  //         payload: sectionJsonContent,
+  //       };
+
+  //       const elementorOrigin = "https://raeescodes.xyz";
+
+  //       // --- DEBUG LOG 4 ---
+  //       console.log(
+  //         "--- Step 4: Iframe is ready. Attempting to post message ---"
+  //       );
+  //       console.log("Target Origin:", elementorOrigin);
+  //       console.log("Message Object:", message);
+
+  //       iframe.contentWindow.postMessage(message, elementorOrigin);
+
+  //       console.log(
+  //         "Message SENT. If the listener does not respond, the Target Origin is likely wrong."
+  //       );
+
+  //       setIsImporterOpen(false);
+  //     } else {
+  //       console.error(
+  //         "CRITICAL ERROR: Iframe reference not found or contentWindow is missing. Cannot post message.",
+  //         { iframe }
+  //       );
+  //       alert("Editor connection error. Could not send data.");
+  //     }
+  //   },
+  //   [iframeRef]
+  // );
   const handleInsertSection = useCallback(
-    (sectionJsonContent) => {
-      // --- DEBUG LOG 3 ---
+    (sectionJsonContent, insertPosition = "last", customIndex = "") => {
       console.log("--- Step 3: handleInsertSection in BlockPreview fired ---");
 
       const iframe = iframeRef.current;
@@ -815,12 +853,15 @@ const BlockPreview = () => {
       if (iframe && iframe.contentWindow) {
         const message = {
           type: "ADD_ELEMENTOR_SECTION",
-          payload: sectionJsonContent,
+          payload: {
+            content: sectionJsonContent,
+            insertPosition,
+            customIndex,
+          },
         };
 
         const elementorOrigin = "https://raeescodes.xyz";
 
-        // --- DEBUG LOG 4 ---
         console.log(
           "--- Step 4: Iframe is ready. Attempting to post message ---"
         );
@@ -849,7 +890,10 @@ const BlockPreview = () => {
   const handleEditorToolAction = (action) => {
     if (action === "edit_text") {
       console.log("Sending postMessage: EDITOR_TOOL_EDIT_TEXT");
-      iframeRef.current?.contentWindow?.postMessage({ type: "EDITOR_TOOL_EDIT_TEXT" }, "*");
+      iframeRef.current?.contentWindow?.postMessage(
+        { type: "EDITOR_TOOL_EDIT_TEXT" },
+        "*"
+      );
     }
   };
 
