@@ -20,20 +20,19 @@
 }
 
 .leftPanel {
-  width: auto;
+  width: 450px;
   height: calc(100vh - 95px);
   background-color: #fff !important;
   margin-right: 20px;
   margin-left: 20px;
   border-radius: 16px;
-  /* font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; */
   font-family: "Manrope", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   box-shadow: 4px 0 6px rgba(0, 0, 0, 0.01), 6px 0 8px rgba(0, 0, 0, 0.03) !important;
-  /* padding: 16px 20px;   */
+
 }
 
 .leftPanel>div {
-  max-width: 250px;
+  max-width: 400px;
   padding: 30px;
   
 }
@@ -47,6 +46,7 @@
   display: block;
   text-align: right !important;
   color: #00684a;
+  text-decoration: none !important;
 }
 
 

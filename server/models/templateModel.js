@@ -75,7 +75,7 @@ const templateSchema = new mongoose.Schema({
   },
   screenshot: {
     type: String,
-    default: null, // Optional: set a default value
+    default: null, // Optionally we can set a default value
   },
   isActive: {
     type: Boolean,
@@ -87,6 +87,11 @@ const templateSchema = new mongoose.Schema({
   },
   style: {
     type: String,
+  },
+  description: {
+    type: String,
+    maxlength: 100 * 20, // Approx. 100 words assuming an average of 20 characters per word
+    trim: true, // Remove extra whitespace
   },
 
   createdAt: {

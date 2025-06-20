@@ -8,7 +8,7 @@ const ChatbotContainer = ({ onComplete }) => {
   const [originalQuestions, setOriginalQuestions] = useState([]);
   const observer = useRef(null);
 
-  // NEW: This function will scroll to the bottom and focus the input field.
+  // This function will scroll to the bottom and focus the input field.
   const handleBotTypingEnd = () => {
     const chatContainer = document.querySelector(".rsc-content");
     if (chatContainer) {
@@ -23,7 +23,7 @@ const ChatbotContainer = ({ onComplete }) => {
   };
 
   useEffect(() => {
-    // This MutationObserver is still useful for scrolling after a USER action.
+    // This MutationObserver is useful for scrolling after a USER action.
     const scrollToBottomAfterUser = (mutations) => {
       const chatContainer = document.querySelector(".rsc-content");
       if (chatContainer) {

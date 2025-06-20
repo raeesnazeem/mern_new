@@ -2,6 +2,7 @@
 
 .rsc{
   overflow-y:auto !important;
+  border-radius:16px;
 }
 
 /* The main container for the entire chatbot window */
