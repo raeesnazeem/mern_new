@@ -24,7 +24,7 @@ const AnswerDisplay = () => {
       </div>
 
     <div className="middlePart">
-    <img src={botImage} style={{maxWidth:'400px', display:'flex', alignSelf:'center'}}/>
+    <img src={botImage} style={{maxWidth:'350px', display:'flex', alignSelf:'center'}}/>
 
     </div>
 

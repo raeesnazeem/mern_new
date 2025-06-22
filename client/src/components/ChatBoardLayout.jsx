@@ -3,9 +3,9 @@ import styles from '../styles/ChatBoardLayout.module.css';
 
 const DashboardLayout = ({ leftPanel, rightPanel, topBar, children }) => { 
   return (
-    <div className={styles.dashboard}>
+    <div className={styles.dashboardChat}>
       {topBar && <div className={styles.topBar}>{topBar}</div>}
-      <div className={styles.content}>
+      <div className={styles.contentChat}>
         <div className={styles.leftPanel}>{leftPanel}</div>
         <div className={styles.rightPanel}>{rightPanel}</div>
       </div>

@@ -14,6 +14,8 @@ import CreateTemplateAndSS from "./components/CreateTemplateAndSS";
 import EditTemplateList from "./components/EditTemplateList";
 import EditTemplateForm from "./components/EditTemplateForm";
 import TemplateGallery from "./components/TemplateGallery";
+import ChatBot from "./components/Chatbot";
+import ChatBoardLayout from "./components/ChatBoardLayout";
 
 const router = createBrowserRouter([
   {
