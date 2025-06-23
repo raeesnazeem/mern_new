@@ -9,11 +9,11 @@ class EmailController {
     const { prompt } = req.body;
 
     const transporter = nodemailer.createTransport({
-      host: "smtp.zoho.com",
+      host: "smtp.zoho.in",
       port: 587,
       secure: false, // Use TLS
       auth: {
-        user: "raees@raeescodes.xyz",
+        user: "g99buildbot_zoho",
         pass: process.env.EMAIL_PASS, 
       },
     });
