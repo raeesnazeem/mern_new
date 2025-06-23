@@ -109,17 +109,14 @@
 // });
 require("dotenv").config();
 const express = require("express");
-const http = require("http");
+const https = require("https"); // Import HTTPS
+const fs = require("fs"); // Import File System
 const app = express();
-<<<<<<< HEAD
-=======
 
 const { InferenceClient } = require('@huggingface/inference'); //huggingface
 const hf = new InferenceClient(process.env.HF_TOKEN);
 
->>>>>>> dev
 const cors = require("cors");
-
 const connectDB = require("./utils/db");
 
 const router = require("./router/authRouter");
@@ -129,28 +126,10 @@ const AiRouter = require("./router/AiRouter")
 const EmailRouter = require("./router/EmailRouter")
 
 
-
-const PORT = process.env.PORT || 10000; // Single PORT definition
+const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 
 // CORS Configuration
-<<<<<<< HEAD
-const allowedOrigins = [
-  process.env.FRONTEND_PRODUCTION_URL || "https://g99buildbot.vercel.app",
-].filter(Boolean);
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-};
-=======
 let corsOptions;
 if (NODE_ENV === "production") {
   const allowedOrigins = [
@@ -181,54 +160,55 @@ if (NODE_ENV === "production") {
     credentials: true,
   };
 }
->>>>>>> dev
 
 // Middlewares
 app.use(cors(corsOptions));
-app.use(express.json({ limit: "30mb" })); // Add JSON body parser
-app.use(express.urlencoded({ extended: true, limit: "30mb" })); // Add URL-encoded body parser
 
-// Global Diagnostic Logger
+// 2. Global Diagnostic Logger (BEFORE ALL ROUTES)
 app.use((req, res, next) => {
   console.log(
-    `[Request Logger] Time: ${new Date().toISOString()} - Path: ${req.originalUrl}`
+    `[Request Logger] Time: ${new Date().toISOString()} - Path: ${
+      req.originalUrl
+    }`
   );
   next();
 });
 
-<<<<<<< HEAD
-// Internal API Routes
-=======
 
 app.use(express.json({ limit: "30mb" }));
 app.use(express.urlencoded({ extended: true, limit: "30mb" }));
 
 
->>>>>>> dev
 app.use("/api/v1/auth", router);
 app.use("/api/v1/template", tempRouter);
 app.use("/api/v1/frame-builder", frameBuilderRouter);
 app.use("/api/v1/ai-gen", AiRouter)
 app.use('/api/v1/email', EmailRouter)
 
-// Health Check Endpoint
+// 6. Health Check Endpoint
 app.get("/api/health", (req, res) => {
-  res.status(200).json({ status: "OK", timestamp: new Date(), environment: NODE_ENV });
+  res
+    .status(200)
+    .json({ status: "OK", timestamp: new Date(), environment: NODE_ENV });
 });
 
-// Error Handling Middleware
+// 7. Error Handling Middleware (Last)
 app.use((err, req, res, next) => {
   console.error("Error caught by middleware:", err.stack);
   res.status(500).json({ error: "Internal Server Error" });
 });
 
-// Server Start Logic
+// 8. HTTPS Server Start Logic
 let server;
+const sslOptions = {
+  key: fs.readFileSync("./localhost+2-key.pem"),
+  cert: fs.readFileSync("./localhost+2.pem"),
+};
 
 connectDB()
   .then(() => {
-    server = http.createServer(app).listen(PORT, "0.0.0.0", () => {
-      console.log(`Server is running on http://0.0.0.0:${PORT}`);
+    server = https.createServer(sslOptions, app).listen(PORT, () => {
+      console.log(`✅ Server is running securely on https://localhost:${PORT}`);
     });
   })
   .catch((err) => {
@@ -238,13 +218,10 @@ connectDB()
 
 // Process Handlers
 process.on("unhandledRejection", (err) => {
-  console.error("Unhandled Rejection:", err);
   if (server) server.close(() => process.exit(1));
   else process.exit(1);
 });
 process.on("uncaughtException", (err) => {
-  console.error("Uncaught Exception:", err);
   if (server) server.close(() => process.exit(1));
   else process.exit(1);
 });
-
