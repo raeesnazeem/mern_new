@@ -11,7 +11,7 @@ class EmailController {
     const transporter = nodemailer.createTransport({
       host: "smtp.zoho.in",
       port: 465,
-      secure: true, // Use TLS
+      secure: true, // Use SSL
       auth: {
         user: "raees@raeescodes.xyz",
         pass: process.env.EMAIL_PASS, 
