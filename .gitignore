@@ -55,4 +55,7 @@ repo-dev.code-workspace
 
 #Folders
 server-new/
+
+
+#vercel-build
 .vercel
