@@ -199,15 +199,10 @@ app.use((err, req, res, next) => {
 });
 
 // 8. HTTPS Server Start Logic
-let server;
-const sslOptions = {
-  key: fs.readFileSync("./localhost+2-key.pem"),
-  cert: fs.readFileSync("./localhost+2.pem"),
-};
 
 connectDB()
   .then(() => {
-    server = https.createServer(sslOptions, app).listen(PORT, () => {
+    server = http.createServer(app).listen(PORT, () => {
       console.log(`✅ Server is running securely on https://localhost:${PORT}`);
     });
   })
