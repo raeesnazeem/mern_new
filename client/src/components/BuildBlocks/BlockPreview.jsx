@@ -8,7 +8,20 @@ import Typewriter from "../Typewriter";
 import "../../styles/TemplatePreviewPage.css";
 import "../../styles/ColorEditorOverlay.css";
 import modalStyles from "../../styles/BlockPreviewModals.module.css";
+import "../../styles/LoginModal.css";
+import SectionImporterOverlay from "../SectionImporterOverlay";
+import PageEditorToolBar from "../PageEditorToolBar";
 import { useLocation, useNavigate } from "react-router-dom";
+
+import {
+  FiArrowLeft,
+  FiHome,
+  FiEdit3,
+  FiExternalLink,
+  FiZap,
+  FiTool,
+} from "react-icons/fi";
+import "../../styles/LeftPanelModern.css";
 
 import axios from "axios"; //new
 // ----- Helper Constants and Functions -----
@@ -66,10 +79,8 @@ const COLOR_KEYS = [
 ];
 
 const HEX_REGEX = /^#([0-9A-Fa-f]{3,4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
-const RGBA_REGEX =
-  /^rgba?\(\s*\d+%?\s*,\s*\d+%?\s*,\s*\d+%?\s*(,\s*[\d\.]+\s*)?\)$/;
-const HSLA_REGEX =
-  /^hsla?\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*(,\s*[\d\.]+\s*)?\)$/;
+const RGBA_REGEX = /^rgba?\(\s*\d+%?\s*,\s*\d+%?\s*,\s*\d+%?\s*(,\s*[\d\.]+\s*)?\)$/;
+const HSLA_REGEX = /^hsla?\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*(,\s*[\d\.]+\s*)?\)$/;
 
 function generateContextName(node, key, path) {
   if (node._title) return `${node._title} - ${key}`;
@@ -176,7 +187,6 @@ const BlockPreview = () => {
   const navigate = useNavigate();
   const iframeRef = useRef(null);
 
- 
   const [isLoading, setIsLoading] = useState(false); //loading and login visibility
   const [initialRawTemplates, setInitialRawTemplates] = useState(null);
   const [originalJsonProcessed, setOriginalJsonProcessed] = useState(null);
@@ -203,6 +213,14 @@ const BlockPreview = () => {
   const initialRawTemplatesFromLocationCacheRef = useRef(null);
   const allowNextPopState = useRef(false);
 
+  const [isImporterOpen, setIsImporterOpen] = useState(false);
+  const [sectionImporter, setSectionImporter] = useState(false);
+
+  const [toastMessage, setToastMessage] = useState(null);
+  const [toastType, setToastType] = useState("success");
+
+  const [showToolbarOverlay, setShowToolbarOverlay] = useState(false);
+
   useEffect(() => {
     window.history.pushState(
       { page: "BlockPreviewLoaded" },
@@ -222,6 +240,13 @@ const BlockPreview = () => {
     };
     window.addEventListener("popstate", handleBrowserBack);
     return () => window.removeEventListener("popstate", handleBrowserBack);
+  }, []);
+
+  //for toasts
+  const showToast = useCallback((msg, type = "success") => {
+    setToastMessage(msg);
+    setToastType(type);
+    setTimeout(() => setToastMessage(null), 2000);
   }, []);
 
   const extractColorsRecursively = useCallback(
@@ -292,7 +317,10 @@ const BlockPreview = () => {
     colorInstances.forEach((inst) => {
       if (seenOverall.has(inst.originalValue)) return;
       seenOverall.add(inst.originalValue);
-      const pk = inst.path.split(".").pop().toLowerCase();
+      const pk = inst.path
+        .split(".")
+        .pop()
+        .toLowerCase();
       let assigned = false;
       if (
         pk.includes("background_color_b") ||
@@ -346,12 +374,13 @@ const BlockPreview = () => {
       console.log("Already authenticated. Loading editor.");
       setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
       setShowIframe(true);
-      return; // Stop here
+      return;
     }
 
     // If we don't have a password, we need to log in.
     console.log("Not authenticated. Showing login form.");
     setShowLoginForm(true);
+    showToast("Let's login to continue");
   };
 
   //handleLogin
@@ -362,41 +391,60 @@ const BlockPreview = () => {
 
     try {
       const loginResponse = await axios.post(
-        `https://raeescodes.xyz/wp-json/custom-builder/v1/login?t=${new Date().getTime()}`,
+        `https://raeescodes.xyz/wp-json/custom-builder/v1/login`,
         { username, password }
       );
 
       if (loginResponse.data.success) {
-        console.log("Login Successful. Received Application Password.");
+        const {
+          logged_in_cookie,
+          secure_auth_cookie,
+          cookie_domain,
+          cookie_path,
+          admin_cookie_path,
+          plugins_cookie_path,
+          expiration,
+        } = loginResponse.data;
 
-        // 1. Store the application password for future use
-        setAppPassword(loginResponse.data.application_password);
+        const expires = new Date(expiration * 1000).toUTCString();
 
-        // 2. Close the login form
+        // Manually and explicitly set all three required cookies
+        document.cookie = `${logged_in_cookie.name}=${logged_in_cookie.value}; expires=${expires}; path=${cookie_path}; domain=${cookie_domain}; SameSite=None; Secure`;
+        document.cookie = `${secure_auth_cookie.name}=${secure_auth_cookie.value}; expires=${expires}; path=${admin_cookie_path}; domain=${cookie_domain}; SameSite=None; Secure`;
+        document.cookie = `${secure_auth_cookie.name}=${secure_auth_cookie.value}; expires=${expires}; path=${plugins_cookie_path}; domain=${cookie_domain}; SameSite=None; Secure`;
+
+        console.log("All cookies have been manually set via JavaScript.");
+
         setShowLoginForm(false);
+        showToast("Logged in");
 
-        // 3. IMMEDIATELY load the editor, completing the action the user started.
-        console.log("Login complete. Proceeding to load editor.");
-        setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
-        setShowIframe(true);
+        // Use a timeout to ensure the browser has processed the cookie updates before navigating the iframe
+        setTimeout(() => {
+          console.log("Proceeding to load editor URL into iframe.");
+          setIframeUrl(editUrl + "&cache_bust=" + new Date().getTime());
+        }, 150); // A 150ms delay is enough to handle this.
       } else {
-        setLoginError(loginResponse.data?.message || "Login failed.");
+        setLoginError(loginResponse.data.message || "Login failed.");
+        showToast("Oops! something's wrong!", "warning");
       }
     } catch (error) {
       console.error("Login error:", error);
       setLoginError(error.response?.data?.message || "An error occurred.");
+      showToast("Oops! something's wrong!", "warning");
     } finally {
       setIsLoading(false);
     }
   };
-
-
 
   useEffect(() => {
     const newLocationTemplatesData = location.state?.templatesOrderedBySection;
     const newLocationTemplatesString = newLocationTemplatesData
       ? JSON.stringify(newLocationTemplatesData)
       : null;
+
+    if (newLocationTemplatesData) {
+      showToast("Just a moment! we are generating your page!");
+    }
 
     setOriginalPrompt(
       location.state?.originalPrompt ||
@@ -535,7 +583,11 @@ const BlockPreview = () => {
     categorizeColorInstances,
   ]);
 
-
+  useEffect(() => {
+    const handler = () => setShowToolbarOverlay(false);
+    window.addEventListener("closeEditorToolbar", handler);
+    return () => window.removeEventListener("closeEditorToolbar", handler);
+  }, []);
 
   const handleWordPressPageGenerated = useCallback(
     (url, pageDataObjectFromWP) => {
@@ -547,10 +599,8 @@ const BlockPreview = () => {
         return;
       }
 
-     
-
       console.log("Received edit_url:", edit_url);
-     
+
       setIframeUrl(public_url || url); // For the "view" link
       setEditUrl(edit_url); // For the "edit" button
 
@@ -558,8 +608,8 @@ const BlockPreview = () => {
       setShowIframe(true);
       setIsPageLoading(false);
     },
-    [] 
-  )
+    []
+  );
 
   const applyChangesAndRegenerate = useCallback(
     async (changesArray) => {
@@ -573,8 +623,8 @@ const BlockPreview = () => {
         setIsColorEditorOpen(false);
         return;
       }
-      
 
+      showToast("Applying changes");
       const modifiedPageJson = structuredClone(originalJsonProcessed.json);
       let actualModificationsCount = 0;
 
@@ -613,9 +663,8 @@ const BlockPreview = () => {
         `Total successful calls to setValueByPath: ${actualModificationsCount}`
       );
 
-      const newPageName = `${originalJsonProcessed.name || "Page"} (Colors V${
-        Date.now() % 10000
-      })`;
+      const newPageName = `${originalJsonProcessed.name ||
+        "Page"} (Colors V${Date.now() % 10000})`;
 
       const updatedPageAsSingleSection = {
         _id: `updated-page-${Date.now()}`,
@@ -654,6 +703,7 @@ const BlockPreview = () => {
       allColorInstances,
       categorizeColorInstances,
       initialRawTemplatesFromLocationCacheRef,
+      showToast,
     ]
   );
 
@@ -677,6 +727,7 @@ const BlockPreview = () => {
     setIsConfirmModalOpen(false);
     setIsColorEditorOpen(true);
     setIsOrderFinalized(true);
+    showToast("Select colors");
   };
 
   const handleProgrammaticBackNavigation = () => {
@@ -688,55 +739,56 @@ const BlockPreview = () => {
     setIsConfirmModalOpen(false);
   };
 
-  // Render login form
   const renderLoginForm = () => {
     if (!showLoginForm) return null;
     return (
-      <div className={modalStyles.modalBackdrop}>
-        <div className={modalStyles.modalContent}>
-          <h4>Login to WordPress</h4>
-          <form onSubmit={handleLogin}>
-            <div style={{ marginBottom: "15px" }}>
-              <label>
-                Username:
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  style={{ width: "100%", padding: "8px", marginTop: "5px" }}
-                />
-              </label>
+      <div className="custom-login-backdrop">
+        <div className="custom-login-modal">
+          <h2 className="custom-login-heading">Login to Continue</h2>
+          <form onSubmit={handleLogin} className="custom-login-form">
+            <div className="form-group">
+              <input
+                id="username"
+                type="text"
+                placeholder=" "
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="form-input"
+                autoFocus
+              />
+              <label htmlFor="username">Username</label>
             </div>
-            <div style={{ marginBottom: "15px" }}>
-              <label>
-                Password:
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={{ width: "100%", padding: "8px", marginTop: "5px" }}
-                />
-              </label>
+
+            <div className="form-group">
+              <input
+                id="password"
+                type="password"
+                placeholder=" "
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="form-input"
+              />
+              <label htmlFor="password">Password</label>
             </div>
-            {loginError && <p style={{ color: "red" }}>{loginError}</p>}
-            <div className={modalStyles.modalActions}>
+            {loginError && <p className="form-error">{loginError}</p>}
+            <div className="form-actions">
               <button
                 type="button"
                 onClick={() => setShowLoginForm(false)}
-                className={`${modalStyles.modalButton} ${modalStyles.modalButtonSecondary}`}
+                className="btn btn-secondary"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className={`${modalStyles.modalButton} ${modalStyles.modalButtonPrimary}`}
+                className="btn btn-primary"
                 disabled={isLoading}
               >
                 Login
               </button>
             </div>
           </form>
-          <p style={{ marginTop: "15px", fontSize: "0.9em" }}>
+          <p className="alt-login">
             <a
               href={`https://raeescodes.xyz/wp-login.php?redirect_to=${encodeURIComponent(
                 editUrl
@@ -752,21 +804,110 @@ const BlockPreview = () => {
     );
   };
 
+  //sending data from overlay to the iframe
+  // const handleInsertSection = useCallback(
+  //   (sectionJsonContent) => {
+  //     // --- DEBUG LOG 3 ---
+  //     console.log("--- Step 3: handleInsertSection in BlockPreview fired ---");
+
+  //     const iframe = iframeRef.current;
+
+  //     if (iframe && iframe.contentWindow) {
+  //       const message = {
+  //         type: "ADD_ELEMENTOR_SECTION",
+  //         payload: sectionJsonContent,
+  //       };
+
+  //       const elementorOrigin = "https://raeescodes.xyz";
+
+  //       // --- DEBUG LOG 4 ---
+  //       console.log(
+  //         "--- Step 4: Iframe is ready. Attempting to post message ---"
+  //       );
+  //       console.log("Target Origin:", elementorOrigin);
+  //       console.log("Message Object:", message);
+
+  //       iframe.contentWindow.postMessage(message, elementorOrigin);
+
+  //       console.log(
+  //         "Message SENT. If the listener does not respond, the Target Origin is likely wrong."
+  //       );
+
+  //       setIsImporterOpen(false);
+  //     } else {
+  //       console.error(
+  //         "CRITICAL ERROR: Iframe reference not found or contentWindow is missing. Cannot post message.",
+  //         { iframe }
+  //       );
+  //       alert("Editor connection error. Could not send data.");
+  //     }
+  //   },
+  //   [iframeRef]
+  // );
+  const handleInsertSection = useCallback(
+    (sectionJsonContent, insertPosition = "last", customIndex = "") => {
+      console.log("--- Step 3: handleInsertSection in BlockPreview fired ---");
+
+      const iframe = iframeRef.current;
+
+      if (iframe && iframe.contentWindow) {
+        const message = {
+          type: "ADD_ELEMENTOR_SECTION",
+          payload: {
+            content: sectionJsonContent,
+            insertPosition,
+            customIndex,
+          },
+        };
+
+        const elementorOrigin = "https://raeescodes.xyz";
+
+        console.log(
+          "--- Step 4: Iframe is ready. Attempting to post message ---"
+        );
+        console.log("Target Origin:", elementorOrigin);
+        console.log("Message Object:", message);
+
+        iframe.contentWindow.postMessage(message, elementorOrigin);
+
+        console.log(
+          "Message SENT. If the listener does not respond, the Target Origin is likely wrong."
+        );
+
+        setIsImporterOpen(false);
+      } else {
+        console.error(
+          "CRITICAL ERROR: Iframe reference not found or contentWindow is missing. Cannot post message.",
+          { iframe }
+        );
+        alert("Editor connection error. Could not send data.");
+      }
+    },
+    [iframeRef]
+  );
+
+  //handling edit form action
+  const handleEditorToolAction = (action) => {
+    if (action === "edit_text") {
+      console.log("Sending postMessage: EDITOR_TOOL_EDIT_TEXT");
+      iframeRef.current?.contentWindow?.postMessage(
+        { type: "EDITOR_TOOL_EDIT_TEXT" },
+        "*"
+      );
+    }
+  };
+
+  const handleIframeLoad = () => {
+    console.log(
+      "Elementor iframe has finished loading. Showing Generate Sections button."
+    );
+    setIsPageLoading(false); // Make sure any main loaders are hidden
+    setSectionImporter(true); // **This is the correct place to show the button**
+  };
+
   // Left Panel Content
   const leftPanelContent = (
-    <div
-      className="template-preview-left-panel"
-      style={{
-        padding: "20px",
-        borderRadius: "16px",
-        backgroundColor: "white",
-        minHeight: "100%",
-        display: "flex",
-        flexDirection: "row",
-        alignContent: "start",
-        flexWrap: "wrap",
-      }}
-    >
+    <div className="template-preview-left-panel">
       <div className="promptDisplayPanel">
         <h3 style={{ marginTop: 0, marginBottom: "10px" }}>You said:</h3>
         {originalPrompt ? (
@@ -781,149 +922,98 @@ const BlockPreview = () => {
       </div>
 
       <div className="buttonGroup">
-        {/* Edit Colors Button */}
-        {originalJsonProcessed && showIframe && (
-          <button
-            className="editColorsButton"
-            onClick={handleAttemptEditColors}
-            disabled={
-              !(
-                categorizedColorPalette &&
-                Object.values(categorizedColorPalette).some(
-                  (arr) => arr.length > 0
-                )
-              ) || isPageLoading
-            }
+        <div className="buttonGroup">
+          <hr style={{ margin: "16px 0", borderColor: "#e0e0e0" }} />
+
+          <div
             style={{
-              display: "block",
-              width: "100%",
-              padding: "10px",
-              marginTop: "20px",
-              marginBottom: "15px",
-              backgroundColor: "teal",
-              color: "white",
-              border: "none",
-              borderRadius: "5px",
-              cursor:
-                !(
-                  categorizedColorPalette &&
-                  Object.values(categorizedColorPalette).some(
-                    (arr) => arr.length > 0
-                  )
-                ) || isPageLoading
-                  ? "not-allowed"
-                  : "pointer",
-              fontSize: "1rem",
-              fontWeight: "bold",
-              opacity:
-                !(
-                  categorizedColorPalette &&
-                  Object.values(categorizedColorPalette).some(
-                    (arr) => arr.length > 0
-                  )
-                ) || isPageLoading
-                  ? 0.6
-                  : 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
             }}
           >
-            Edit Colors
-            {categorizedColorPalette &&
-            Object.values(categorizedColorPalette).some((arr) => arr.length > 0)
-              ? ` (Colors Available)`
-              : " (No colors found)"}
-          </button>
-        )}
+            <span className="leftPanel-subHeadings">ACTIONS</span>
+          </div>
 
-        {editUrl && (
-          <p style={{ fontSize: "0.9em", marginTop: "10px" }}>
+          {originalJsonProcessed && showIframe && (
             <button
-              style={{
-                width: "100%",
-                padding: "8px",
-                backgroundColor: "#fff7e5",
-                color: "#333",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                fontWeight: "normal",
-                opacity: isLoading ? 0.6 : 1,
-                boxShadow:
-                  "0 1px 3px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05)",
-              }}
+              className="menu-style-button teal"
+              onClick={handleAttemptEditColors}
+              disabled={
+                !(
+                  categorizedColorPalette &&
+                  Object.values(categorizedColorPalette).some(
+                    (arr) => arr.length > 0
+                  )
+                ) || isPageLoading
+              }
+            >
+              <FiEdit3 />
+              Edit Colors
+            </button>
+          )}
+          {editUrl && (
+            <button
+              className="menu-style-button"
               onClick={() => checkAuthAndLoadEditor()}
               disabled={isLoading}
             >
+              <FiExternalLink />
               Edit Full Page in Editor
             </button>
-          </p>
-        )}
-
-        {/* Optional Finalized Message */}
-        {isOrderFinalized && (
-          <p
-            style={{
-              marginTop: "0px",
-              marginBottom: "15px",
-              color: "#555",
-              fontSize: "0.85rem",
-              textAlign: "center",
-            }}
-          >
-            Section order is finalized. You can continue to edit colors.
-          </p>
-        )}
-
-        <button
-          className="backToReorderButton"
-          onClick={handleProgrammaticBackNavigation}
-          disabled={isOrderFinalized}
-          style={{
-            display: "block",
-            width: "100%",
-            padding: "10px",
-            marginBottom: "15px",
-            backgroundColor: isOrderFinalized ? "#A9A9A9" : "#6c757d",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: isOrderFinalized ? "not-allowed" : "pointer",
-            opacity: isOrderFinalized ? 0.5 : 1,
-            marginTop: "40px",
-            minWidth: "200px",
-          }}
-        >
-          Back One Step
-        </button>
-
-        <button
-          className="backToDashboardButton"
-          onClick={() => navigate("/")}
-          style={{
-            display: "block",
-            width: "100%",
-            padding: "10px",
-            backgroundColor: "#37352f",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-        >
-          Back to Dashboard
-        </button>
-
-        {showIframe && iframeUrl && (
-          <p className={modalStyles.previewLink}>
-            <a
-              href={iframeUrl}
-              style={{ fontSize: "0.5em", marginTop: "15px" }}
-              target="_blank"
-              rel="noopener noreferrer"
+          )}
+          {isOrderFinalized && (
+            <p
+              style={{
+                fontSize: "0.85rem",
+                textAlign: "center",
+                color: "#666",
+              }}
             >
-              Open preview in new tab
-            </a>
-          </p>
-        )}
+              Section order is finalized. You can continue to edit colors.
+            </p>
+          )}
+          {sectionImporter && (
+            <>
+              <button
+                className="menu-style-button"
+                onClick={() => setIsImporterOpen(true)}
+              >
+                <FiZap />
+                Generate Sections
+              </button>
+              {/* <button
+                className="menu-style-button"
+                onClick={() => setShowToolbarOverlay(true)}
+              >
+                <FiTool />
+                Editor Tools
+              </button> */}
+            </>
+          )}
+
+          <button
+            className="backToReorderButton"
+            onClick={handleProgrammaticBackNavigation}
+            disabled={isOrderFinalized}
+          >
+            <FiArrowLeft style={{ marginRight: 6 }} />
+            Back One Step
+          </button>
+          <button
+            className="backToDashboardButton"
+            onClick={() => navigate("/")}
+          >
+            <FiHome
+              style={{
+                marginRight: 6,
+                fontSize: "13px",
+                verticalAlign: "middle",
+              }}
+            />
+            Back to Dashboard
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -952,6 +1042,7 @@ const BlockPreview = () => {
             sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
             referrerPolicy="no-referrer"
             allow="fullscreen; camera; microphone; clipboard-read; clipboard-write;"
+            onLoad={handleIframeLoad}
           />
         </div>
       </div>
@@ -1052,6 +1143,24 @@ const BlockPreview = () => {
           categorizedPalette={categorizedColorPalette}
           onApplyChanges={applyChangesAndRegenerate}
         />
+      )}
+      {isImporterOpen && (
+        <SectionImporterOverlay
+          onClose={() => setIsImporterOpen(false)}
+          onInsertSection={handleInsertSection}
+        />
+      )}
+      {showToolbarOverlay && (
+        <PageEditorToolBar onAction={handleEditorToolAction} />
+      )}
+      {toastMessage && (
+        <div
+          className={`toast-message ${
+            toastType === "warning" ? "warning" : ""
+          }`}
+        >
+          {toastMessage}
+        </div>
       )}
     </DashboardLayout>
   );

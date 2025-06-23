@@ -1,0 +1,71 @@
+[
+  {
+    "id": "q1",
+    "text": "Hey there! I'm excited to help you get started on your new project. To begin, what's your full name?",
+    "type": "text",
+    "next": "q2",
+    "required": false
+  },
+  {
+    "id": "q2",
+    "text": "Awesome, thanks! Could you please share the best email address to reach you at?",
+    "type": "text",
+    "next": "q3",
+    "required": false
+  },
+  {
+    "id": "q3",
+    "text": "And what's the name of your business?",
+    "type": "text",
+    "next": "q4",
+    "required": false
+  },
+  {
+    "id": "q4",
+    "text": "Do you have a current website? If so, could you share the address with me? If not, just type 'none'.",
+    "type": "text",
+    "next": "q5",
+    "required": false
+  },
+  {
+    "id": "q5",
+    "text": "Will anyone else from your team be involved in this project? If so, who are the key people I should know about?",
+    "type": "text",
+    "next": "q6",
+    "required": false
+  },
+  {
+    "id": "q6",
+    "text": "Tell me a bit about your business. What industry are you in, and how would you describe what you do?",
+    "type": "text",
+    "next": "q7",
+    "required": false
+  },
+  {
+    "id": "q7",
+    "text": "What's your secret sauce? What makes your business stand out from the competition?",
+    "type": "text",
+    "next": "q8",
+    "required": false
+  },
+  {
+    "id": "q8",
+    "text": "What's the main thing you're hoping to achieve with us at Growth99? Are you looking to get more clients, boost sales, improve your site's SEO, or something else?",
+    "type": "text",
+    "next": "q9",
+    "required": false
+  },
+  {
+    "id": "q9",
+    "text": "Just to make sure we're on the same page for scheduling, what time zone are you in?",
+    "type": "text",
+    "next": "q10",
+    "required": false
+  },
+  {
+    "id": "q10",
+    "text": "What's your business address? If you have more than one spot, feel free to list them all.",
+    "type": "text",
+    "next": null
+  }
+]

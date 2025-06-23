@@ -4,12 +4,17 @@ const https = require("https"); // Import HTTPS
 const fs = require("fs"); // Import File System
 const app = express();
 
+const { InferenceClient } = require('@huggingface/inference'); //huggingface
+const hf = new InferenceClient(process.env.HF_TOKEN);
+
 const cors = require("cors");
 const connectDB = require("./utils/db");
 
 const router = require("./router/authRouter");
 const tempRouter = require("./router/templateRouter");
 const frameBuilderRouter = require("./router/frameBuilderRouter");
+const AiRouter = require("./router/AiRouter")
+const EmailRouter = require("./router/EmailRouter")
 
 
 const PORT = process.env.PORT || 3000;
@@ -19,7 +24,7 @@ const NODE_ENV = process.env.NODE_ENV || "development";
 let corsOptions;
 if (NODE_ENV === "production") {
   const allowedOrigins = [
-    process.env.FRONTEND_PRODUCTION_URL || "https://g99buildbot.vercel.app",
+    process.env.FRONTEND_PRODUCTION_URL || "https://g99buildbot.vercel.app" || "https://g99buildbot.raeescodes.xyz"
   ].filter(Boolean);
   corsOptions = {
     origin: function (origin, callback) {
@@ -39,6 +44,7 @@ if (NODE_ENV === "production") {
       process.env.FRONTEND_DEVELOPMENT_URL || "https://localhost:5173",
       "https://127.0.0.1:5173",
       "https://g99buildbot.raeescodes.xyz",
+      "https://raeescodes.xyz"
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -67,6 +73,8 @@ app.use(express.urlencoded({ extended: true, limit: "30mb" }));
 app.use("/api/v1/auth", router);
 app.use("/api/v1/template", tempRouter);
 app.use("/api/v1/frame-builder", frameBuilderRouter);
+app.use("/api/v1/ai-gen", AiRouter)
+app.use('/api/v1/email', EmailRouter)
 
 // 6. Health Check Endpoint
 app.get("/api/health", (req, res) => {

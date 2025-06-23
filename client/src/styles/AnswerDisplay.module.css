@@ -1,0 +1,48 @@
+.answerContainer {
+  padding: 2rem;
+  background-color: #ffffff;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 16px;
+}
+
+.title {
+  font-size: 1.5rem;
+  color: #333;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.placeholder {
+  color: #888;
+  font-style: italic;
+  line-height: 1.6;
+}
+
+.methodButton{
+  padding: 12px 24px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  background-color: #37352f;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 180px;
+  display: flex;
+  align-self: flex-start;
+}
+
+
+.methodButton:hover {
+  background-color: #f7f6f3;
+  border-color: #d0d0d0;
+  color: #37352f;
+}
+
+.methodButton:active {
+  background-color: #f0efec;
+}

@@ -14,6 +14,10 @@ import {
   FiCopy,
   FiFolderPlus,
   FiBarChart,
+  FiPlusCircle,
+  FiOctagon,
+  FiEdit3,
+  FiEye,
 } from "react-icons/fi";
 import AddSectionForm from "../components/AddSectionForm";
 
@@ -75,32 +79,33 @@ const DashboardPage = () => {
         { prompt }
       );
 
-
       // from the response data - Extract templatesOrderedBySection alone
       const templatesInOrder = response.data.data.templatesOrderedBySection;
 
       //from the response data - Extract all templates that match all the filtering criteria in the controller
-      const allMatchingTemplatesFromController = response.data.data.allTemplates;
+      const allMatchingTemplatesFromController =
+        response.data.data.allTemplates;
 
-      console.log("data is sent including section names: ", templatesInOrder)
+      console.log("data is sent including section names: ", templatesInOrder);
 
       // console.log('These are the templates in order:', templatesInOrder);
 
       // /preview route renders TemplatePreview Component - also passing on the templates and originalPrompt
       navigate("/intermediate-component", {
-        state: { templatesOrderedBySection: templatesInOrder,
-                 allMatchingTemplatesFromController:allMatchingTemplatesFromController,
-                 originalPrompt: prompt
-         },
+        state: {
+          templatesOrderedBySection: templatesInOrder,
+          allMatchingTemplatesFromController:
+            allMatchingTemplatesFromController,
+          originalPrompt: prompt,
+        },
       });
     } catch (error) {
       console.error("Error:", error.message);
-      console.error("Full error response:", error.response?.data); 
+      console.error("Full error response:", error.response?.data);
       alert("Failed to generate templates.");
     } finally {
       setIsLoading(false);
     }
-
   };
 
   // Logic for rendering the right panel of the layout
@@ -170,7 +175,10 @@ const DashboardPage = () => {
                     <div>
                       <div
                         className="iframe-container"
-                        style={{ height: "calc(100vh - 95px)", border: "1px solid #ccc" }}
+                        style={{
+                          height: "calc(100vh - 95px)",
+                          border: "1px solid #ccc",
+                        }}
                       >
                         <iframe
                           src={previewUrl}
@@ -214,139 +222,136 @@ const DashboardPage = () => {
     );
   };
 
-const leftPanelContent = (
-  <div className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ""}`}>
-    {/* Sidebar Header */}
-    <div className={styles.sidebarHeader}>
-      {!isCollapsed && <h3>Actions</h3>}
-      <button className={styles.toggleButton} onClick={toggleSidebar}>
-        <FiLayout />
-      </button>
-    </div>
+  const leftPanelContent = (
+    <div className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ""}`}>
+      {/* Sidebar Header */}
+      <div className={styles.sidebarHeader}>
+        {!isCollapsed && <h3>Actions</h3>}
+        <button className={styles.toggleButton} onClick={toggleSidebar}>
+          <FiLayout />
+        </button>
+      </div>
 
-    {/* Flex container for content + admin */}
-    <div className={styles.sidebarBody}>
-      {/* Main Menu Items */}
-      <ul className={styles.sidebarMenu}>
-        {/* Generate Template */}
-        <li>
-          <button
-            className={`${styles.sidebarItem} ${
-              activeView === "home" ? styles.active : ""
-            }`}
-            onClick={() => {
-              resetEverything();
-              setActiveView("home");
-            }}
-            title={isCollapsed ? "Generate Template" : ""}
-          >
-            <span className={styles.icon}>
-              <FiLayers />
-            </span>
-            {!isCollapsed && <span>Generate Template</span>}
-          </button>
-        </li>
+      {/* Flex container for content + admin */}
+      <div className={styles.sidebarBody}>
+        {/* Main Menu Items */}
+        <ul className={styles.sidebarMenu}>
+          {/* Generate Template */}
+          <li>
+            <button
+              className={`${styles.sidebarItem} ${
+                activeView === "home" ? styles.active : ""
+              }`}
+              onClick={() => {
+                resetEverything();
+                setActiveView("home");
+              }}
+              title={isCollapsed ? "Generate Template" : ""}
+            >
+              <span className={styles.icon}>
+                <FiLayers />
+              </span>
+              {!isCollapsed && <span>Generate Template</span>}
+            </button>
+          </li>
 
+          {/* Frame Builder */}
+          <li>
+            <button
+              className={styles.sidebarItem}
+              onClick={() => navigate("/frame-builder")}
+            >
+              <span className={styles.icon}>
+                <FiCopy />
+              </span>
+              {!isCollapsed && <span>Frame Builder</span>}
+            </button>
+          </li>
+        </ul>
 
-        {/* Frame Builder */}
-        <li>
-          <button
-            className={styles.sidebarItem}
-            onClick={() => navigate("/frame-builder")}
-          >
-            <span className={styles.icon}>
-              <FiCopy />
-            </span>
-            {!isCollapsed && <span>Frame Builder</span>}
-          </button>
-        </li>
+        {/* Bottom Section: Admin Area */}
+        <div className={styles.sidebarFooterSection}>
+          <hr className={styles.divider} />
 
-         {/* BuildBlocks */}
-      {/*  <li>
-          <button
-            className={styles.sidebarItem}
-            onClick={() => navigate("/build-blocks-main")}
-          >
-            <span className={styles.icon}>
-              <FiBarChart />
-            </span>
-            {!isCollapsed && <span>Build Blocks</span>}
-          </button>
-        </li>*/}
-      </ul> 
-
-      {/* Bottom Section: Admin Area */}
-      <div className={styles.sidebarFooterSection}>
-        <hr className={styles.divider} />
-
-        {/* Admin Toggle */}
-        <div className={styles.adminSection}>
-          <div className={styles.adminToggleContainer}>
-            {!isCollapsed && <span>Admin</span>}
-            <label className={styles.switch}>
-              <input
-                type="checkbox"
-                checked={isAdmin}
-                onChange={(e) => setIsAdmin(e.target.checked)}
-              />
-              <span className={styles.slider}></span>
-            </label>
+          {/* Admin Toggle */}
+          <div className={styles.adminSection}>
+            <div className={styles.adminToggleContainer}>
+              {!isCollapsed && <span>Admin</span>}
+              <label className={styles.switch}>
+                <input
+                  type="checkbox"
+                  checked={isAdmin}
+                  onChange={(e) => setIsAdmin(e.target.checked)}
+                />
+                <span className={styles.slider}></span>
+              </label>
+            </div>
           </div>
+
+          {/* Conditional Admin Actions */}
+          {isAdmin && (
+            <ul className={styles.sidebarMenu}>
+              {/* Add Templates */}
+              <li>
+                <button
+                  className={styles.sidebarItem}
+                  onClick={() => navigate("/add-templates")}
+                >
+                  <span className={styles.icon}>
+                    <FiPlusCircle />
+                  </span>
+                  {!isCollapsed && <span>Add Sections</span>}
+                </button>
+              </li>
+
+              {/* See Templates */}
+              <li>
+                <button
+                  className={styles.sidebarItem}
+                  onClick={() => navigate("/templates")}
+                >
+                  <span className={styles.icon}>
+                    <FiEye />
+                  </span>
+                  {!isCollapsed && <span>See Sections</span>}
+                </button>
+              </li>
+
+
+              {/* See Template(s) */}
+              <li>
+                <button
+                  className={`${styles.sidebarItem} ${
+                    activeView === "fetchtemplate" ? styles.active : ""
+                  }`}
+                  onClick={() => setActiveView("fetchtemplate")}
+                  title={isCollapsed ? "Search Template(s)" : ""}
+                >
+                  <span className={styles.icon}>
+                    <FiGrid />
+                  </span>
+                  {!isCollapsed && <span>Search Template(s)</span>}
+                </button>
+              </li>
+
+              {/* Add Sections (Builder) */}
+              <li>
+                <button
+                  className={styles.sidebarItem}
+                  onClick={() => setActiveView("addSectionForm")}
+                >
+                  <span className={styles.icon}>
+                    <FiFolderPlus />
+                  </span>
+                  {!isCollapsed && <span>Add Sections (Builder)</span>}
+                </button>
+              </li>
+            </ul>
+          )}
         </div>
-
-        {/* Conditional Admin Actions */}
-        {isAdmin && (
-          <ul className={styles.sidebarMenu}>
-            {/* Add New Template */}
-            <li>
-              <button
-                className={`${styles.sidebarItem} ${
-                  activeView === "addTemplate" ? styles.active : ""
-                }`}
-                onClick={() => setActiveView("addTemplate")}
-                title={isCollapsed ? "Add New Template(s)" : ""}
-              >
-                <span className={styles.icon}>
-                  <FiPlus />
-                </span>
-                {!isCollapsed && <span>Add New Template(s)</span>}
-              </button>
-            </li>
-
-            {/* See Template(s) */}
-            <li>
-              <button
-                className={`${styles.sidebarItem} ${
-                  activeView === "fetchtemplate" ? styles.active : ""
-                }`}
-                onClick={() => setActiveView("fetchtemplate")}
-                title={isCollapsed ? "See Template(s)" : ""}
-              >
-                <span className={styles.icon}>
-                  <FiGrid />
-                </span>
-                {!isCollapsed && <span>See Template(s)</span>}
-              </button>
-            </li>
-
-            {/* Add Sections (Builder) */}
-            <li>
-              <button
-                className={styles.sidebarItem}
-                onClick={() => setActiveView("addSectionForm")}
-              >
-                <span className={styles.icon}>
-                  <FiFolderPlus />
-                </span>
-                {!isCollapsed && <span>Add Sections (Builder)</span>}
-              </button>
-            </li>
-          </ul>
-        )}
       </div>
     </div>
-  </div>
-);
+  );
 
   return (
     <DashboardLayout

@@ -1,5 +1,5 @@
 import styles from '../styles/DashboardLayout.module.css';
-import TopBar from './TopBar';
+import TopBar from '../components/TopBar';
 
 const DashboardLayout = ({ leftPanel, rightPanel, topBar, children }) => { 
   return (

@@ -73,7 +73,10 @@ const templateSchema = new mongoose.Schema({
     type: Object,
     required: [true, "JSON content is required"],
   },
-
+  screenshot: {
+    type: String,
+    default: null, // Optionally we can set a default value
+  },
   isActive: {
     type: Boolean,
     default: true,
@@ -84,6 +87,11 @@ const templateSchema = new mongoose.Schema({
   },
   style: {
     type: String,
+  },
+  description: {
+    type: String,
+    maxlength: 100 * 20, // Approx. 100 words assuming an average of 20 characters per word
+    trim: true, // Remove extra whitespace
   },
 
   createdAt: {

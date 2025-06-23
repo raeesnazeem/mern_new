@@ -140,10 +140,6 @@ const FetchTemplateDisplay = ({ onPreview }) => {
     setLoading(true);
 
     try {
-      const username = `${import.meta.env.VITE_VITE_WP_USERNAME}`;
-      const appPassword = `${import.meta.env.VITE_WP_PASS}`;
-      // const token = btoa(`${username}:${appPassword}`);
-
       const requestData = {
         name: `${template.name} ${Math.floor(
           Math.random() * 90000000000 + 10000000000

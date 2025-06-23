@@ -107,7 +107,7 @@ const CreateTemplate = ({ onSuccess }) => {
         `${import.meta.env.VITE_TO_SERVER_API_URL}/template/create-template`,
         payload,
         {
-          withCredentials: true, // If you need to send cookies
+          withCredentials: true, // If needed to send cookies
           headers: {
             "Content-Type": "application/json",
           },

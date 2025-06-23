@@ -1,5 +1,9 @@
 const Template = require("../models/templateModel");
 const { v4: uuid } = require("uuid");
+const {
+  sendToWordPressAndTakeScreenshot,
+} = require("../utils/screenshotService");
+const axios = require("axios");
 
 const templateController = {
   /* ----------------------------------------------------*
@@ -184,8 +188,9 @@ const templateController = {
         );
       } else {
         finalTemplates = allFoundTemplates.filter(
-          (template) => !(template.tags || []).includes("dark") )
-          console.log(
+          (template) => !(template.tags || []).includes("dark")
+        );
+        console.log(
           `   Style is 'empty', defaulting to 'light' tag. Count is now ${finalTemplates.length}.`
         );
       }
@@ -266,7 +271,38 @@ const templateController = {
   },
 
   /* ----------------------------------------------------*
-   * Create/Upload a new template
+   * Fetch Sections for WP plugin
+   * ----------------------------------------------------*/
+  fetchSectionsByType: async (req, res) => {
+    try {
+      const { sectionType } = req.body;
+      if (!sectionType) {
+        return res
+          .status(400)
+          .json({ success: false, message: "sectionType is required" });
+      }
+
+      // Query MongoDB database for all templates of the specified type
+      const templates = await Template.find({
+        isActive: true,
+        sectionType: sectionType.toLowerCase(),
+      })
+        .select("name json tags style")
+        .lean(); // Get all necessary data
+
+      if (!templates || templates.length === 0) {
+        return res.status(404).json({ success: false, data: [] });
+      }
+
+      res.status(200).json({ success: true, data: templates });
+    } catch (error) {
+      console.error("Error in fetchSectionsByType:", error);
+      res.status(500).json({ success: false, message: "Server error." });
+    }
+  },
+
+  /* ----------------------------------------------------*
+   * Create/Upload/edit a template
    * POST /api/templates
    * Required fields: name, sectionType, json
    * ----------------------------------------------------*/
@@ -368,6 +404,192 @@ const templateController = {
         error:
           process.env.NODE_ENV === "development" ? error.message : undefined,
       });
+    }
+  },
+
+  //after creating template, setting this up to automatically take screenshot
+  createTemplateAndPreview: async (req, res) => {
+    try {
+      const { name, sectionType, json, style, tags } = req.body;
+
+      // Handle tags correctly
+      const parsedTags = tags
+        ? Array.isArray(tags)
+          ? tags
+              .map((tag) => (typeof tag === "string" ? tag.trim() : ""))
+              .filter(Boolean)
+          : tags
+              .split(",")
+              .map((tag) => tag.trim())
+              .filter(Boolean)
+        : [];
+
+      // Save to MongoDB
+      const createdTemplate = await Template.create({
+        name,
+        sectionType,
+        json,
+        style,
+        tags: parsedTags,
+      });
+
+      // FAKE ASYNC: Do this in background without blocking response
+      setTimeout(async () => {
+        try {
+          const screenshotUrl = await sendToWordPressAndTakeScreenshot({
+            name: `${createdTemplate.name} - ${createdTemplate.uuid}`,
+            json: createdTemplate.json,
+          });
+
+          console.log("Updating template with screenshot...");
+          console.log("Screenshot length:", screenshotUrl.length);
+
+          const result = await Template.findByIdAndUpdate(
+            createdTemplate._id,
+            { $set: { screenshot: screenshotUrl } },
+            { new: true }
+          );
+
+          if (!result) {
+            throw new Error("Failed to update template with screenshot");
+          }
+
+          console.log("Screenshot successfully saved!");
+        } catch (err) {
+          console.error("Background task failed:", err.message);
+        }
+      }, 0);
+
+      res.status(201).json({
+        success: true,
+        data: createdTemplate,
+      });
+    } catch (error) {
+      console.error("Error creating template:", error);
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  },
+
+  //edit Template
+  // GET /template/edit/:id - Get template for editing
+  getTemplateForEdit: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const template = await Template.findById(id).select(
+        "name sectionType json tags style screenshot"
+      );
+
+      if (!template) {
+        return res.status(404).json({
+          success: false,
+          message: "Template not found",
+        });
+      }
+
+      res.json({
+        success: true,
+        data: template,
+      });
+    } catch (error) {
+      console.error("Error fetching template:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error while fetching template",
+        error:
+          process.env.NODE_ENV === "development" ? error.message : undefined,
+      });
+    }
+  },
+
+  // PUT /template/edit/:id - Update template
+  updateTemplate: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const updateData = {};
+      const allowedFields = ["name", "sectionType", "json", "tags", "style"];
+
+      Object.keys(req.body).forEach((key) => {
+        if (allowedFields.includes(key)) {
+          updateData[key] = req.body[key];
+        }
+      });
+
+      // Handle tags as array
+      if (updateData.tags && typeof updateData.tags === "string") {
+        updateData.tags = updateData.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter((tag) => tag);
+      }
+
+      const updatedTemplate = await Template.findByIdAndUpdate(
+        id,
+        { $set: updateData },
+        { new: true, runValidators: true }
+      );
+
+      if (!updatedTemplate) {
+        return res.status(404).json({
+          success: false,
+          message: "Template not found",
+        });
+      }
+
+      res.json({
+        success: true,
+        data: updatedTemplate,
+      });
+    } catch (error) {
+      console.error("Error updating template:", error);
+
+      if (error.name === "ValidationError") {
+        const messages = Object.values(error.errors).map((val) => val.message);
+        return res.status(400).json({
+          success: false,
+          message: "Validation error",
+          errors: messages,
+        });
+      }
+
+      res.status(500).json({
+        success: false,
+        message: "Server error while updating template",
+        error:
+          process.env.NODE_ENV === "development" ? error.message : undefined,
+      });
+    }
+  },
+
+  //list all templates available
+  getAllTemplates: async (req, res) => {
+    try {
+      const templates = await Template.find({}, "name sectionType screenshot")
+        .select("name sectionType json tags style screenshot")
+        .sort({ createdAt: -1 })
+        .lean();
+      res.json({ success: true, data: templates });
+    } catch (error) {
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+  },
+
+  // DELETE /template/delete/:id
+  deleteTemplate: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await Template.findByIdAndDelete(id);
+
+      if (!deleted) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Template not found" });
+      }
+
+      res.json({ success: true, message: "Template deleted successfully" });
+    } catch (err) {
+      console.error("Error deleting template:", err);
+      res.status(500).json({ success: false, message: "Server error" });
     }
   },
 };

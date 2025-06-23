@@ -6,7 +6,6 @@
 
 }
 
-
 .editColorsButton:hover {
     background-color: #fff;
     outline: none;
@@ -18,3 +17,141 @@
     color: #fff;
 }
 
+.toast-message {
+    position: fixed;
+    top: 140px;
+    left: calc((calc(100% - 280px))- 20%);
+    transform: translateX(-80%);
+    background-color: #ffffff;
+    color: #004d4d;
+    padding: 12px 20px;
+    border-radius: 12px;
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
+    font-size: 0.8rem;
+    font-weight: 500;
+    z-index: 9999;
+    opacity: 0;
+    animation: fadeToast 2s ease-in-out forwards;
+    pointer-events: none;
+}
+
+.toast-message.warning {
+    background-color: #ffe5e5;
+    color: #a80000;
+}
+
+@keyframes fadeToast {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -8px);
+    }
+
+    10% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+
+    90% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -8px);
+    }
+}
+
+/*Laptop Screens*/
+@media (max-width: 1400px) {
+  .editColorsButton {
+    font-size: 0.75rem !important;
+    padding: 8px 12px;
+  }
+
+  .backToDashboard {
+    font-size: 0.75rem;
+    padding: 8px 12px;
+  }
+
+  .toast-message {
+    font-size: 0.75rem;
+    padding: 10px 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 200px;
+    max-width: 90%;
+  }
+}
+
+/* Tablet Screens */
+@media (max-width: 1024px) {
+  .editColorsButton {
+    font-size: 0.7rem !important;
+    padding: 6px 10px;
+  }
+
+  .backToDashboard {
+    font-size: 0.7rem;
+    padding: 6px 10px;
+  }
+
+  .toast-message {
+    font-size: 0.7rem;
+    padding: 8px 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 180px;
+    max-width: 90%;
+  }
+}
+
+/* Mobile Screens */
+@media (max-width: 768px) {
+  .editColorsButton {
+    font-size: 0.65rem !important;
+    padding: 6px 10px;
+    width: 100%;
+    margin-top: 15px;
+  }
+
+  .backToDashboard {
+    font-size: 0.65rem;
+    padding: 6px 10px;
+    width: 100%;
+  }
+
+  .toast-message {
+    font-size: 0.65rem;
+    padding: 8px 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 160px;
+    max-width: 90%;
+  }
+}
+
+/* Very Small Devices */
+@media (max-width: 320px) {
+  .editColorsButton {
+    font-size: 0.6rem !important;
+    padding: 5px 8px;
+    width: 100%;
+    margin-top: 12px;
+  }
+
+  .backToDashboard {
+    font-size: 0.6rem;
+    padding: 5px 8px;
+    width: 100%;
+  }
+
+  .toast-message {
+    font-size: 0.6rem;
+    padding: 6px 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 140px;
+    max-width: 90%;
+  }
+}

@@ -1,0 +1,178 @@
+/* --- Overall Chatbot Container --- */
+
+.rsc{
+  overflow-y:auto !important;
+  border-radius:16px;
+}
+
+/* The main container for the entire chatbot window */
+.rsc-container {
+  border-radius: 16px !important;
+  background: #fff !important;
+  height: calc(100vh - 95px) !important;
+}
+
+/* --- Header --- */
+
+/* The header bar at the top */
+.rsc-header {
+  background-color: #fff !important; /* dark teal */
+  color: white !important;
+  padding: 16px !important;
+}
+
+/* The title text inside the header */
+.rsc-header-title {
+  font-weight: 500 !important;
+  font-size: 18px !important;
+}
+
+/* --- Chat Content Area --- */
+
+/* The scrollable area where messages appear */
+.rsc-content {
+  background-color: #ffffff !important;
+  padding: 20px 10px !important;
+}
+
+/* --- Chat Bubbles --- */
+
+
+
+/* User-specific message bubble */
+.rsc-ts-user .rsc-ts-bubble {
+  background-color: #e6f8e1;
+  color: #2a3532;
+  border: 1px solid #2a3532;
+  border-radius: 12px 12px 0 12px !important;
+  font-weight:500;
+}
+
+/* The text content inside any bubble */
+.rsc-ts-bubble-text {
+  font-size: 15px !important;
+  line-height: 1.5 !important;
+  font-weight: 500 !important;
+}
+
+/* --- Multiple Choice Options --- */
+
+/* The container for the option buttons */
+.rsc-os-options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end; /* Aligns buttons to the right */
+  padding: 0 10px;
+}
+
+/* A single option button */
+.rsc-os-option-button {
+  background-color: white !important;
+  color: #008080 !important; /* Teal text */
+  border: 1px solid #008080 !important;
+  border-radius: 20px !important;
+  font-weight: 500 !important;
+  padding: 10px 16px !important;
+  margin: 4px !important;
+  transition: all 0.2s ease !important;
+}
+
+/* The hover state for an option button */
+.rsc-os-option-button:hover {
+  background-color: #008080 !important;
+  color: white !important;
+}
+
+/* --- Input Form at the Bottom --- */
+
+/* The form container holding the input field and submit button */
+.rsc-form {
+  border-top: 1px solid #eee !important;
+  padding: 10px !important;
+  display: flex;
+  align-items: center;  
+}
+
+/* The text input field */
+.rsc-input {
+  border: 1px solid #ccc !important;
+  border-radius: 8px !important;
+  padding: 12px !important;
+  font-size: 15px !important;
+  flex-grow: 1 !important;
+}
+
+.rsc-input:focus {
+  border-color: #2a3532 !important; /* Highlight with teal on focus */
+  box-shadow: 0 0 0 2px rgba(0, 128, 128, 0.2) !important;
+  outline: none;
+}
+
+/* The submit button */
+.rsc-submit-button {
+  background-color: #aed6cc !important;
+  width: 43px !important;
+  height: 43px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  margin-left: 10px !important;
+  margin-top:2px !important;
+  margin-right:10px !important;
+}
+
+/* You can replace the default SVG icon like this */
+.rsc-submit-button svg {
+  fill: white !important;
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.rsc-cs{
+  box-shadow: none !important;
+}
+
+.rsc-footer{
+    max-width:98%;
+    padding-left: 20px;
+    background: #fff !important;
+    margin-top: -20px;
+}
+
+/*
+ * Custom Scrollbar for the Chatbot Content Area
+ * This targets the specific container from the react-simple-chatbot library.
+ */
+
+/* First, for modern browsers like Firefox */
+.rsc-content {
+  scrollbar-width: thin;
+  /* scrollbar-color: [thumb-color] [track-color] */
+  scrollbar-color: #98c2b6 #FFFFFF;
+}
+
+/* Second, for WebKit browsers like Chrome, Safari, and Edge */
+
+/* This sets the overall width of the scrollbar */
+.rsc-content::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* This styles the track (the background the scrollbar moves along) */
+.rsc-content::-webkit-scrollbar-track {
+  background: #FFFFFF; /* White */
+}
+
+/* This styles the draggable handle of the scrollbar */
+.rsc-content::-webkit-scrollbar-thumb {
+  background-color: #98c2b6; /* g99 color */
+  border-radius: 10px; /* Makes the corners rounded */
+  border: 2px solid #FFFFFF; /* Adds a little "padding" around the handle */
+}
+
+/* Optional: Add a hover effect for the handle */
+.rsc-content::-webkit-scrollbar-thumb:hover {
+  background-color: #006666; /* A slightly darker teal for hover state */
+}
+
