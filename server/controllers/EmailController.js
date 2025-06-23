@@ -10,10 +10,10 @@ class EmailController {
 
     const transporter = nodemailer.createTransport({
       host: "smtp.zoho.in",
-      port: 587,
-      secure: false, // Use TLS
+      port: 465,
+      secure: true, // Use TLS
       auth: {
-        user: "g99buildbot_zoho",
+        user: "raees@raeescodes.xyz",
         pass: process.env.EMAIL_PASS, 
       },
     });
