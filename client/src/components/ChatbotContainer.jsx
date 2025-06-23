@@ -134,7 +134,7 @@ const ChatBubble = memo(({ msg, isThinking }) => {
                 msg.text,
                 () => setIsTypingComplete(true), // Mark typing as complete
               ]}
-              speed={{ type: "keyStrokeDelayInMs", value: 70 }} // Average 70ms per character
+              speed={{ type: "keyStrokeDelayInMs", value: 60 }} // Average 60ms per character
               repeat={0}
               cursor={false}
               style={{ display: "inline" }}
