@@ -272,9 +272,8 @@
 .rightPanel input,
 .rightPanel textarea,
 .rightPanel select {
-  max-width: 70%;
+  max-width: 90%;
   padding: 10px 14px;
-  border: 1px solid #e0e0e0;
   border-radius: 6px;
   font-family: "Manrope", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   font-size: 14px;
