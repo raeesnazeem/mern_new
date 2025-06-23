@@ -199,17 +199,25 @@ app.use((err, req, res, next) => {
 });
 
 // 8. HTTPS Server Start Logic
+let server;
+const sslOptions = {
+  key: fs.readFileSync("./localhost+2-key.pem"),
+  cert: fs.readFileSync("./localhost+2.pem"),
+};
 
 connectDB()
   .then(() => {
-    server = http.createServer(app).listen(PORT, () => {
-      console.log(`✅ Server is running securely on https://localhost:${PORT}`);
-    });
+    if (NODE_ENV === "development") {
+      const server = https.createServer(sslOptions, app).listen(PORT, () => {
+        console.log(`✅ Dev server running securely at https://localhost:${PORT}`);
+      });
+    } else {
+      const server = app.listen(PORT, '0.0.0.0', () => {
+        console.log(`✅ Prod server running on http://0.0.0.0:${PORT}`);
+      });
+    }
   })
-  .catch((err) => {
-    console.error("Database connection failed:", err);
-    process.exit(1);
-  });
+
 
 // Process Handlers
 process.on("unhandledRejection", (err) => {
