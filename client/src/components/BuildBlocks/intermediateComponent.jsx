@@ -1706,6 +1706,7 @@ const listStyles = `
   line-height: 1;
   width: 24px;
   height: 24px;
+  color: #000;
 }
 
 .move-button-html5:disabled {
