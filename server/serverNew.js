@@ -23,9 +23,15 @@ const NODE_ENV = process.env.NODE_ENV || "development";
 // CORS Configuration
 let corsOptions;
 if (NODE_ENV === "production") {
-  const allowedOrigins = [
-    process.env.FRONTEND_PRODUCTION_URL || "https://g99buildbot.vercel.app" || "https://g99buildbot.raeescodes.xyz"
-  ].filter(Boolean);
+  const allowedOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean)
+    : [
+        "https://g99buildbot.vercel.app",
+        "https://g99buildbot.raeescodes.xyz",
+        "https://app.raeescodes.xyz",
+      ];
   corsOptions = {
     origin: function (origin, callback) {
       if (!origin || allowedOrigins.indexOf(origin) !== -1) {
@@ -35,7 +41,7 @@ if (NODE_ENV === "production") {
       }
     },
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-WP-Nonce", "Accept"],
     credentials: true,
   };
 } else {
@@ -47,7 +53,7 @@ if (NODE_ENV === "production") {
       "https://raeescodes.xyz"
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-WP-Nonce", "Accept"],
     credentials: true,
   };
 }
